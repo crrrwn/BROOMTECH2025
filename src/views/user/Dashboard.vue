@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-6">
-    <!-- Welcome Section -->
+     Welcome Section 
     <div class="bg-gradient-to-r from-blue-500 to-green-600 rounded-xl p-6 text-white">
       <h1 class="text-2xl font-bold mb-2">Welcome back, {{ userName }}!</h1>
       <p class="text-green-100">Ready to place your next order? We're here to help.</p>
     </div>
 
-    <!-- Quick Stats -->
+     Quick Stats 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div class="bg-white rounded-lg p-6 shadow-sm border">
         <div class="flex items-center">
@@ -18,6 +18,7 @@
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Total Orders</p>
             <p class="text-2xl font-semibold text-gray-900">{{ stats.totalOrders }}</p>
+            <p v-if="stats.totalOrders === 0" class="text-xs text-gray-500 mt-1">No orders yet</p>
           </div>
         </div>
       </div>
@@ -32,6 +33,7 @@
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Completed</p>
             <p class="text-2xl font-semibold text-gray-900">{{ stats.completedOrders }}</p>
+            <p v-if="stats.completedOrders === 0" class="text-xs text-gray-500 mt-1">None completed</p>
           </div>
         </div>
       </div>
@@ -46,6 +48,7 @@
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Pending</p>
             <p class="text-2xl font-semibold text-gray-900">{{ stats.pendingOrders }}</p>
+            <p v-if="stats.pendingOrders === 0" class="text-xs text-gray-500 mt-1">None pending</p>
           </div>
         </div>
       </div>
@@ -59,13 +62,14 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Total Spent</p>
-            <p class="text-2xl font-semibold text-gray-900">₱{{ stats.totalSpent }}</p>
+            <p class="text-2xl font-semibold text-gray-900">₱{{ stats.totalSpent.toFixed(2) }}</p>
+            <p v-if="stats.totalSpent === 0" class="text-xs text-gray-500 mt-1">No spending yet</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Quick Actions -->
+     Quick Actions 
     <div class="bg-white rounded-lg p-6 shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -119,7 +123,7 @@
       </div>
     </div>
 
-    <!-- Recent Orders -->
+     Recent Orders 
     <div class="bg-white rounded-lg p-6 shadow-sm border">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900">Recent Orders</h2>
@@ -128,7 +132,23 @@
         </router-link>
       </div>
       
-      <div class="space-y-4">
+      <div v-if="recentOrders.length === 0" class="text-center py-8">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <p class="text-gray-600 mb-4">No orders yet</p>
+        <router-link 
+          to="/user/book" 
+          class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-600 transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create Your First Order
+        </router-link>
+      </div>
+      
+      <div v-else class="space-y-4">
         <div v-for="order in recentOrders" :key="order.id" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div class="flex items-center space-x-4">
             <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -159,52 +179,103 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script>
 import { useAuthStore } from '@/stores/auth'
+import { realtimeService } from '@/services/realtime'
 
-const authStore = useAuthStore()
-
-const userName = computed(() => {
-  const profile = authStore.userProfile
-  return profile ? profile.firstName : 'User'
-})
-
-const stats = ref({
-  totalOrders: 24,
-  completedOrders: 20,
-  pendingOrders: 4,
-  totalSpent: 2450
-})
-
-const recentOrders = ref([
-  {
-    id: 1,
-    service: 'Food Delivery',
-    date: 'Today, 2:30 PM',
-    amount: 285,
-    status: 'In Transit'
+export default {
+  name: 'UserDashboard',
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
   },
-  {
-    id: 2,
-    service: 'Grocery Shopping',
-    date: 'Yesterday, 4:15 PM',
-    amount: 1250,
-    status: 'Delivered'
+  data() {
+    return {
+      stats: {
+        totalOrders: 0,
+        completedOrders: 0,
+        pendingOrders: 0,
+        totalSpent: 0
+      },
+      recentOrders: [],
+      unsubscribeFunction: null
+    }
   },
-  {
-    id: 3,
-    service: 'Bill Payment',
-    date: '2 days ago',
-    amount: 55,
-    status: 'Delivered'
+  computed: {
+    userName() {
+      const profile = this.authStore.userProfile
+      return profile ? profile.firstName : 'User'
+    }
   },
-  {
-    id: 4,
-    service: 'Pick-up & Drop',
-    date: '3 days ago',
-    amount: 120,
-    status: 'Delivered'
+  async mounted() {
+    const userUid = this.authStore.user?.uid
+    if (userUid) {
+      this.unsubscribeFunction = realtimeService.subscribeToUserOrders(userUid, (orders) => {
+        this.calculateStats(orders)
+      })
+    }
+  },
+  beforeUnmount() {
+    if (this.unsubscribeFunction) {
+      this.unsubscribeFunction()
+    }
+  },
+  methods: {
+    calculateStats(orders) {
+      const totalOrders = orders.length
+      const completedOrders = orders.filter(order => order.status === 'delivered').length
+      const pendingOrders = orders.filter(order => ['pending', 'confirmed', 'in_transit'].includes(order.status)).length
+      const totalSpent = orders
+        .filter(order => order.status === 'delivered')
+        .reduce((sum, order) => sum + (order.priceEstimate?.total || 0), 0)
+
+      this.stats = {
+        totalOrders,
+        completedOrders,
+        pendingOrders,
+        totalSpent
+      }
+
+      // Get recent orders (last 4 orders)
+      this.recentOrders = orders
+        .sort((a, b) => new Date(b.createdAt?.toDate()) - new Date(a.createdAt?.toDate()))
+        .slice(0, 4)
+        .map(order => ({
+          id: order.id,
+          service: order.serviceName,
+          date: this.formatDate(order.createdAt),
+          amount: order.priceEstimate?.total || 0,
+          status: this.formatStatus(order.status)
+        }))
+    },
+
+    formatDate(timestamp) {
+      if (!timestamp) return ''
+      const date = new Date(timestamp.toDate())
+      const now = new Date()
+      const diffTime = Math.abs(now - date)
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 1) return 'Today'
+      if (diffDays === 2) return 'Yesterday'
+      if (diffDays <= 7) return `${diffDays - 1} days ago`
+      
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      })
+    },
+
+    formatStatus(status) {
+      const statusMap = {
+        'pending': 'Pending',
+        'confirmed': 'Confirmed',
+        'in_transit': 'In Transit',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled'
+      }
+      return statusMap[status] || status
+    }
   }
-])
+}
 </script>

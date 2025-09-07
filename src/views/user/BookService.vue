@@ -1,20 +1,18 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Add profile completion check for Google users -->
+    <!-- Profile completion notice -->
     <div v-if="needsProfileCompletion" class="bg-red-50 border border-red-200 rounded-lg p-4">
       <div class="flex">
         <div class="flex-shrink-0">
           <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
           </svg>
         </div>
         <div class="ml-3">
           <h3 class="text-sm font-medium text-red-800">Profile Incomplete</h3>
-          <p class="mt-1 text-sm text-red-700">
-            Please complete your profile information before booking services.
-          </p>
+          <p class="mt-1 text-sm text-red-700">Please complete your profile information before booking services.</p>
           <div class="mt-3">
-            <router-link 
+            <router-link
               to="/user/profile?complete=true"
               class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
@@ -34,11 +32,18 @@
     <!-- Service Selection -->
     <div v-if="!needsProfileCompletion" class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Select Service Type</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="service in services" :key="service.id" 
-             @click="selectedService = service"
-             :class="selectedService?.id === service.id ? 'ring-2 ring-green-500 bg-green-50' : 'hover:bg-gray-50'"
-             class="p-4 border rounded-lg cursor-pointer transition-all">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="service in services"
+          :key="service.id"
+          @click="onSelectService(service)"
+          :class="selectedService?.id === service.id ? 'ring-2 ring-green-500 bg-green-50' : 'hover:bg-gray-50'"
+          class="p-4 border rounded-lg cursor-pointer transition-all"
+          role="button"
+          tabindex="0"
+          @keydown.enter.prevent="onSelectService(service)"
+          @keydown.space.prevent="onSelectService(service)"
+        >
           <div class="flex items-center space-x-3">
             <div class="p-2 bg-green-100 rounded-lg">
               <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +53,6 @@
             <div class="flex-1">
               <h3 class="font-medium text-gray-900">{{ service.name }}</h3>
               <p class="text-sm text-gray-600">{{ service.description }}</p>
-              <p class="text-sm font-medium text-green-600">Starting at ₱{{ service.baseRate }}</p>
             </div>
           </div>
         </div>
@@ -58,138 +62,459 @@
     <!-- Booking Form -->
     <div v-if="selectedService && !needsProfileCompletion" class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Booking Details</h2>
-      <form @submit.prevent="submitBooking" class="space-y-4">
-        <!-- Pickup Location -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
-          <div class="relative">
-            <input type="text" v-model="bookingForm.pickupAddress" 
-                   placeholder="Enter pickup address" 
-                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-            <button type="button" @click="getCurrentLocation('pickup')" 
-                    class="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
+
+      <!-- Map & route -->
+      <div class="mb-6">
+        <h3 class="text-md font-medium text-gray-800 mb-3">Route & Distance</h3>
+        <div class="bg-gray-100 rounded-lg p-4">
+          <div id="map" class="w-full h-64 rounded-lg mb-3"></div>
+          <div class="flex justify-between items-center text-sm">
+            <div class="flex items-center space-x-4">
+              <span class="text-gray-600">Distance: <strong>{{ routeInfo.distance }}</strong></span>
+              <span class="text-gray-600">ETA: <strong>{{ routeInfo.duration }}</strong></span>
+            </div>
+            <button
+              @click="getCurrentLocation"
+              class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+              type="button"
+            >
+              Use Current Location
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- Delivery Location -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Location</label>
-          <div class="relative">
-            <input type="text" v-model="bookingForm.deliveryAddress" 
-                   placeholder="Enter delivery address" 
-                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-            <button type="button" @click="getCurrentLocation('delivery')" 
-                    class="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </button>
+      <form @submit.prevent="submitBooking" class="space-y-6">
+        <!-- FOOD DELIVERY -->
+        <div v-if="selectedService.id === 'food-delivery'" class="space-y-4">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Restaurant / Order Info</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant/Store Name *</label>
+              <input type="text" v-model.trim="bookingForm.restaurantName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant Address *</label>
+              <input
+                type="text"
+                v-model.trim="bookingForm.restaurantAddress"
+                required
+                ref="restaurantAddressInput"
+                @input="onAddressManualInput"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
           </div>
-        </div>
 
-        <!-- Contact Information -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Contact Name</label>
-            <input type="text" v-model="bookingForm.contactName" 
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Food Order Details *</label>
+            <textarea v-model.trim="bookingForm.foodOrderDetails" rows="3" required placeholder="List what you want to order..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-            <input type="tel" v-model="bookingForm.contactPhone" 
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions (Optional)</label>
+            <textarea v-model.trim="bookingForm.specialInstructions" rows="2" placeholder="Any special instructions..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
           </div>
-        </div>
 
-        <!-- Delivery Instructions -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
-          <textarea v-model="bookingForm.instructions" rows="3" 
-                    placeholder="Any special delivery instructions..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-        </div>
-
-        <!-- Scheduled Delivery -->
-        <div>
-          <label class="flex items-center">
-            <input type="checkbox" v-model="bookingForm.isScheduled" 
-                   class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-            <span class="ml-2 text-sm text-gray-700">Schedule for later</span>
-          </label>
-        </div>
-
-        <div v-if="bookingForm.isScheduled" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Date</label>
-            <input type="date" v-model="bookingForm.scheduledDate" 
-                   :min="new Date().toISOString().split('T')[0]"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Time</label>
-            <select v-model="bookingForm.scheduledTime" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              <option value="">Select time</option>
-              <option value="08:00">8:00 AM</option>
-              <option value="09:00">9:00 AM</option>
-              <option value="10:00">10:00 AM</option>
-              <option value="11:00">11:00 AM</option>
-              <option value="12:00">12:00 PM</option>
-              <option value="13:00">1:00 PM</option>
-              <option value="14:00">2:00 PM</option>
-              <option value="15:00">3:00 PM</option>
-              <option value="16:00">4:00 PM</option>
-              <option value="17:00">5:00 PM</option>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+            <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              <option value="">Select budget range</option>
+              <option value="P1-P499">₱1 - ₱499</option>
+              <option value="P500-P999">₱500 - ₱999</option>
+              <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+              <option value="P2000+">₱2,000+</option>
             </select>
           </div>
-        </div>
 
-        <!-- Price Estimate -->
-        <div v-if="priceEstimate" class="bg-green-50 p-4 rounded-lg border border-green-200">
-          <div class="flex justify-between items-center">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Delivery To</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p class="text-sm text-green-700">Estimated Price</p>
-              <p class="text-lg font-semibold text-green-900">₱{{ priceEstimate.total }}</p>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Full Name *</label>
+              <input type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
             </div>
-            <button type="button" @click="calculatePrice" 
-                    class="text-sm text-green-600 hover:text-green-800">
-              Recalculate
-            </button>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Contact Number *</label>
+              <input type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
           </div>
-          <div class="mt-2 text-xs text-green-600 space-y-1">
-            <div class="flex justify-between">
-              <span>Base rate:</span>
-              <span>₱{{ priceEstimate.baseRate }}</span>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
+            <input
+              type="text"
+              v-model.trim="bookingForm.deliveryAddress"
+              required
+              ref="deliveryAddressInput"
+              @input="onAddressManualInput"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark / Notes (Optional)</label>
+              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
             </div>
-            <div class="flex justify-between">
-              <span>Distance ({{ priceEstimate.distance }}km):</span>
-              <span>₱{{ priceEstimate.distanceRate }}</span>
-            </div>
-            <div v-if="priceEstimate.weatherMultiplier > 1" class="flex justify-between">
-              <span>Weather surcharge:</span>
-              <span>₱{{ priceEstimate.weatherSurcharge }}</span>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
+              <input type="time" v-model="bookingForm.preferredTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
             </div>
           </div>
         </div>
 
-        <!-- Submit Button -->
-        <div class="flex space-x-4">
-          <button type="button" @click="calculatePrice" 
-                  :disabled="!canCalculatePrice"
-                  class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
-            Get Price Estimate
+        <!-- BILL PAYMENTS -->
+        <div v-if="selectedService.id === 'bill-payments'" class="space-y-4">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Biller Details</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Biller Name *</label>
+              <input type="text" v-model.trim="bookingForm.billerName" required placeholder="e.g., MERALCO, GLOBE, PLDT" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Account Name *</label>
+              <input type="text" v-model.trim="bookingForm.accountName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
+              <input type="text" v-model.trim="bookingForm.accountNumber" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Amount to Pay *</label>
+              <input type="number" v-model.number="bookingForm.amountToPay" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Due Date (Optional)</label>
+              <input type="date" v-model="bookingForm.dueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <option value="">Select budget range</option>
+                <option value="P1-P499">₱1 - ₱499</option>
+                <option value="P500-P999">₱500 - ₱999</option>
+                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                <option value="P2000+">₱2,000+</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Receipt / Reference Upload (REQUIRED) -->
+          <div class="grid grid-cols-1 gap-2">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Receipt / Reference (image/PDF) *
+              </label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                @change="handleBillReceiptSelect"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+              <p class="text-xs text-gray-500 mt-1">Max 5MB · Allowed: JPG/PNG/PDF</p>
+
+              <div v-if="uploadingBillReceipt" class="text-xs text-gray-600 mt-1">
+                Uploading... {{ billReceiptProgress }}%
+              </div>
+
+              <div v-if="bookingForm.billReceiptUrl" class="text-xs text-green-600 mt-1">
+                Uploaded ✓
+                <a :href="bookingForm.billReceiptUrl" target="_blank" class="underline">View file</a>
+              </div>
+
+              <p v-if="selectedService.id==='bill-payments' && !bookingForm.billReceiptUrl && !uploadingBillReceipt" class="text-xs text-red-600 mt-1">
+                Receipt/reference is required.
+              </p>
+            </div>
+          </div>
+
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Pickup & Delivery</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Address *</label>
+              <input type="text" v-model.trim="bookingForm.pickupAddress" required ref="pickupAddressInput" @input="onAddressManualInput" placeholder="Where to collect payment/bill" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Return Address *</label>
+              <input type="text" v-model.trim="bookingForm.returnAddress" required ref="returnAddressInput" @input="onAddressManualInput" placeholder="Where to return receipt" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Schedule (Optional)</label>
+            <input type="datetime-local" v-model="bookingForm.preferredSchedule" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+          </div>
+        </div>
+
+        <!-- GROCERY SHOPPING -->
+        <div v-if="selectedService.id === 'grocery-shopping'" class="space-y-4">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Shopping List</h3>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">List of Items to Buy *</label>
+            <textarea v-model.trim="bookingForm.shoppingList" rows="4" required placeholder="List all items you need..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Store Preference (Optional)</label>
+              <input type="text" v-model.trim="bookingForm.storePreference" placeholder="e.g., SM, Robinson's, Mercury Drug" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <option value="">Select budget range</option>
+                <option value="P1-P499">₱1 - ₱499</option>
+                <option value="P500-P999">₱500 - ₱999</option>
+                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                <option value="P2000+">₱2,000+</option>
+              </select>
+            </div>
+          </div>
+
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Delivery To</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Full Name *</label>
+              <input type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Contact Number *</label>
+              <input type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
+            <input type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark (Optional)</label>
+              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
+              <input type="time" v-model="bookingForm.preferredTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- GIFT DELIVERY -->
+        <div v-if="selectedService.id === 'gift-delivery'" class="space-y-4">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Gift Details</h3>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Type of Gift / Item *</label>
+            <input type="text" v-model.trim="bookingForm.giftType" required placeholder="e.g., Flowers, Cake, Jewelry" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
+              <textarea v-model.trim="bookingForm.specialInstructions" rows="3" placeholder="e.g., Wrap with ribbon, Include card" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <option value="">Select budget range</option>
+                <option value="P1-P499">₱1 - ₱499</option>
+                <option value="P500-P999">₱500 - ₱999</option>
+                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                <option value="P2000+">₱2,000+</option>
+              </select>
+            </div>
+          </div>
+
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Receiver Info</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Full Name *</label>
+              <input type="text" v-model.trim="bookingForm.recipientName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Contact Number *</label>
+              <input type="tel" v-model.trim="bookingForm.recipientContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
+            <input type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark (Optional)</label>
+              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Date/Time (Optional)</label>
+              <input type="datetime-local" v-model="bookingForm.preferredDateTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- MEDICINE DELIVERY -->
+        <div v-if="selectedService.id === 'medicine-delivery'" class="space-y-4">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Medicine Details</h3>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Medicine Name(s) *</label>
+            <textarea v-model.trim="bookingForm.medicineNames" rows="3" required placeholder="List all medicines needed..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Prescription Upload (Optional)</label>
+              <input type="file" @change="handleFileUpload" accept="image/*,.pdf" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+              <p class="text-xs text-gray-500 mt-1">Upload if prescription is required</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+              <input type="text" v-model.trim="bookingForm.quantity" required placeholder="e.g., 1 box, 2 bottles" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+            <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              <option value="">Select budget range</option>
+              <option value="P1-P499">₱1 - ₱499</option>
+              <option value="P500-P999">₱500 - ₱999</option>
+              <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+              <option value="P2000+">₱2,000+</option>
+            </select>
+          </div>
+
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Delivery To</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Full Name *</label>
+              <input type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Contact Number *</label>
+              <input type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
+            <input type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark (Optional)</label>
+              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
+              <input type="time" v-model="bookingForm.preferredTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- PICK-UP & DROP -->
+        <div v-if="selectedService.id === 'pickup-drop'" class="space-y-4">
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Pick-up Info</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Pick-up Address *</label>
+              <input type="text" v-model.trim="bookingForm.pickupAddress" required ref="pickupAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Contact Person & Number (Pick-up) *</label>
+              <input type="text" v-model.trim="bookingForm.pickupContact" required placeholder="Name - Phone Number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Item Details</h3>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Item Description *</label>
+            <textarea v-model.trim="bookingForm.itemDescription" rows="3" required placeholder="Describe the item(s) to be picked up..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Item Type *</label>
+              <select v-model="bookingForm.itemType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <option value="">Select item type</option>
+                <option value="LAUNDRY">Laundry</option>
+                <option value="PET_FOOD">Pet Food</option>
+                <option value="GAS_DELIVERY">Gas Delivery</option>
+                <option value="SACK_OF_RICE">Sack of Rice Delivery</option>
+                <option value="DOCUMENT_DELIVERY">Document Delivery</option>
+                <option value="SHOPPING_DELIVERY">Shopping Delivery</option>
+                <option value="BOXES_OR_ITEMS">Boxes or Items Delivery</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <option value="">Select budget range</option>
+                <option value="P1-P499">₱1 - ₱499</option>
+                <option value="P500-P999">₱500 - ₱999</option>
+                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                <option value="P2000+">₱2,000+</option>
+              </select>
+            </div>
+          </div>
+
+          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Drop-off Info</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Drop-off Address *</label>
+              <input type="text" v-model.trim="bookingForm.dropoffAddress" required ref="dropoffAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text sm font-medium text-gray-700 mb-2">Receiver Name & Contact *</label>
+              <input type="text" v-model.trim="bookingForm.receiverContact" required placeholder="Name - Phone Number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="text-md font-medium text-gray-800 mb-3">Payment Method</h3>
+          <div class="space-y-2">
+            <label class="flex items-center">
+              <input type="radio" v-model="bookingForm.paymentMethod" value="GCASH" class="text-green-600 focus:ring-green-500" />
+              <span class="ml-2 text-sm text-gray-700">GCash</span>
+            </label>
+            <label class="flex items-center">
+              <input type="radio" v-model="bookingForm.paymentMethod" value="COD" class="text-green-600 focus:ring-green-500" />
+              <span class="ml-2 text-sm text-gray-700">Cash on Delivery (COD)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex flex-col gap-2">
+          <button
+            type="submit"
+            :disabled="!canSubmitBooking || submitting || (selectedService?.id==='bill-payments' && uploadingBillReceipt)"
+            class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            {{ submitting ? 'Booking...' : 'Submit Booking' }}
           </button>
-          <button type="submit" 
-                  :disabled="!canSubmitBooking || submitting"
-                  class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
-            {{ submitting ? 'Booking...' : 'Book Now' }}
-          </button>
+          <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
         </div>
       </form>
     </div>
@@ -197,15 +522,14 @@
 </template>
 
 <script>
-import { googleMapsService } from '@/services/googleMaps'
 import { db } from '@/firebase/config'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/auth'
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 
 export default {
   name: 'BookService',
   setup() {
-    // Use hooks at the top level
     const authStore = useAuthStore()
     return { authStore }
   },
@@ -213,148 +537,483 @@ export default {
     return {
       selectedService: null,
       submitting: false,
+      formError: '',
+      uploadingBillReceipt: false,
+      billReceiptProgress: 0,
+
+      // Maps instances
+      map: null,
+      directionsService: null,
+      directionsRenderer: null,
+      geocoder: null,
+      distanceService: null,
+      currentLocationMarker: null,
+      pickupMarker: null,
+      deliveryMarker: null,
+      routeInfo: { distance: 'N/A', duration: 'N/A' },
+      autocompleteInstances: {},
+      mapsReady: false,
+      debounceTimer: null,
+
       services: [
-        {
-          id: 1,
-          name: 'Grocery Delivery',
-          description: 'Fresh groceries delivered to your door',
-          baseRate: 50,
-          perKm: 15,
-          icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5L7 13m0 0l2.5 5'
-        },
-        {
-          id: 2,
-          name: 'Food Delivery',
-          description: 'Hot meals from your favorite restaurants',
-          baseRate: 40,
-          perKm: 12,
-          icon: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'
-        },
-        {
-          id: 3,
-          name: 'Medicine Delivery',
-          description: 'Prescription and over-the-counter medicines',
-          baseRate: 60,
-          perKm: 18,
-          icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547A1.934 1.934 0 014 17.5v3A1.5 1.5 0 005.5 22h13a1.5 1.5 0 001.5-1.5v-3a1.934 1.934 0 00-.572-1.072z'
-        },
-        {
-          id: 4,
-          name: 'Package Delivery',
-          description: 'Documents and packages delivered safely',
-          baseRate: 45,
-          perKm: 14,
-          icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
-        }
+        { id: 'food-delivery', name: 'Food Delivery', description: 'Restaurant orders and food delivery', icon: 'M12 6l3 6-3 6-3-6 3-6z' },
+        { id: 'bill-payments', name: 'Bill Payments', description: 'Pay your bills and get receipts delivered', icon: 'M9 12l2 2 4-4M5 12a7 7 0 1114 0 7 7 0 01-14 0z' },
+        { id: 'grocery-shopping', name: 'Grocery Shopping', description: 'Fresh groceries delivered to your door', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4' },
+        { id: 'gift-delivery', name: 'Gift Delivery', description: 'Special gifts delivered with care', icon: 'M12 8v13l-4-4-4 4M12 4a8 8 0 110 16 8 8 0 010-16z' },
+        { id: 'medicine-delivery', name: 'Medicine Delivery', description: 'Prescription and over-the-counter medicines', icon: 'M7 7h10M7 11h10M7 15h6' },
+        { id: 'pickup-drop', name: 'Pick-up & Drop', description: 'Pick up and deliver items between locations', icon: 'M4 7l8-4 8 4-8 4-8-4z M12 11l8-4v10l-8 4-8-4V7' }
       ],
+
       bookingForm: {
-        pickupAddress: '',
-        deliveryAddress: '',
-        contactName: '',
-        contactPhone: '',
-        instructions: '',
-        isScheduled: false,
-        scheduledDate: '',
-        scheduledTime: ''
+        // Common
+        paymentMethod: 'COD',
+        // Food
+        restaurantName: '', restaurantAddress: '', foodOrderDetails: '', specialInstructions: '', budgetRange: '',
+        receiverName: '', receiverContact: '', deliveryAddress: '', landmark: '', preferredTime: '',
+        // Bill
+        billerName: '', accountName: '', accountNumber: '', amountToPay: '', dueDate: '', pickupAddress: '', returnAddress: '', preferredSchedule: '',
+        billReceiptFile: null, billReceiptUrl: '',
+        // Grocery
+        shoppingList: '', storePreference: '',
+        // Gift
+        giftType: '', recipientName: '', recipientContact: '', preferredDateTime: '',
+        // Medicine
+        medicineNames: '', prescriptionFile: null, quantity: '',
+        // Pick-up & Drop
+        pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
       },
-      priceEstimate: null,
-      needsProfileCompletion: false // Assume this is set based on some logic
+
+      needsProfileCompletion: false
     }
   },
   computed: {
-    canCalculatePrice() {
-      return this.selectedService && 
-             this.bookingForm.pickupAddress && 
-             this.bookingForm.deliveryAddress
-    },
     canSubmitBooking() {
-      return this.canCalculatePrice && 
-             this.bookingForm.contactName && 
-             this.bookingForm.contactPhone && 
-             this.priceEstimate
+      if (!this.selectedService) return false
+      const hasPaymentMethod = !!this.bookingForm.paymentMethod
+      const hasRequiredFields = this.checkRequiredFields()
+      // extra guard: wag mag-submit habang nag-a-upload pa ng receipt
+      const noBlockingUpload = !(this.selectedService.id === 'bill-payments' && this.uploadingBillReceipt)
+      return hasPaymentMethod && hasRequiredFields && noBlockingUpload
     }
   },
+  mounted() {
+    this.loadGoogleMapsAPI()
+  },
   methods: {
-    async getCurrentLocation(type) {
-      try {
-        const location = await googleMapsService.getCurrentLocation()
-        // In a real app, you would reverse geocode this to get the address
-        const address = `${location.lat}, ${location.lng}`
-        
-        if (type === 'pickup') {
-          this.bookingForm.pickupAddress = address
-        } else {
-          this.bookingForm.deliveryAddress = address
+    onSelectService(service) {
+      this.selectedService = service
+      this.formError = ''
+      this.routeInfo = { distance: 'N/A', duration: 'N/A' }
+      if (this.directionsRenderer) this.directionsRenderer.setDirections({ routes: [] })
+      this.$nextTick(() => {
+        this.initializeMap()
+        this.initializeAutocomplete()
+      })
+    },
+
+    onAddressManualInput() {
+      clearTimeout(this.debounceTimer)
+      this.debounceTimer = setTimeout(() => this.updateRoute(), 350)
+    },
+
+    loadGoogleMapsAPI() {
+      if (window.google && window.google.maps) {
+        this.mapsReady = true
+        return
+      }
+      if (document.getElementById('gmaps-script')) return
+
+      const script = document.createElement('script')
+      script.id = 'gmaps-script'
+      // ⚠️ Restrict your key in GCP
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=places,geometry&v=weekly`
+      script.async = true
+      script.defer = true
+      script.onload = () => {
+        this.mapsReady = true
+        if (this.selectedService) {
+          this.initializeMap()
+          this.initializeAutocomplete()
         }
-      } catch (error) {
-        console.error('Error getting location:', error)
-        alert('Unable to get your current location. Please enter manually.')
+      }
+      script.onerror = () => console.error('Failed to load Google Maps API')
+      document.head.appendChild(script)
+    },
+
+    initializeMap() {
+      const mapElement = document.getElementById('map')
+      if (!mapElement || !this.mapsReady) return
+
+      const calapanCenter = { lat: 13.4119, lng: 121.1803 }
+
+      this.map = new window.google.maps.Map(mapElement, {
+        center: calapanCenter,
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        restriction: {
+          latLngBounds: { north: 13.5, south: 13.3, east: 121.3, west: 121.0 },
+          strictBounds: false
+        }
+      })
+
+      this.directionsService = new window.google.maps.DirectionsService()
+      this.directionsRenderer = new window.google.maps.DirectionsRenderer({ draggable: false, suppressMarkers: true })
+      this.directionsRenderer.setMap(this.map)
+
+      this.geocoder = new window.google.maps.Geocoder()
+      this.distanceService = new window.google.maps.DistanceMatrixService()
+    },
+
+    initializeAutocomplete() {
+      if (!this.mapsReady) return
+
+      const refs = [
+        'restaurantAddressInput',
+        'deliveryAddressInput',
+        'pickupAddressInput',
+        'returnAddressInput',
+        'dropoffAddressInput'
+      ]
+
+      const calapanBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(13.3000, 121.0000),
+        new window.google.maps.LatLng(13.5000, 121.3000)
+      )
+
+      refs.forEach((refKey) => {
+        const input = this.$refs[refKey]
+        if (!input) return
+
+        const ac = new window.google.maps.places.Autocomplete(input, {
+          componentRestrictions: { country: 'ph' },
+          fields: ['place_id', 'geometry', 'name', 'formatted_address'],
+          bounds: calapanBounds,
+          strictBounds: false,
+          types: ['establishment', 'geocode']
+        })
+
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace()
+          if (!place.geometry) return
+
+          if (!calapanBounds.contains(place.geometry.location)) {
+            alert('Please select a location within Calapan City area.')
+            input.value = ''
+            return
+          }
+
+          const addr = place.formatted_address
+          input.value = addr
+
+          if (refKey === 'restaurantAddressInput') this.bookingForm.restaurantAddress = addr
+          else if (refKey === 'deliveryAddressInput') this.bookingForm.deliveryAddress = addr
+          else if (refKey === 'pickupAddressInput') this.bookingForm.pickupAddress = addr
+          else if (refKey === 'returnAddressInput') this.bookingForm.returnAddress = addr
+          else if (refKey === 'dropoffAddressInput') this.bookingForm.dropoffAddress = addr
+
+          this.addAddressMarker(place.geometry.location, addr, refKey)
+          this.updateRoute()
+        })
+
+        this.autocompleteInstances[refKey] = ac
+      })
+    },
+
+    addAddressMarker(location, address, inputType) {
+      if (!this.map) return
+
+      let markerColor = '#FF0000'
+      let markerLabel = 'A'
+
+      if (inputType.includes('pickup') || inputType.includes('restaurant')) {
+        markerColor = '#00AA55'
+        markerLabel = 'P'
+        if (this.pickupMarker) this.pickupMarker.setMap(null)
+      } else if (inputType.includes('delivery') || inputType.includes('dropoff') || inputType.includes('return')) {
+        markerColor = '#D33'
+        markerLabel = 'D'
+        if (this.deliveryMarker) this.deliveryMarker.setMap(null)
+      }
+
+      const marker = new window.google.maps.Marker({
+        position: location,
+        map: this.map,
+        title: address,
+        label: { text: markerLabel, color: 'white', fontWeight: 'bold' }
+      })
+
+      if (inputType.includes('pickup') || inputType.includes('restaurant')) this.pickupMarker = marker
+      else if (inputType.includes('delivery') || inputType.includes('dropoff') || inputType.includes('return')) this.deliveryMarker = marker
+    },
+
+    getCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert("Error: Your browser doesn't support geolocation.")
+        return
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const position = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          if (this.currentLocationMarker) this.currentLocationMarker.setMap(null)
+
+          this.currentLocationMarker = new window.google.maps.Marker({
+            position,
+            map: this.map,
+            title: 'Your Current Location'
+          })
+
+          if (this.map) {
+            this.map.setCenter(position)
+            this.map.setZoom(15)
+          }
+
+          if (!this.geocoder) return
+          this.geocoder.geocode({ location: position }, (results, status) => {
+            if (status === 'OK' && results?.[0]) {
+              if (this.selectedService && (this.selectedService.id === 'pickup-drop' || this.selectedService.id === 'bill-payments')) {
+                this.bookingForm.pickupAddress = results[0].formatted_address
+              }
+              this.updateRoute()
+            }
+          })
+        },
+        () => {
+          alert('Error: The Geolocation service failed.')
+        }
+      )
+    },
+
+    updateRoute() {
+      if (!this.map || !this.directionsService || !this.selectedService) return
+
+      let origin = ''
+      let destination = ''
+
+      switch (this.selectedService.id) {
+        case 'food-delivery':
+          origin = this.bookingForm.restaurantAddress
+          destination = this.bookingForm.deliveryAddress
+          break
+        case 'bill-payments':
+          origin = this.bookingForm.pickupAddress
+          destination = this.bookingForm.returnAddress
+          break
+        case 'grocery-shopping':
+        case 'gift-delivery':
+        case 'medicine-delivery':
+          if (this.currentLocationMarker) origin = this.currentLocationMarker.getPosition()
+          destination = this.bookingForm.deliveryAddress
+          break
+        case 'pickup-drop':
+          origin = this.bookingForm.pickupAddress
+          destination = this.bookingForm.dropoffAddress
+          break
+      }
+
+      if (!origin || !destination) return
+
+      this.directionsService.route(
+        {
+          origin,
+          destination,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+          unitSystem: window.google.maps.UnitSystem.METRIC,
+          avoidHighways: false,
+          avoidTolls: false
+        },
+        (response, status) => {
+          if (status === 'OK') {
+            this.directionsRenderer.setOptions({ suppressMarkers: true })
+            this.directionsRenderer.setDirections(response)
+            const leg = response.routes[0].legs[0]
+            this.routeInfo = { distance: leg.distance.text, duration: leg.duration.text }
+          } else {
+            console.error('Directions request failed due to ' + status)
+            this.routeInfo = { distance: 'N/A', duration: 'N/A' }
+          }
+        }
+      )
+    },
+
+    handleFileUpload(e) {
+      const file = e.target.files?.[0]
+      this.bookingForm.prescriptionFile = file || null
+    },
+
+    async handleBillReceiptSelect(e) {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      const okTypes = ['image/jpeg','image/png','application/pdf']
+      if (!okTypes.includes(file.type)) {
+        alert('Invalid file type. Please upload JPG, PNG, or PDF.')
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File too large. Max 5MB only.')
+        return
+      }
+
+      this.bookingForm.billReceiptFile = file
+      const user = this.authStore?.user
+      if (!user?.uid) {
+        alert('Please log in to upload a receipt.')
+        return
+      }
+      await this.uploadBillReceipt(file, user.uid)
+    },
+
+    uploadBillReceipt(file, uid) {
+      return new Promise((resolve, reject) => {
+        try {
+          const storage = getStorage()
+          const path = `billReceipts/${uid}/${Date.now()}_${file.name}`
+          const ref = storageRef(storage, path)
+          const metadata = { contentType: file.type }
+
+          this.uploadingBillReceipt = true
+          this.billReceiptProgress = 0
+
+          const task = uploadBytesResumable(ref, file, metadata)
+
+          task.on(
+            'state_changed',
+            (snap) => {
+              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
+              this.billReceiptProgress = pct
+            },
+            (err) => {
+              this.uploadingBillReceipt = false
+              console.error('upload error:', err.code, err.message)
+              if (err.code === 'storage/unauthenticated') {
+                alert('Please log in before uploading a receipt.')
+              } else if (err.code === 'storage/unauthorized') {
+                alert('Upload blocked by Storage Rules. Please check your Firebase Storage rules.')
+              } else if (err.code === 'storage/canceled') {
+                alert('Upload cancelled.')
+              } else {
+                alert('Upload failed. Please try again.')
+              }
+              reject(err)
+            },
+            async () => {
+              this.uploadingBillReceipt = false
+              const url = await getDownloadURL(task.snapshot.ref)
+              this.bookingForm.billReceiptUrl = url
+              resolve(url)
+            }
+          )
+        } catch (err) {
+          this.uploadingBillReceipt = false
+          console.error('upload exception:', err)
+          reject(err)
+        }
+      })
+    },
+
+    checkRequiredFields() {
+      if (!this.selectedService) return false
+      const f = this.bookingForm
+      switch (this.selectedService.id) {
+        case 'food-delivery':
+          return f.restaurantName && f.restaurantAddress && f.foodOrderDetails && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
+        case 'bill-payments':
+          // REQUIRED na ang receipt/reference URL
+          return f.billerName && f.accountName && f.accountNumber && f.amountToPay && f.budgetRange && f.pickupAddress && f.returnAddress && !!f.billReceiptUrl
+        case 'grocery-shopping':
+          return f.shoppingList && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
+        case 'gift-delivery':
+          return f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress
+        case 'medicine-delivery':
+          return f.medicineNames && f.quantity && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
+        case 'pickup-drop':
+          return f.pickupAddress && f.pickupContact && f.itemDescription && f.itemType && f.budgetRange && f.dropoffAddress && f.receiverContact
+        default:
+          return false
       }
     },
 
-    async calculatePrice() {
-      if (!this.canCalculatePrice) return
-
-      try {
-        // In a real app, you would use Google Maps Distance Matrix API
-        // For now, we'll simulate the calculation
-        const baseRate = this.selectedService.baseRate
-        const perKm = this.selectedService.perKm
-        const estimatedDistance = Math.random() * 10 + 2 // 2-12 km
-        const weatherMultiplier = Math.random() > 0.7 ? 1.5 : 1 // 30% chance of bad weather
-        
-        const distanceRate = estimatedDistance * perKm
-        const subtotal = baseRate + distanceRate
-        const weatherSurcharge = weatherMultiplier > 1 ? subtotal * 0.5 : 0
-        const total = subtotal + weatherSurcharge
-
-        this.priceEstimate = {
-          baseRate: baseRate.toFixed(2),
-          distance: estimatedDistance.toFixed(1),
-          distanceRate: distanceRate.toFixed(2),
-          weatherMultiplier,
-          weatherSurcharge: weatherSurcharge.toFixed(2),
-          total: total.toFixed(2)
-        }
-      } catch (error) {
-        console.error('Error calculating price:', error)
-        alert('Unable to calculate price. Please try again.')
-      }
-    },
-
+    // ✅ SUBMIT TO FIRESTORE
     async submitBooking() {
-      if (!this.canSubmitBooking) return
-
-      this.submitting = true
       try {
-        const bookingData = {
-          userId: this.authStore.user.uid,
+        this.formError = ''
+        if (this.needsProfileCompletion) {
+          this.formError = 'Please complete your profile first.'
+          return
+        }
+
+        const user = this.authStore?.user
+        if (!user?.uid) {
+          this.formError = 'You must be logged in to submit a booking.'
+          alert(this.formError)
+          return
+        }
+
+        if (!this.canSubmitBooking) {
+          this.formError = 'Please fill all required fields.'
+          return
+        }
+
+        this.submitting = true
+
+        // Safety: kung may file pero di pa uploaded
+        if (this.selectedService?.id === 'bill-payments' && this.bookingForm.billReceiptFile && !this.bookingForm.billReceiptUrl) {
+          await this.uploadBillReceipt(this.bookingForm.billReceiptFile, user.uid)
+          if (!this.bookingForm.billReceiptUrl) {
+            throw new Error('Receipt upload failed')
+          }
+        }
+
+        const payload = {
+          userId: user.uid,
           serviceId: this.selectedService.id,
           serviceName: this.selectedService.name,
-          pickupAddress: this.bookingForm.pickupAddress,
-          deliveryAddress: this.bookingForm.deliveryAddress,
-          contactName: this.bookingForm.contactName,
-          contactPhone: this.bookingForm.contactPhone,
-          instructions: this.bookingForm.instructions,
-          isScheduled: this.bookingForm.isScheduled,
-          scheduledDate: this.bookingForm.scheduledDate,
-          scheduledTime: this.bookingForm.scheduledTime,
-          priceEstimate: this.priceEstimate,
+          formData: { ...this.bookingForm, billReceiptFile: null }, // wag isama raw file
+          routeInfo: { ...this.routeInfo },
           status: 'pending',
           createdAt: serverTimestamp()
         }
 
-        const docRef = await addDoc(collection(db, 'orders'), bookingData)
-        
+        await addDoc(collection(db, 'orders'), payload)
+
         alert('Booking submitted successfully!')
-        this.$router.push(`/user/orders/${docRef.id}`)
-      } catch (error) {
-        console.error('Error submitting booking:', error)
-        alert('Error submitting booking. Please try again.')
+        this.$router.push('/user/orders')
+      } catch (err) {
+        console.error('[submitBooking] error:', err)
+        this.formError = 'Error submitting booking. Please try again.'
+        alert(this.formError)
       } finally {
         this.submitting = false
+      }
+    }
+  },
+  watch: {
+    async selectedService(newService) {
+      if (!newService || this.needsProfileCompletion) return
+      await this.$nextTick()
+      this.initializeMap()
+      await this.$nextTick()
+      this.initializeAutocomplete()
+    },
+    mapsReady(ready) {
+      if (ready && this.selectedService) {
+        this.$nextTick(async () => {
+          this.initializeMap()
+          await this.$nextTick()
+          this.initializeAutocomplete()
+        })
       }
     }
   }
 }
 </script>
+
+<style scoped>
+#map { height: 300px !important; width: 100% !important; min-height: 300px; background-color: #f0f0f0; }
+.map-container { position: relative; overflow: hidden; }
+/* Ensure the Places Autocomplete dropdown isn't hidden behind anything */
+:deep(.pac-container) { z-index: 9999 !important; width: auto !important; min-width: 280px; }
+</style>
