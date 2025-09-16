@@ -68,12 +68,13 @@
             
             <div>
               <label for="phone" class="block text-sm font-medium text-gray-700">
-                Phone Number <span v-if="showCompletionNotice" class="text-red-500">*</span>
+                Contact Number <span v-if="showCompletionNotice" class="text-red-500">*</span>
               </label>
               <input
                 type="tel"
                 id="phone"
                 v-model="profile.phone"
+                placeholder="Enter your contact number"
                 :class="[
                   'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
                   showCompletionNotice && !profile.phone ? 'border-red-300' : ''
@@ -90,6 +91,7 @@
                 id="address"
                 v-model="profile.address"
                 rows="3"
+                placeholder="Enter your complete address"
                 :class="[
                   'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
                   showCompletionNotice && !profile.address ? 'border-red-300' : ''
@@ -175,7 +177,6 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
@@ -183,133 +184,157 @@ import { db } from '@/firebase/config'
 
 export default {
   name: 'Profile',
-  setup() {
-    const authStore = useAuthStore()
-    const loading = ref(false)
-    const passwordLoading = ref(false)
-    const showCompletionNotice = ref(false)
-    
-    const profile = ref({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      address: ''
-    })
-    
-    const passwordForm = ref({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    })
-    
-    const loadProfile = async () => {
+  data() {
+    return {
+      loading: false,
+      passwordLoading: false,
+      showCompletionNotice: false,
+      profile: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        address: ''
+      },
+      passwordForm: {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    }
+  },
+  computed: {
+    authStore() {
+      return useAuthStore()
+    }
+  },
+  async mounted() {
+    await this.loadProfile()
+  },
+  methods: {
+    async loadProfile() {
       try {
-        if (authStore.user) {
-          const userDoc = await getDoc(doc(db, 'users', authStore.user.uid))
+        if (this.authStore.user) {
+          console.log('[v0] Loading profile for user:', this.authStore.user.uid)
+          const userDoc = await getDoc(doc(db, 'users', this.authStore.user.uid))
           if (userDoc.exists()) {
             const userData = userDoc.data()
-            profile.value = {
-              firstName: userData.firstName || '',
-              lastName: userData.lastName || '',
-              email: userData.email || authStore.user.email,
-              phone: userData.phone || '',
-              address: userData.address || ''
+            console.log('[v0] User data from Firestore:', userData)
+            
+            this.profile = {
+              firstName: userData.firstName || userData.first_name || '',
+              lastName: userData.lastName || userData.last_name || '',
+              email: userData.email || this.authStore.user.email,
+              phone: userData.contact || userData.phone || userData.phoneNumber || userData.contactNumber || userData.contact_number || userData.mobile || '',
+              address: userData.address || userData.location || userData.barangay || ''
             }
+            
+            console.log('[v0] Mapped profile data:', this.profile)
+            
             // Check if the user is a Google user and needs to complete their profile
-            if (authStore.user.providerData.some(provider => provider.providerId === 'google.com') && (!userData.phone || !userData.address)) {
-              showCompletionNotice.value = true
+            if (this.authStore.user.providerData.some(provider => provider.providerId === 'google.com') && (!this.profile.phone || !this.profile.address)) {
+              this.showCompletionNotice = true
             }
+          } else {
+            console.log('[v0] No user document found in Firestore')
           }
         }
       } catch (error) {
         console.error('Error loading profile:', error)
         alert('Error loading profile data')
       }
-    }
+    },
     
-    const updateProfile = async () => {
-      loading.value = true
+    async updateProfile() {
+      this.loading = true
       try {
-        if (authStore.user) {
-          await updateDoc(doc(db, 'users', authStore.user.uid), {
-            firstName: profile.value.firstName,
-            lastName: profile.value.lastName,
-            phone: profile.value.phone,
-            address: profile.value.address,
+        if (this.authStore.user) {
+          console.log('[v0] Updating profile with data:', this.profile)
+          
+          const updateData = {
+            firstName: this.profile.firstName,
+            lastName: this.profile.lastName,
+            email: this.profile.email,
+            contact: this.profile.phone, // Primary contact field
+            phone: this.profile.phone,
+            phoneNumber: this.profile.phone,
+            contactNumber: this.profile.phone,
+            mobile: this.profile.phone,
+            address: this.profile.address,
+            location: this.profile.address,
             updatedAt: new Date()
-          })
+          }
+          
+          await updateDoc(doc(db, 'users', this.authStore.user.uid), updateData)
+          
+          console.log('[v0] Profile updated successfully in Firestore')
           alert('Profile updated successfully!')
+          
           // Hide the completion notice if the profile is now complete
-          if (profile.value.phone && profile.value.address) {
-            showCompletionNotice.value = false
+          if (this.profile.phone && this.profile.address) {
+            this.showCompletionNotice = false
           }
         }
       } catch (error) {
         console.error('Error updating profile:', error)
-        alert('Error updating profile')
+        alert('Error updating profile: ' + error.message)
       } finally {
-        loading.value = false
+        this.loading = false
       }
-    }
+    },
     
-    const changePassword = async () => {
-      if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    async changePassword() {
+      if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
         alert('New passwords do not match')
         return
       }
       
-      if (passwordForm.value.newPassword.length < 6) {
+      if (this.passwordForm.newPassword.length < 6) {
         alert('New password must be at least 6 characters long')
         return
       }
       
-      passwordLoading.value = true
+      this.passwordLoading = true
       try {
-        if (authStore.user) {
+        if (this.authStore.user) {
+          console.log('[v0] Changing password for user')
+          
           // Reauthenticate user
           const credential = EmailAuthProvider.credential(
-            authStore.user.email,
-            passwordForm.value.currentPassword
+            this.authStore.user.email,
+            this.passwordForm.currentPassword
           )
-          await reauthenticateWithCredential(authStore.user, credential)
+          await reauthenticateWithCredential(this.authStore.user, credential)
           
-          // Update password
-          await updatePassword(authStore.user, passwordForm.value.newPassword)
+          // Update password through Firebase Auth
+          await updatePassword(this.authStore.user, this.passwordForm.newPassword)
+          
+          await updateDoc(doc(db, 'users', this.authStore.user.uid), {
+            passwordUpdatedAt: new Date()
+          })
           
           // Clear form
-          passwordForm.value = {
+          this.passwordForm = {
             currentPassword: '',
             newPassword: '',
             confirmPassword: ''
           }
           
+          console.log('[v0] Password changed successfully')
           alert('Password changed successfully!')
         }
       } catch (error) {
         console.error('Error changing password:', error)
         if (error.code === 'auth/wrong-password') {
           alert('Current password is incorrect')
+        } else if (error.code === 'auth/weak-password') {
+          alert('New password is too weak')
         } else {
-          alert('Error changing password')
+          alert('Error changing password: ' + error.message)
         }
       } finally {
-        passwordLoading.value = false
+        this.passwordLoading = false
       }
-    }
-    
-    onMounted(() => {
-      loadProfile()
-    })
-    
-    return {
-      profile,
-      passwordForm,
-      loading,
-      passwordLoading,
-      showCompletionNotice,
-      updateProfile,
-      changePassword
     }
   }
 }

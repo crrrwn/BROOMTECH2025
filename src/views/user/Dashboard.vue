@@ -98,15 +98,15 @@
         </router-link>
 
         <router-link 
-          to="/user/payment" 
+          to="/user/chat-messages" 
           class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
         >
           <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-2">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 11-8 0 4 4 0 018 0zM15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
             </svg>
           </div>
-          <span class="text-sm font-medium text-gray-900">Upload Payment</span>
+          <span class="text-sm font-medium text-gray-900">Chat Messages</span>
         </router-link>
 
         <router-link 

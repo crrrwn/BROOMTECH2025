@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <!-- Header -->
     <div>
-      <h1 class="text-2xl font-semibold text-gray-900">Upload Proof of Delivery</h1>
-      <p class="text-gray-600">Upload photos and details to confirm delivery completion</p>
+      <h1 class="text-2xl font-semibold text-gray-900">Upload Proof & Payment</h1>
+      <p class="text-gray-600">Upload delivery proof and handle payment confirmation</p>
     </div>
 
     <!-- Order Selection -->
@@ -36,10 +36,93 @@
 
     <!-- Upload Form -->
     <div v-if="selectedOrderId" class="bg-white rounded-lg p-6 shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Proof of Delivery</h2>
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Delivery & Payment Proof</h2>
       
       <form @submit.prevent="submitProof" class="space-y-6">
-        <!-- Photo Upload -->
+        <!-- Payment Information -->
+        <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h3 class="text-md font-semibold text-blue-900 mb-3">💰 Payment Information</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Total Amount Paid <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="number"
+                v-model="paymentAmount"
+                step="0.01"
+                min="0"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+                placeholder="Enter total amount paid by customer"
+              >
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Payment Method <span class="text-red-500">*</span>
+              </label>
+              <select 
+                v-model="paymentMethod"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+              >
+                <option value="">Select payment method</option>
+                <option value="gcash">GCash</option>
+                <option value="paymaya">PayMaya</option>
+                <option value="cash">Cash on Delivery</option>
+                <option value="bank_transfer">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Receipt Photo -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Payment Receipt Photo <span class="text-red-500">*</span>
+          </label>
+          <p class="text-sm text-gray-600 mb-3">
+            Take a photo of the customer's payment receipt (GCash screenshot, cash receipt, etc.)
+          </p>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <input 
+              type="file" 
+              ref="paymentPhotoInput"
+              @change="handlePaymentPhotoUpload"
+              accept="image/*"
+              class="hidden"
+            >
+            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-gray-600 mb-2">Click to upload payment receipt photo</p>
+            <p class="text-sm text-gray-500">PNG, JPG up to 10MB</p>
+            <button 
+              type="button"
+              @click="$refs.paymentPhotoInput.click()"
+              class="mt-3 bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            >
+              Choose Payment Photo
+            </button>
+          </div>
+          
+          <!-- Preview payment photo -->
+          <div v-if="paymentPhoto" class="mt-4">
+            <div class="relative inline-block">
+              <img :src="paymentPhoto.preview" alt="Payment Receipt" class="w-32 h-32 object-cover rounded-lg border">
+              <button 
+                type="button"
+                @click="removePaymentPhoto"
+                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Photos -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Delivery Photos <span class="text-red-500">*</span>
@@ -92,7 +175,7 @@
             v-model="deliveryNotes"
             rows="4"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-            placeholder="Add any notes about the delivery (optional)"
+            placeholder="Add any notes about the delivery and payment process..."
           ></textarea>
         </div>
 
@@ -131,7 +214,7 @@
             :disabled="!canSubmit"
             class="flex-1 bg-primary text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
           >
-            Submit Proof of Delivery
+            Submit Delivery & Payment Proof
           </button>
           <button 
             type="button"
@@ -146,115 +229,167 @@
 
     <!-- Instructions -->
     <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-      <h3 class="font-medium text-blue-900 mb-2">Photo Guidelines:</h3>
+      <h3 class="font-medium text-blue-900 mb-2">Instructions:</h3>
       <ul class="text-sm text-blue-800 space-y-1">
-        <li>• Take clear photos of the delivered items</li>
-        <li>• Include the delivery location/address if visible</li>
-        <li>• Ensure good lighting and focus</li>
-        <li>• Multiple angles are recommended</li>
+        <li>• Take a clear photo of the customer's payment receipt (GCash screenshot, etc.)</li>
+        <li>• Set the correct total amount that the customer paid</li>
+        <li>• Take photos of the delivered items at the delivery location</li>
+        <li>• Ensure good lighting and focus for all photos</li>
+        <li>• Once submitted, the order will automatically be marked as paid</li>
       </ul>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
-import { useToast } from 'vue-toastification'
-
-const toast = useToast()
-
-const selectedOrderId = ref(null)
-const uploadedPhotos = ref([])
-const deliveryNotes = ref('')
-const recipientName = ref('')
-const deliveryTime = ref('')
-
-const deliveredOrders = ref([
-  {
-    id: 1,
-    title: 'Food Delivery',
-    customer: 'Maria Santos',
-    dropoff: 'Barangay Guinobatan, Calapan City',
-    amount: 85,
-    deliveredTime: '2 hours ago'
-  },
-  {
-    id: 2,
-    title: 'Grocery Shopping',
-    customer: 'Juan Dela Cruz',
-    dropoff: 'Barangay Mahal na Pangalan, Calapan City',
-    amount: 120,
-    deliveredTime: '3 hours ago'
-  },
-  {
-    id: 3,
-    title: 'Document Delivery',
-    customer: 'Ana Reyes',
-    dropoff: 'Barangay San Vicente, Calapan City',
-    amount: 75,
-    deliveredTime: '4 hours ago'
-  }
-])
-
-const canSubmit = computed(() => {
-  return selectedOrderId.value && uploadedPhotos.value.length > 0
-})
-
-const handlePhotoUpload = (event) => {
-  const files = Array.from(event.target.files)
-  
-  files.forEach(file => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error(`File ${file.name} is too large. Maximum size is 10MB.`)
-      return
+<script>
+export default {
+  name: 'UploadProof',
+  data() {
+    return {
+      selectedOrderId: null,
+      uploadedPhotos: [],
+      deliveryNotes: '',
+      recipientName: '',
+      deliveryTime: '',
+      paymentAmount: '',
+      paymentMethod: '',
+      paymentPhoto: null,
+      deliveredOrders: [
+        {
+          id: 1,
+          title: 'Food Delivery',
+          customer: 'Maria Santos',
+          dropoff: 'Barangay Guinobatan, Calapan City',
+          amount: 85,
+          deliveredTime: '2 hours ago'
+        },
+        {
+          id: 2,
+          title: 'Grocery Shopping',
+          customer: 'Juan Dela Cruz',
+          dropoff: 'Barangay Mahal na Pangalan, Calapan City',
+          amount: 120,
+          deliveredTime: '3 hours ago'
+        },
+        {
+          id: 3,
+          title: 'Document Delivery',
+          customer: 'Ana Reyes',
+          dropoff: 'Barangay San Vicente, Calapan City',
+          amount: 75,
+          deliveredTime: '4 hours ago'
+        }
+      ]
     }
-    
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      uploadedPhotos.value.push({
-        file: file,
-        preview: e.target.result,
-        name: file.name
+  },
+  computed: {
+    canSubmit() {
+      return this.selectedOrderId && 
+             this.uploadedPhotos.length > 0 && 
+             this.paymentPhoto && 
+             this.paymentAmount && 
+             this.paymentMethod
+    }
+  },
+  mounted() {
+    // Set current time as default
+    const now = new Date()
+    this.deliveryTime = now.toISOString().slice(0, 16)
+  },
+  methods: {
+    handlePaymentPhotoUpload(event) {
+      const file = event.target.files[0]
+      
+      if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          alert('Payment photo is too large. Maximum size is 10MB.')
+          return
+        }
+        
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.paymentPhoto = {
+            file: file,
+            preview: e.target.result,
+            name: file.name
+          }
+        }
+        reader.readAsDataURL(file)
+      }
+      
+      event.target.value = ''
+    },
+
+    removePaymentPhoto() {
+      this.paymentPhoto = null
+    },
+
+    handlePhotoUpload(event) {
+      const files = Array.from(event.target.files)
+      
+      files.forEach(file => {
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`File ${file.name} is too large. Maximum size is 10MB.`)
+          return
+        }
+        
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.uploadedPhotos.push({
+            file: file,
+            preview: e.target.result,
+            name: file.name
+          })
+        }
+        reader.readAsDataURL(file)
       })
+      
+      event.target.value = ''
+    },
+
+    removePhoto(index) {
+      this.uploadedPhotos.splice(index, 1)
+    },
+
+    async submitProof() {
+      try {
+        const selectedOrder = this.deliveredOrders.find(order => order.id === this.selectedOrderId)
+        
+        const proofData = {
+          orderId: this.selectedOrderId,
+          deliveryPhotos: this.uploadedPhotos,
+          paymentPhoto: this.paymentPhoto,
+          paymentAmount: parseFloat(this.paymentAmount),
+          paymentMethod: this.paymentMethod,
+          deliveryNotes: this.deliveryNotes,
+          recipientName: this.recipientName,
+          deliveryTime: this.deliveryTime,
+          submittedAt: new Date().toISOString()
+        }
+        
+        alert(`Delivery and payment proof submitted for ${selectedOrder.title}! Order automatically marked as paid.`)
+        
+        this.resetForm()
+        
+      } catch (error) {
+        alert('Failed to submit proof. Please try again.')
+      }
+    },
+
+    resetForm() {
+      this.selectedOrderId = null
+      this.uploadedPhotos = []
+      this.paymentPhoto = null
+      this.paymentAmount = ''
+      this.paymentMethod = ''
+      this.deliveryNotes = ''
+      this.recipientName = ''
+      this.deliveryTime = ''
+      
+      // Reset current time
+      const now = new Date()
+      this.deliveryTime = now.toISOString().slice(0, 16)
     }
-    reader.readAsDataURL(file)
-  })
-  
-  // Reset input
-  event.target.value = ''
-}
-
-const removePhoto = (index) => {
-  uploadedPhotos.value.splice(index, 1)
-}
-
-const submitProof = async () => {
-  try {
-    // In a real app, this would upload photos and submit to server
-    const selectedOrder = deliveredOrders.value.find(order => order.id === selectedOrderId.value)
-    
-    toast.success(`Proof of delivery submitted for ${selectedOrder.title}!`)
-    
-    // Reset form
-    resetForm()
-    
-    // Navigate back or to assignments page
-    // router.push('/driver/assignments')
-    
-  } catch (error) {
-    toast.error('Failed to submit proof of delivery. Please try again.')
   }
 }
-
-const resetForm = () => {
-  selectedOrderId.value = null
-  uploadedPhotos.value = []
-  deliveryNotes.value = ''
-  recipientName.value = ''
-  deliveryTime.value = ''
-}
-
-// Set current time as default
-const now = new Date()
-deliveryTime.value = now.toISOString().slice(0, 16)
 </script>

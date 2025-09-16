@@ -116,6 +116,43 @@
                 </div>
               </div>
 
+              <!-- Live Tracking for in-transit orders -->
+              <div v-if="order.status === 'in_transit'" class="mb-4">
+                <LiveTracking :order-id="order.id" />
+              </div>
+
+              <!-- Order Feedback for delivered orders -->
+              <div v-if="order.status === 'delivered' && !order.feedback" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-lg font-semibold text-green-800">Order Completed!</h4>
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <p class="text-green-700 mb-3">Your order has been successfully delivered! Please rate your experience.</p>
+                <button @click="showFeedbackModal(order.id)"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  Rate & Review
+                </button>
+              </div>
+
+              <!-- Show existing feedback for delivered orders -->
+              <div v-if="order.status === 'delivered' && order.feedback" class="mb-4 p-4 bg-gray-50 border rounded-lg">
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">Your Feedback</h4>
+                <div class="flex items-center mb-2">
+                  <div class="flex items-center">
+                    <svg v-for="i in 5" :key="i" 
+                         :class="i <= order.feedback.rating ? 'text-yellow-400' : 'text-gray-300'"
+                         class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    <span class="ml-2 text-sm text-gray-600">{{ order.feedback.rating }}/5</span>
+                  </div>
+                </div>
+                <p v-if="order.feedback.comment" class="text-gray-700">{{ order.feedback.comment }}</p>
+                <p class="text-xs text-gray-500 mt-2">Submitted {{ formatDate(order.feedback.createdAt) }}</p>
+              </div>
+
               <!-- DETAILS -->
               <div v-if="expandedOrderId === order.id" class="mt-4 p-4 bg-gray-50 rounded-lg border">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">📋 Complete Order Details</h4>
@@ -392,12 +429,6 @@
                       Cancel (expired)
                     </span>
                   </template>
-
-                  <button v-if="order.status === 'delivered' && !order.paymentProof"
-                          @click="uploadPayment(order.id)"
-                          class="text-green-600 hover:text-green-800 font-medium">
-                    Upload Payment
-                  </button>
                 </div>
               </div>
 
@@ -495,6 +526,85 @@
         </p>
       </div>
     </div>
+
+    <!-- Feedback Modal -->
+    <div v-if="showFeedbackDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Rate Your Experience</h3>
+        
+        <!-- Rating Stars -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Overall Rating</label>
+          <div class="flex items-center space-x-1">
+            <button v-for="i in 5" :key="i"
+                    @click="feedbackRating = i"
+                    :class="i <= feedbackRating ? 'text-yellow-400' : 'text-gray-300'"
+                    class="w-8 h-8 hover:text-yellow-400 transition-colors">
+              <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+              </svg>
+            </button>
+          </div>
+          <p class="text-sm text-gray-600 mt-1">{{ getRatingText(feedbackRating) }}</p>
+        </div>
+
+        <!-- Service Categories -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Rate Service Aspects</label>
+          <div class="space-y-3">
+            <div v-for="aspect in serviceAspects" :key="aspect.key" class="flex items-center justify-between">
+              <span class="text-sm text-gray-700">{{ aspect.label }}</span>
+              <div class="flex items-center space-x-1">
+                <button v-for="i in 5" :key="i"
+                        @click="feedbackAspects[aspect.key] = i"
+                        :class="i <= (feedbackAspects[aspect.key] || 0) ? 'text-yellow-400' : 'text-gray-300'"
+                        class="w-5 h-5 hover:text-yellow-400 transition-colors">
+                  <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comment -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Additional Comments (Optional)</label>
+          <textarea v-model="feedbackComment"
+                    placeholder="Tell us about your experience..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+                    rows="3"></textarea>
+        </div>
+
+        <!-- Quick Feedback Tags -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Quick Tags (Optional)</label>
+          <div class="flex flex-wrap gap-2">
+            <button v-for="tag in feedbackTags" :key="tag"
+                    @click="toggleFeedbackTag(tag)"
+                    :class="selectedTags.includes(tag) ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-700 border-gray-300'"
+                    class="px-3 py-1 text-sm border rounded-full hover:bg-green-50 transition-colors">
+              {{ tag }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex space-x-3">
+          <button @click="submitFeedback"
+                  :disabled="!feedbackRating || submittingFeedback"
+                  class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+            <span v-if="submittingFeedback">Submitting...</span>
+            <span v-else>Submit Feedback</span>
+          </button>
+          <button @click="closeFeedbackModal" :disabled="submittingFeedback"
+                  class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -503,9 +613,13 @@ import { realtimeService } from '@/services/realtime'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import LiveTracking from '@/components/LiveTracking.vue'
 
 export default {
   name: 'MyOrders',
+  components: {
+    LiveTracking
+  },
   setup() {
     const authStore = useAuthStore()
     return { authStore }
@@ -541,7 +655,27 @@ export default {
 
       // ⏱ per-order cancellation timers (seconds remaining)
       cancelCountdowns: {}, // { [orderId]: secondsRemaining }
-      timersInterval: null
+      timersInterval: null,
+
+      // feedback modal state
+      showFeedbackDialog: false,
+      feedbackOrderId: null,
+      feedbackRating: 0,
+      feedbackComment: '',
+      feedbackAspects: {},
+      selectedTags: [],
+      submittingFeedback: false,
+      serviceAspects: [
+        { key: 'timeliness', label: 'Timeliness' },
+        { key: 'communication', label: 'Communication' },
+        { key: 'professionalism', label: 'Professionalism' },
+        { key: 'service_quality', label: 'Service Quality' }
+      ],
+      feedbackTags: [
+        'Fast Delivery', 'Professional Driver', 'Great Communication', 
+        'On Time', 'Careful Handling', 'Friendly Service', 
+        'Clean Vehicle', 'Easy to Contact'
+      ]
     }
   },
   computed: {
@@ -679,10 +813,89 @@ export default {
       }
     },
 
-    // ====== OTHER ACTIONS ======
-    uploadPayment(orderId) {
-      this.$router.push(`/user/upload-payment/${orderId}`)
+    // ====== FEEDBACK MODAL ======
+    showFeedbackModal(orderId) {
+      this.feedbackOrderId = orderId
+      this.showFeedbackDialog = true
+      this.feedbackRating = 0
+      this.feedbackComment = ''
+      this.feedbackAspects = {}
+      this.selectedTags = []
     },
+
+    closeFeedbackModal() {
+      this.showFeedbackDialog = false
+      this.feedbackOrderId = null
+      this.feedbackRating = 0
+      this.feedbackComment = ''
+      this.feedbackAspects = {}
+      this.selectedTags = []
+    },
+
+    toggleFeedbackTag(tag) {
+      const index = this.selectedTags.indexOf(tag)
+      if (index > -1) {
+        this.selectedTags.splice(index, 1)
+      } else {
+        this.selectedTags.push(tag)
+      }
+    },
+
+    getRatingText(rating) {
+      const texts = {
+        1: 'Poor',
+        2: 'Fair', 
+        3: 'Good',
+        4: 'Very Good',
+        5: 'Excellent'
+      }
+      return texts[rating] || 'Select a rating'
+    },
+
+    async submitFeedback() {
+      if (!this.feedbackRating) {
+        alert('Please provide a rating')
+        return
+      }
+
+      this.submittingFeedback = true
+      try {
+        const feedbackData = {
+          rating: this.feedbackRating,
+          comment: this.feedbackComment.trim(),
+          aspects: this.feedbackAspects,
+          tags: this.selectedTags,
+          createdAt: serverTimestamp(),
+          userId: this.authStore.user.uid
+        }
+
+        const orderRef = doc(db, 'orders', this.feedbackOrderId)
+        await updateDoc(orderRef, {
+          feedback: feedbackData,
+          updatedAt: serverTimestamp()
+        })
+
+        // Update local order
+        const orderIndex = this.orders.findIndex(o => o.id === this.feedbackOrderId)
+        if (orderIndex !== -1) {
+          this.orders[orderIndex].feedback = {
+            ...feedbackData,
+            createdAt: new Date()
+          }
+        }
+        this.filterOrders()
+
+        alert('Thank you for your feedback!')
+        this.closeFeedbackModal()
+      } catch (error) {
+        console.error('Error submitting feedback:', error)
+        alert('Error submitting feedback. Please try again.')
+      } finally {
+        this.submittingFeedback = false
+      }
+    },
+
+    // ====== OTHER ACTIONS ======
     callDriver(phone) {
       if (phone) window.open(`tel:${phone}`)
     },

@@ -54,7 +54,7 @@
             
             <router-link to="/driver/bookings" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
               </svg>
               Available Bookings
               <span v-if="availableBookingsCount > 0" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
@@ -72,11 +72,19 @@
               </span>
             </router-link>
             
+            <!-- Added chat link for driver-customer communication -->
+            <router-link to="/driver/chat" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
+              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              Chat with Customers
+            </router-link>
+            
             <router-link to="/driver/proof" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 11-8 0 4 4 0 018 0zM15 13l-3-3m0 0l-3 3m3-3v12"></path>
               </svg>
-              Upload Proof
+              Upload Proof & Payment
             </router-link>
             
             <router-link to="/driver/profile" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
@@ -141,57 +149,59 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+<script>
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from 'vue-toastification'
 
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
-const toast = useToast()
-
-// Driver status and stats
-const isOnline = ref(false)
-const availableBookingsCount = ref(3)
-const activeAssignmentsCount = ref(1)
-const todayEarnings = ref(450)
-
-const pageTitle = computed(() => {
-  const titles = {
-    'driver-dashboard': 'Dashboard',
-    'available-bookings': 'Available Bookings',
-    'my-assignments': 'My Assignments',
-    'upload-proof': 'Upload Proof',
-    'driver-profile': 'Profile'
-  }
-  return titles[route.name] || 'Dashboard'
-})
-
-const driverName = computed(() => {
-  const profile = authStore.userProfile
-  return profile ? `${profile.firstName} ${profile.lastName}` : 'Driver'
-})
-
-const driverInitials = computed(() => {
-  const profile = authStore.userProfile
-  if (!profile) return 'D'
-  return `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
-})
-
-const toggleOnlineStatus = () => {
-  isOnline.value = !isOnline.value
-  toast.success(isOnline.value ? 'You are now online!' : 'You are now offline')
-}
-
-const logout = async () => {
-  const result = await authStore.logout()
-  if (result.success) {
-    toast.success(result.message)
-    router.push('/')
-  } else {
-    toast.error(result.message)
+export default {
+  name: 'DriverLayout',
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
+  data() {
+    return {
+      isOnline: false,
+      availableBookingsCount: 3,
+      activeAssignmentsCount: 1,
+      todayEarnings: 450
+    }
+  },
+  computed: {
+    pageTitle() {
+      const titles = {
+        'driver-dashboard': 'Dashboard',
+        'available-bookings': 'Available Bookings',
+        'my-assignments': 'My Assignments',
+        'driver-chat': 'Chat with Customers', // Added chat page title
+        'upload-proof': 'Upload Proof & Payment',
+        'driver-profile': 'Profile'
+      }
+      return titles[this.$route.name] || 'Dashboard'
+    },
+    driverName() {
+      const profile = this.authStore.userProfile
+      return profile ? `${profile.firstName} ${profile.lastName}` : 'Driver'
+    },
+    driverInitials() {
+      const profile = this.authStore.userProfile
+      if (!profile) return 'D'
+      return `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
+    }
+  },
+  methods: {
+    toggleOnlineStatus() {
+      this.isOnline = !this.isOnline
+      this.$toast.success(this.isOnline ? 'You are now online!' : 'You are now offline')
+    },
+    async logout() {
+      const result = await this.authStore.logout()
+      if (result.success) {
+        this.$toast.success(result.message)
+        this.$router.push('/')
+      } else {
+        this.$toast.error(result.message)
+      }
+    }
   }
 }
 </script>

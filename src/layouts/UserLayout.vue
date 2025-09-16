@@ -51,15 +51,16 @@
               My Orders
             </router-link>
 
+            <!-- Removed chatbot navigation link, kept only chat messages -->
             <router-link
-              :to="{ name: 'upload-payment' }"
+              :to="{ name: 'user-chat-messages' }"
               class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors"
               active-class="bg-primary text-white"
             >
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 11-8 0 4 4 0 018 0zM15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
               </svg>
-              Upload Payment
+              Chat Messages
             </router-link>
 
             <router-link
@@ -111,50 +112,56 @@
         </main>
       </div>
     </div>
+
+    <!-- Added floating chatbot component -->
+    <FloatingChatbot />
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+<script>
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from 'vue-toastification'
+import FloatingChatbot from '@/components/FloatingChatbot.vue'
 
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
-const toast = useToast()
-
-// Make sure your routes have these exact names
-const pageTitle = computed(() => {
-  const titles = {
-    'user-dashboard': 'Dashboard',
-    'book-service': 'Book a Service',
-    'my-orders': 'My Orders',
-    'upload-payment': 'Upload Payment',
-    'user-profile': 'Profile'
-  }
-  return titles[route.name] || 'Dashboard'
-})
-
-const userName = computed(() => {
-  const profile = authStore.userProfile
-  return profile ? `${profile.firstName} ${profile.lastName}` : 'User'
-})
-
-const userInitials = computed(() => {
-  const profile = authStore.userProfile
-  if (!profile) return 'U'
-  return `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
-})
-
-const logout = async () => {
-  const result = await authStore.logout()
-  if (result.success) {
-    toast.success(result.message)
-    router.push('/')
-  } else {
-    toast.error(result.message)
+export default {
+  name: 'UserLayout',
+  components: {
+    FloatingChatbot
+  },
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
+  computed: {
+    pageTitle() {
+      const titles = {
+        'user-dashboard': 'Dashboard',
+        'book-service': 'Book a Service',
+        'my-orders': 'My Orders',
+        'user-profile': 'Profile',
+        'user-chat-messages': 'Chat Messages'
+      }
+      return titles[this.$route.name] || 'Dashboard'
+    },
+    userName() {
+      const profile = this.authStore.userProfile
+      return profile ? `${profile.firstName} ${profile.lastName}` : 'User'
+    },
+    userInitials() {
+      const profile = this.authStore.userProfile
+      if (!profile) return 'U'
+      return `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
+    }
+  },
+  methods: {
+    async logout() {
+      const result = await this.authStore.logout()
+      if (result.success) {
+        this.$toast.success(result.message)
+        this.$router.push('/')
+      } else {
+        this.$toast.error(result.message)
+      }
+    }
   }
 }
 </script>

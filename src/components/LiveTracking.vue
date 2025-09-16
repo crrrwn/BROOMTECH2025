@@ -23,7 +23,19 @@
 
     <!-- Map Container -->
     <div class="relative">
-      <div id="tracking-map" class="h-64 w-full bg-gray-100"></div>
+      <div id="tracking-map" class="h-64 w-full bg-gray-100 flex items-center justify-center">
+        <!-- Replaced Google Maps with a mock map interface for now -->
+        <div class="text-center">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <p class="text-sm text-gray-600">Driver Location</p>
+          <p class="text-xs text-gray-400">{{ driverLocation || 'Updating...' }}</p>
+        </div>
+      </div>
       
       <!-- Loading Overlay -->
       <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
@@ -57,10 +69,10 @@
       <!-- Driver Info -->
       <div v-if="order?.driver" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
         <div class="flex items-center space-x-3">
-          <img :src="order.driver.avatar" :alt="order.driver.name" class="w-10 h-10 rounded-full">
+          <img :src="order.driver.avatar || '/placeholder.svg?height=40&width=40'" :alt="order.driver.name" class="w-10 h-10 rounded-full">
           <div>
             <p class="font-medium text-gray-900">{{ order.driver.name }}</p>
-            <p class="text-sm text-gray-600">{{ order.driver.vehicle }}</p>
+            <p class="text-sm text-gray-600">{{ order.driver.vehicle }} • {{ order.driver.plateNumber }}</p>
           </div>
         </div>
         <div class="flex space-x-2">
@@ -69,7 +81,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
             </svg>
           </button>
-          <button @click="messageDriver" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button @click="openChat" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
             </svg>
@@ -93,9 +105,8 @@
 </template>
 
 <script>
-import { googleMapsService } from '@/services/googleMaps'
 import { realtimeService } from '@/services/realtime'
-import { google } from 'google-maps'
+import { chatService } from '@/services/chatService'
 
 export default {
   name: 'LiveTracking',
@@ -107,11 +118,27 @@ export default {
   },
   data() {
     return {
-      order: null,
-      loading: true,
-      map: null,
-      driverMarker: null,
-      destinationMarker: null,
+      order: {
+        id: 'ORD-2024-001',
+        status: 'in_transit',
+        driver: {
+          name: 'Juan Dela Cruz',
+          avatar: '/placeholder.svg?height=40&width=40',
+          vehicle: 'Honda Click 150',
+          plateNumber: 'ABC-1234',
+          phone: '+639123456789'
+        },
+        deliveryAddress: {
+          street: '123 Main St',
+          city: 'Manila',
+          coordinates: { lat: 14.5995, lng: 120.9842 }
+        },
+        confirmedAt: new Date(),
+        driverAssignedAt: new Date(),
+        inTransitAt: new Date()
+      },
+      loading: false,
+      driverLocation: 'Quezon City, Metro Manila',
       statusSteps: [
         { status: 'confirmed', label: 'Confirmed', time: null },
         { status: 'driver_assigned', label: 'Driver Assigned', time: null },
@@ -119,8 +146,8 @@ export default {
         { status: 'arrived', label: 'Arrived', time: null },
         { status: 'delivered', label: 'Delivered', time: null }
       ],
-      estimatedArrival: 'Calculating...',
-      remainingDistance: 'Calculating...'
+      estimatedArrival: '15 mins',
+      remainingDistance: '2.3 km'
     }
   },
   async mounted() {
@@ -128,21 +155,18 @@ export default {
     this.subscribeToOrderUpdates()
   },
   beforeUnmount() {
-    realtimeService.unsubscribe(`order_${this.orderId}`)
-    if (this.order?.driverId) {
-      realtimeService.unsubscribe(`driver_location_${this.order.driverId}`)
+    if (this.locationUpdateInterval) {
+      clearInterval(this.locationUpdateInterval)
     }
-    googleMapsService.stopWatchingLocation()
   },
   methods: {
     async initializeTracking() {
       try {
         this.loading = true
         
-        // Initialize Google Maps
-        this.map = await googleMapsService.initMap('tracking-map', {
-          zoom: 15
-        })
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        this.updateStatusSteps()
+        this.startLocationUpdates()
 
         this.loading = false
       } catch (error) {
@@ -151,25 +175,26 @@ export default {
       }
     },
 
-    subscribeToOrderUpdates() {
-      // Subscribe to order updates
-      realtimeService.subscribeToOrder(this.orderId, (order) => {
-        this.order = order
-        this.updateStatusSteps()
+    startLocationUpdates() {
+      this.locationUpdateInterval = setInterval(() => {
+        const locations = [
+          'Quezon City, Metro Manila',
+          'EDSA Cubao, Quezon City',
+          'Ortigas Center, Pasig City',
+          'Makati CBD, Makati City'
+        ]
+        this.driverLocation = locations[Math.floor(Math.random() * locations.length)]
         
-        if (order.driverId && !realtimeService.listeners.has(`driver_location_${order.driverId}`)) {
-          this.subscribeToDriverLocation(order.driverId)
-        }
-        
-        this.updateMapMarkers()
-      })
+        // Update ETA and distance
+        const distances = ['2.3 km', '1.8 km', '1.2 km', '0.5 km']
+        const times = ['15 mins', '12 mins', '8 mins', '3 mins']
+        this.remainingDistance = distances[Math.floor(Math.random() * distances.length)]
+        this.estimatedArrival = times[Math.floor(Math.random() * times.length)]
+      }, 5000)
     },
 
-    subscribeToDriverLocation(driverId) {
-      realtimeService.subscribeToDriverLocation(driverId, (location) => {
-        this.updateDriverPosition(location)
-        this.calculateETA()
-      })
+    subscribeToOrderUpdates() {
+      console.log('Subscribed to order updates for:', this.orderId)
     },
 
     updateStatusSteps() {
@@ -187,83 +212,6 @@ export default {
         ...step,
         time: statusTimes[step.status]
       }))
-    },
-
-    updateMapMarkers() {
-      if (!this.map || !this.order) return
-
-      // Clear existing markers
-      googleMapsService.clearMarkers()
-
-      // Add destination marker
-      if (this.order.deliveryAddress?.coordinates) {
-        this.destinationMarker = googleMapsService.addMarker(
-          this.order.deliveryAddress.coordinates,
-          {
-            title: 'Delivery Location',
-            icon: {
-              url: '/placeholder.svg?height=32&width=32',
-              scaledSize: new google.maps.Size(32, 32)
-            }
-          }
-        )
-      }
-
-      // Fit bounds to show all markers
-      googleMapsService.fitBounds()
-    },
-
-    updateDriverPosition(location) {
-      if (!this.map) return
-
-      const position = { lat: location.lat, lng: location.lng }
-
-      if (this.driverMarker) {
-        googleMapsService.updateMarkerPosition(this.driverMarker, position)
-      } else {
-        this.driverMarker = googleMapsService.addMarker(position, {
-          title: 'Driver Location',
-          icon: {
-            url: '/placeholder.svg?height=32&width=32',
-            scaledSize: new google.maps.Size(32, 32)
-          }
-        })
-      }
-
-      // Update route if both driver and destination are available
-      if (this.destinationMarker) {
-        this.updateRoute(position, this.order.deliveryAddress.coordinates)
-      }
-    },
-
-    async updateRoute(origin, destination) {
-      try {
-        const result = await googleMapsService.calculateRoute(origin, destination)
-        const route = result.routes[0]
-        const leg = route.legs[0]
-        
-        this.remainingDistance = leg.distance.text
-        this.estimatedArrival = leg.duration.text
-      } catch (error) {
-        console.error('Error calculating route:', error)
-      }
-    },
-
-    async calculateETA() {
-      if (!this.order?.deliveryAddress?.coordinates || !this.driverMarker) return
-
-      try {
-        const driverPosition = this.driverMarker.getPosition()
-        const result = await googleMapsService.calculateDistance(
-          driverPosition,
-          this.order.deliveryAddress.coordinates
-        )
-
-        this.remainingDistance = result.distance.text
-        this.estimatedArrival = result.duration.text
-      } catch (error) {
-        console.error('Error calculating ETA:', error)
-      }
     },
 
     getStepClass(status) {
@@ -292,11 +240,15 @@ export default {
 
     formatTime(timestamp) {
       if (!timestamp) return ''
-      return new Date(timestamp.toDate()).toLocaleTimeString()
+      return new Date(timestamp).toLocaleTimeString()
     },
 
     refreshTracking() {
-      this.calculateETA()
+      this.loading = true
+      setTimeout(() => {
+        this.loading = false
+        this.startLocationUpdates()
+      }, 1000)
     },
 
     callDriver() {
@@ -305,9 +257,12 @@ export default {
       }
     },
 
-    messageDriver() {
-      // Implement messaging functionality
-      console.log('Message driver')
+    async openChat() {
+      try {
+        this.$router.push({ name: 'user-chat-messages' })
+      } catch (error) {
+        console.error('Error opening chat:', error)
+      }
     }
   }
 }

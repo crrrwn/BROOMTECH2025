@@ -21,6 +21,7 @@ import BookService from "@/views/user/BookService.vue"
 import MyOrders from "@/views/user/MyOrders.vue"
 import UploadPayment from "@/views/user/UploadPayment.vue"
 import UserProfile from "@/views/user/Profile.vue"
+import UserChatMessages from "@/views/user/ChatMessages.vue"
 
 // Driver Pages
 import DriverDashboard from "@/views/driver/Dashboard.vue"
@@ -72,6 +73,7 @@ const routes = [
       { path: "orders", name: "my-orders", component: MyOrders },
       { path: "payment", name: "upload-payment", component: UploadPayment },
       { path: "profile", name: "user-profile", component: UserProfile },
+      { path: "chat-messages", name: "user-chat-messages", component: UserChatMessages },
     ],
   },
 
