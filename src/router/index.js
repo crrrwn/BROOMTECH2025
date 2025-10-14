@@ -40,6 +40,7 @@ import ManageUsers from "@/views/admin/ManageUsers.vue"
 import DriverApplications from "@/views/admin/DriverApplications.vue"
 import PricingPanel from "@/views/admin/PricingPanel.vue"
 import SystemSettings from "@/views/admin/SystemSettings.vue"
+import ChatMonitoring from "@/views/admin/ChatMonitoring.vue"
 import AdminLogin from "@/views/admin/AdminLogin.vue"
 import AdminRegister from "@/views/admin/AdminRegister.vue"
 
@@ -104,6 +105,7 @@ const routes = [
       { path: "applications", name: "driver-applications", component: DriverApplications },
       { path: "pricing", name: "pricing-panel", component: PricingPanel },
       { path: "settings", name: "system-settings", component: SystemSettings },
+      { path: "chat-monitoring", name: "chat-monitoring", component: ChatMonitoring },
     ],
   },
 ]

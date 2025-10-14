@@ -3,45 +3,48 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900">System Settings</h1>
-        <p class="text-gray-600">Configure system-wide settings and preferences</p>
+        <!-- Use translation for title and description -->
+        <h1 class="text-2xl font-semibold text-gray-900">{{ t('systemSettings.title') }}</h1>
+        <p class="text-gray-600">{{ t('systemSettings.description') }}</p>
       </div>
       <div class="flex items-center space-x-4">
         <button 
           @click="saveSettings"
           class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
         >
-          Save Changes
+          {{ t('common.save') }}
         </button>
         <button 
           @click="resetSettings"
           class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
         >
-          Reset to Default
+          {{ t('common.reset') }}
         </button>
       </div>
     </div>
 
     <!-- System Status -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+      <!-- Use translation for section title -->
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.systemStatus') }}</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">Maintenance Mode</p>
-            <p class="text-xs text-gray-500">System will be unavailable to users</p>
+            <!-- Use translations for toggle labels -->
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.badWeatherFee') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.badWeatherFeeDesc') }}</p>
           </div>
           <button 
-            @click="toggleMaintenanceMode"
+            @click="toggleBadWeatherFee"
             :class="[
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              systemStatus.maintenanceMode ? 'bg-red-500' : 'bg-gray-300'
+              systemStatus.badWeatherFee ? 'bg-red-500' : 'bg-gray-300'
             ]"
           >
             <span 
               :class="[
                 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                systemStatus.maintenanceMode ? 'translate-x-6' : 'translate-x-1'
+                systemStatus.badWeatherFee ? 'translate-x-6' : 'translate-x-1'
               ]"
             />
           </button>
@@ -49,8 +52,29 @@
 
         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">Auto-Accept Orders</p>
-            <p class="text-xs text-gray-500">Automatically assign orders to drivers</p>
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.autoAcceptUsers') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.autoAcceptUsersDesc') }}</p>
+          </div>
+          <button 
+            @click="toggleAutoAcceptUsers"
+            :class="[
+              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+              systemStatus.autoAcceptUsers ? 'bg-primary' : 'bg-gray-300'
+            ]"
+          >
+            <span 
+              :class="[
+                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                systemStatus.autoAcceptUsers ? 'translate-x-6' : 'translate-x-1'
+              ]"
+            />
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.autoAcceptOrders') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.autoAcceptOrdersDesc') }}</p>
           </div>
           <button 
             @click="toggleAutoAcceptOrders"
@@ -67,36 +91,17 @@
             />
           </button>
         </div>
-
-        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div>
-            <p class="text-sm font-medium text-gray-700">SMS Notifications</p>
-            <p class="text-xs text-gray-500">Send SMS updates to users</p>
-          </div>
-          <button 
-            @click="toggleSMSNotifications"
-            :class="[
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              systemStatus.smsNotifications ? 'bg-primary' : 'bg-gray-300'
-            ]"
-          >
-            <span 
-              :class="[
-                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                systemStatus.smsNotifications ? 'translate-x-6' : 'translate-x-1'
-              ]"
-            />
-          </button>
-        </div>
       </div>
     </div>
 
     <!-- Application Settings -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Application Settings</h3>
+      <!-- Use translation for section title -->
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.applicationSettings') }}</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Application Name</label>
+          <!-- Use translation for label -->
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.name') }}</label>
           <input 
             v-model="appSettings.name"
             type="text" 
@@ -105,16 +110,8 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Support Email</label>
-          <input 
-            v-model="appSettings.supportEmail"
-            type="email" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Support Phone</label>
+          <!-- Use translation for label -->
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.supportPhone') }}</label>
           <input 
             v-model="appSettings.supportPhone"
             type="tel" 
@@ -123,38 +120,26 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Default Currency</label>
-          <select 
-            v-model="appSettings.currency"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          >
-            <option value="PHP">Philippine Peso (₱)</option>
-            <option value="USD">US Dollar ($)</option>
-            <option value="EUR">Euro (€)</option>
-          </select>
+          <!-- Use translation for label -->
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.defaultCurrency') }}</label>
+          <input 
+            type="text"
+            value="Philippine Peso (₱)"
+            disabled
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+          />
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
-          <select 
-            v-model="appSettings.timezone"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          >
-            <option value="Asia/Manila">Asia/Manila (GMT+8)</option>
-            <option value="UTC">UTC (GMT+0)</option>
-            <option value="America/New_York">America/New_York (GMT-5)</option>
-          </select>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Language</label>
+          <!-- Use translation for label -->
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.language') }}</label>
           <select 
             v-model="appSettings.language"
+            @change="updateLanguage"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
           >
-            <option value="en">English</option>
-            <option value="fil">Filipino</option>
-            <option value="tl">Tagalog</option>
+            <option value="en">{{ t('systemSettings.languageEnglish') }}</option>
+            <option value="tl">{{ t('systemSettings.languageTagalog') }}</option>
           </select>
         </div>
       </div>
@@ -162,12 +147,12 @@
 
     <!-- Notification Settings -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h3>
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.notificationSettings') }}</h3>
       <div class="space-y-4">
         <div class="flex items-center justify-between p-4 border rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">Order Confirmation</p>
-            <p class="text-xs text-gray-500">Send notifications when orders are confirmed</p>
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.orderConfirmation') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.orderConfirmationDesc') }}</p>
           </div>
           <input 
             v-model="notificationSettings.orderConfirmation"
@@ -178,8 +163,8 @@
         
         <div class="flex items-center justify-between p-4 border rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">Driver Assignment</p>
-            <p class="text-xs text-gray-500">Notify users when driver is assigned</p>
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.driverAssignment') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.driverAssignmentDesc') }}</p>
           </div>
           <input 
             v-model="notificationSettings.driverAssignment"
@@ -190,8 +175,8 @@
         
         <div class="flex items-center justify-between p-4 border rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">Delivery Updates</p>
-            <p class="text-xs text-gray-500">Send real-time delivery status updates</p>
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.deliveryUpdates') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.deliveryUpdatesDesc') }}</p>
           </div>
           <input 
             v-model="notificationSettings.deliveryUpdates"
@@ -202,8 +187,8 @@
         
         <div class="flex items-center justify-between p-4 border rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">Payment Confirmations</p>
-            <p class="text-xs text-gray-500">Notify when payments are processed</p>
+            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.paymentConfirmations') }}</p>
+            <p class="text-xs text-gray-500">{{ t('systemSettings.paymentConfirmationsDesc') }}</p>
           </div>
           <input 
             v-model="notificationSettings.paymentConfirmations"
@@ -216,10 +201,10 @@
 
     <!-- Security Settings -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.securitySettings') }}</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.sessionTimeout') }}</label>
           <input 
             v-model="securitySettings.sessionTimeout"
             type="number" 
@@ -230,7 +215,7 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.maxLoginAttempts') }}</label>
           <input 
             v-model="securitySettings.maxLoginAttempts"
             type="number" 
@@ -241,7 +226,7 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Password Min Length</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.passwordMinLength') }}</label>
           <input 
             v-model="securitySettings.passwordMinLength"
             type="number" 
@@ -252,7 +237,7 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Account Lockout Duration (minutes)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.lockoutDuration') }}</label>
           <input 
             v-model="securitySettings.lockoutDuration"
             type="number" 
@@ -262,109 +247,69 @@
           />
         </div>
       </div>
-      
-      <div class="mt-6 space-y-4">
-        <div class="flex items-center justify-between p-4 border rounded-lg">
-          <div>
-            <p class="text-sm font-medium text-gray-700">Two-Factor Authentication</p>
-            <p class="text-xs text-gray-500">Require 2FA for admin accounts</p>
-          </div>
-          <input 
-            v-model="securitySettings.require2FA"
-            type="checkbox" 
-            class="rounded border-gray-300 text-primary focus:ring-primary"
-          />
-        </div>
-        
-        <div class="flex items-center justify-between p-4 border rounded-lg">
-          <div>
-            <p class="text-sm font-medium text-gray-700">IP Whitelist</p>
-            <p class="text-xs text-gray-500">Restrict admin access to specific IP addresses</p>
-          </div>
-          <input 
-            v-model="securitySettings.enableIPWhitelist"
-            type="checkbox" 
-            class="rounded border-gray-300 text-primary focus:ring-primary"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- API Configuration -->
-    <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">API Configuration</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Google Maps API Key</label>
-          <input 
-            v-model="apiSettings.googleMapsKey"
-            type="password" 
-            placeholder="Enter API key..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">SMS Provider API Key</label>
-          <input 
-            v-model="apiSettings.smsProviderKey"
-            type="password" 
-            placeholder="Enter API key..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Payment Gateway Key</label>
-          <input 
-            v-model="apiSettings.paymentGatewayKey"
-            type="password" 
-            placeholder="Enter API key..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Firebase Config</label>
-          <textarea 
-            v-model="apiSettings.firebaseConfig"
-            rows="3"
-            placeholder="Enter Firebase configuration..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          ></textarea>
-        </div>
-      </div>
     </div>
 
     <!-- System Logs -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Recent System Logs</h3>
-        <button 
-          @click="clearLogs"
-          class="text-red-600 hover:text-red-800 text-sm font-medium"
-        >
-          Clear Logs
-        </button>
+        <h3 class="text-lg font-semibold text-gray-900">{{ t('systemSettings.recentSystemLogs') }}</h3>
+        <div class="flex items-center space-x-2">
+          <button 
+            @click="refreshLogs"
+            :disabled="loadingLogs"
+            class="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50"
+          >
+            {{ loadingLogs ? 'Refreshing...' : 'Refresh' }}
+          </button>
+          <button 
+            @click="clearLogs"
+            :disabled="loadingLogs || systemLogs.length === 0"
+            class="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+          >
+            {{ t('common.clearLogs') }}
+          </button>
+        </div>
       </div>
       
-      <div class="space-y-2 max-h-64 overflow-y-auto">
-        <div v-for="log in systemLogs" :key="log.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-          <div class="flex items-center space-x-3">
+      <div v-if="loadingLogs" class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+
+      <div v-else-if="systemLogs.length === 0" class="text-center py-8">
+        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <p class="text-gray-500">No system logs available</p>
+      </div>
+
+      <div v-else class="space-y-2 max-h-96 overflow-y-auto">
+        <div v-for="log in systemLogs" :key="log.id" class="flex items-start justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="flex items-start space-x-3 flex-1">
             <div :class="[
-              'w-2 h-2 rounded-full',
+              'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
               log.level === 'error' ? 'bg-red-500' :
               log.level === 'warning' ? 'bg-yellow-500' :
               log.level === 'info' ? 'bg-blue-500' :
               'bg-green-500'
             ]"></div>
-            <div>
+            <div class="flex-1 min-w-0">
               <p class="text-sm text-gray-900">{{ log.message }}</p>
-              <p class="text-xs text-gray-500">{{ log.timestamp }}</p>
+              <div class="flex items-center space-x-2 mt-1">
+                <p class="text-xs text-gray-500">{{ log.timestamp }}</p>
+                <span v-if="log.userType" :class="[
+                  'px-2 py-0.5 text-xs font-medium rounded',
+                  log.userType === 'user' ? 'bg-blue-100 text-blue-700' :
+                  log.userType === 'driver' ? 'bg-purple-100 text-purple-700' :
+                  log.userType === 'admin' ? 'bg-green-100 text-green-700' :
+                  'bg-gray-100 text-gray-700'
+                ]">
+                  {{ log.userType.toUpperCase() }}
+                </span>
+              </div>
             </div>
           </div>
           <span :class="[
-            'px-2 py-1 text-xs font-medium rounded-full',
+            'px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-2',
             log.level === 'error' ? 'bg-red-100 text-red-800' :
             log.level === 'warning' ? 'bg-yellow-100 text-yellow-800' :
             log.level === 'info' ? 'bg-blue-100 text-blue-800' :
@@ -379,23 +324,53 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
+import { db } from '@/firebase/config'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { loggingService } from '@/services/loggingService'
 
 const toast = useToast()
+const { t, locale } = useI18n()
+
+const defaultSystemStatus = {
+  badWeatherFee: false,
+  autoAcceptUsers: true,
+  autoAcceptOrders: true
+}
+
+const defaultAppSettings = {
+  name: 'BroomTech Delivery',
+  supportPhone: '+63 912 345 6789',
+  currency: 'PHP',
+  language: 'en'
+}
+
+const defaultNotificationSettings = {
+  orderConfirmation: true,
+  driverAssignment: true,
+  deliveryUpdates: true,
+  paymentConfirmations: true
+}
+
+const defaultSecuritySettings = {
+  sessionTimeout: 60,
+  maxLoginAttempts: 5,
+  passwordMinLength: 8,
+  lockoutDuration: 30
+}
 
 const systemStatus = ref({
-  maintenanceMode: false,
-  autoAcceptOrders: true,
-  smsNotifications: true
+  badWeatherFee: false,
+  autoAcceptUsers: true,
+  autoAcceptOrders: true
 })
 
 const appSettings = ref({
   name: 'BroomTech Delivery',
-  supportEmail: 'support@broomtech.com',
   supportPhone: '+63 912 345 6789',
   currency: 'PHP',
-  timezone: 'Asia/Manila',
   language: 'en'
 })
 
@@ -410,84 +385,314 @@ const securitySettings = ref({
   sessionTimeout: 60,
   maxLoginAttempts: 5,
   passwordMinLength: 8,
-  lockoutDuration: 30,
-  require2FA: false,
-  enableIPWhitelist: false
+  lockoutDuration: 30
 })
 
-const apiSettings = ref({
-  googleMapsKey: '',
-  smsProviderKey: '',
-  paymentGatewayKey: '',
-  firebaseConfig: ''
-})
+const systemLogs = ref([])
+const loadingLogs = ref(false)
 
-const systemLogs = ref([
-  {
-    id: 1,
-    level: 'info',
-    message: 'System settings updated by admin',
-    timestamp: '2024-01-25 10:30:15'
-  },
-  {
-    id: 2,
-    level: 'warning',
-    message: 'High number of pending orders detected',
-    timestamp: '2024-01-25 10:25:42'
-  },
-  {
-    id: 3,
-    level: 'error',
-    message: 'SMS service connection failed',
-    timestamp: '2024-01-25 10:20:18'
-  },
-  {
-    id: 4,
-    level: 'success',
-    message: 'Database backup completed successfully',
-    timestamp: '2024-01-25 10:15:33'
+const toggleBadWeatherFee = async () => {
+  try {
+    systemStatus.value.badWeatherFee = !systemStatus.value.badWeatherFee
+    
+    const settingsRef = doc(db, 'settings', 'system')
+    await updateDoc(settingsRef, {
+      badWeatherFee: systemStatus.value.badWeatherFee,
+      updatedAt: new Date()
+    })
+    
+    // Log the activity
+    await loggingService.logBadWeatherFeeToggle(
+      null,
+      systemStatus.value.badWeatherFee
+    )
+    
+    toast.success(
+      systemStatus.value.badWeatherFee 
+        ? t('systemSettings.badWeatherFeeEnabled') 
+        : t('systemSettings.badWeatherFeeDisabled')
+    )
+    
+    // Refresh logs to show the new entry
+    await loadSystemLogs()
+  } catch (error) {
+    console.error('Error updating bad weather fee:', error)
+    toast.error(t('common.updateFailed'))
+    systemStatus.value.badWeatherFee = !systemStatus.value.badWeatherFee
   }
-])
-
-const toggleMaintenanceMode = () => {
-  systemStatus.value.maintenanceMode = !systemStatus.value.maintenanceMode
-  toast.success(
-    systemStatus.value.maintenanceMode 
-      ? 'Maintenance mode enabled - system is now offline for users' 
-      : 'Maintenance mode disabled - system is now online'
-  )
 }
 
-const toggleAutoAcceptOrders = () => {
-  systemStatus.value.autoAcceptOrders = !systemStatus.value.autoAcceptOrders
-  toast.success(
-    systemStatus.value.autoAcceptOrders 
-      ? 'Auto-accept orders enabled' 
-      : 'Auto-accept orders disabled'
-  )
+const toggleAutoAcceptUsers = async () => {
+  try {
+    systemStatus.value.autoAcceptUsers = !systemStatus.value.autoAcceptUsers
+    
+    const settingsRef = doc(db, 'settings', 'system')
+    await updateDoc(settingsRef, {
+      autoAcceptUsers: systemStatus.value.autoAcceptUsers,
+      updatedAt: new Date()
+    })
+    
+    // Log the activity
+    await loggingService.logAutoAcceptToggle(
+      null,
+      systemStatus.value.autoAcceptUsers,
+      'users'
+    )
+    
+    toast.success(
+      systemStatus.value.autoAcceptUsers 
+        ? t('systemSettings.autoAcceptUsersEnabled') 
+        : t('systemSettings.autoAcceptUsersDisabled')
+    )
+    
+    // Refresh logs to show the new entry
+    await loadSystemLogs()
+  } catch (error) {
+    console.error('Error updating auto-accept users:', error)
+    toast.error(t('common.updateFailed'))
+    systemStatus.value.autoAcceptUsers = !systemStatus.value.autoAcceptUsers
+  }
 }
 
-const toggleSMSNotifications = () => {
-  systemStatus.value.smsNotifications = !systemStatus.value.smsNotifications
-  toast.success(
-    systemStatus.value.smsNotifications 
-      ? 'SMS notifications enabled' 
-      : 'SMS notifications disabled'
-  )
+const toggleAutoAcceptOrders = async () => {
+  try {
+    systemStatus.value.autoAcceptOrders = !systemStatus.value.autoAcceptOrders
+    
+    const settingsRef = doc(db, 'settings', 'system')
+    await updateDoc(settingsRef, {
+      autoAcceptOrders: systemStatus.value.autoAcceptOrders,
+      updatedAt: new Date()
+    })
+    
+    // Log the activity
+    await loggingService.logAutoAcceptToggle(
+      null,
+      systemStatus.value.autoAcceptOrders,
+      'orders'
+    )
+    
+    toast.success(
+      systemStatus.value.autoAcceptOrders 
+        ? t('systemSettings.autoAcceptOrdersEnabled') 
+        : t('systemSettings.autoAcceptOrdersDisabled')
+    )
+    
+    // Refresh logs to show the new entry
+    await loadSystemLogs()
+  } catch (error) {
+    console.error('Error updating auto-accept orders:', error)
+    toast.error(t('common.updateFailed'))
+    systemStatus.value.autoAcceptOrders = !systemStatus.value.autoAcceptOrders
+  }
 }
 
-const saveSettings = () => {
-  // In real app, this would save to database
-  toast.success('System settings saved successfully')
+const saveSettings = async () => {
+  try {
+    const systemSettingsRef = doc(db, 'settings', 'system')
+    await setDoc(systemSettingsRef, {
+      badWeatherFee: systemStatus.value.badWeatherFee,
+      autoAcceptUsers: systemStatus.value.autoAcceptUsers,
+      autoAcceptOrders: systemStatus.value.autoAcceptOrders,
+      updatedAt: new Date()
+    }, { merge: true })
+    
+    const appSettingsRef = doc(db, 'settings', 'application')
+    await setDoc(appSettingsRef, {
+      name: appSettings.value.name,
+      supportPhone: appSettings.value.supportPhone,
+      currency: 'PHP',
+      language: appSettings.value.language,
+      updatedAt: new Date()
+    }, { merge: true })
+    
+    const notificationSettingsRef = doc(db, 'settings', 'notifications')
+    await setDoc(notificationSettingsRef, {
+      ...notificationSettings.value,
+      updatedAt: new Date()
+    }, { merge: true })
+    
+    const securitySettingsRef = doc(db, 'settings', 'security')
+    await setDoc(securitySettingsRef, {
+      ...securitySettings.value,
+      updatedAt: new Date()
+    }, { merge: true })
+    
+    // Log the settings update
+    await loggingService.logSystemSettingsUpdate(null, 'all settings')
+    
+    toast.success(t('common.saveSuccess'))
+    
+    // Refresh logs to show the new entry
+    await loadSystemLogs()
+  } catch (error) {
+    console.error('Error saving settings:', error)
+    toast.error(t('common.saveFailed'))
+  }
 }
 
-const resetSettings = () => {
-  // In real app, this would reset to default values
-  toast.info('Settings reset to default values')
+const resetSettings = async () => {
+  try {
+    // Reset all settings to default values
+    systemStatus.value = { ...defaultSystemStatus }
+    appSettings.value = { ...defaultAppSettings }
+    notificationSettings.value = { ...defaultNotificationSettings }
+    securitySettings.value = { ...defaultSecuritySettings }
+    
+    // Update language
+    locale.value = defaultAppSettings.language
+    
+    // Save to Firebase
+    const systemSettingsRef = doc(db, 'settings', 'system')
+    await setDoc(systemSettingsRef, {
+      ...defaultSystemStatus,
+      updatedAt: new Date()
+    })
+    
+    const appSettingsRef = doc(db, 'settings', 'application')
+    await setDoc(appSettingsRef, {
+      ...defaultAppSettings,
+      currency: 'PHP',
+      updatedAt: new Date()
+    })
+    
+    const notificationSettingsRef = doc(db, 'settings', 'notifications')
+    await setDoc(notificationSettingsRef, {
+      ...defaultNotificationSettings,
+      updatedAt: new Date()
+    })
+    
+    const securitySettingsRef = doc(db, 'settings', 'security')
+    await setDoc(securitySettingsRef, {
+      ...defaultSecuritySettings,
+      updatedAt: new Date()
+    })
+    
+    toast.success(t('common.resetSuccess'))
+  } catch (error) {
+    console.error('Error resetting settings:', error)
+    toast.error(t('common.resetFailed'))
+  }
 }
 
-const clearLogs = () => {
-  systemLogs.value = []
-  toast.success('System logs cleared')
+const clearLogs = async () => {
+  if (!confirm('Are you sure you want to clear all system logs? This action cannot be undone.')) {
+    return
+  }
+
+  try {
+    loadingLogs.value = true
+    const success = await loggingService.clearAllLogs()
+    
+    if (success) {
+      systemLogs.value = []
+      toast.success(t('common.logsCleared'))
+      
+      // Log the clearing action
+      await loggingService.info(
+        'System logs cleared by admin',
+        loggingService.USER_TYPES.ADMIN,
+        null,
+        { action: 'logs_cleared' }
+      )
+    } else {
+      toast.error('Failed to clear logs')
+    }
+  } catch (error) {
+    console.error('Error clearing logs:', error)
+    toast.error('Failed to clear logs')
+  } finally {
+    loadingLogs.value = false
+  }
 }
+
+const updateLanguage = async () => {
+  try {
+    locale.value = appSettings.value.language
+    
+    const settingsRef = doc(db, 'settings', 'application')
+    await setDoc(settingsRef, {
+      language: appSettings.value.language,
+      updatedAt: new Date()
+    }, { merge: true })
+    
+    const languageNames = {
+      en: 'English',
+      tl: 'Tagalog'
+    }
+    
+    toast.success(t('systemSettings.languageUpdated', { language: languageNames[appSettings.value.language] }))
+  } catch (error) {
+    console.error('Error updating language:', error)
+    toast.error(t('common.updateFailed'))
+  }
+}
+
+const loadSystemSettings = async () => {
+  try {
+    const settingsRef = doc(db, 'settings', 'system')
+    const settingsDoc = await getDoc(settingsRef)
+    
+    if (settingsDoc.exists()) {
+      const settings = settingsDoc.data()
+      systemStatus.value.badWeatherFee = settings.badWeatherFee || false
+      systemStatus.value.autoAcceptUsers = settings.autoAcceptUsers !== false
+      systemStatus.value.autoAcceptOrders = settings.autoAcceptOrders !== false
+    }
+    
+    const appSettingsRef = doc(db, 'settings', 'application')
+    const appSettingsDoc = await getDoc(appSettingsRef)
+    
+    if (appSettingsDoc.exists()) {
+      const settings = appSettingsDoc.data()
+      appSettings.value.name = settings.name || 'BroomTech Delivery'
+      appSettings.value.supportPhone = settings.supportPhone || '+63 912 345 6789'
+      appSettings.value.language = settings.language || 'en'
+      locale.value = appSettings.value.language
+    }
+    
+    const notificationSettingsRef = doc(db, 'settings', 'notifications')
+    const notificationSettingsDoc = await getDoc(notificationSettingsRef)
+    
+    if (notificationSettingsDoc.exists()) {
+      notificationSettings.value = { ...notificationSettingsDoc.data() }
+    }
+    
+    const securitySettingsRef = doc(db, 'settings', 'security')
+    const securitySettingsDoc = await getDoc(securitySettingsRef)
+    
+    if (securitySettingsDoc.exists()) {
+      securitySettings.value = { ...securitySettingsDoc.data() }
+    }
+  } catch (error) {
+    console.error('Error loading system settings:', error)
+    toast.error(t('common.loadFailed'))
+  }
+}
+
+const loadSystemLogs = async () => {
+  try {
+    console.log('[v0] Loading system logs...')
+    loadingLogs.value = true
+    const logs = await loggingService.getRecentLogs(50)
+    console.log('[v0] Loaded logs:', logs)
+    console.log('[v0] Number of logs:', logs.length)
+    systemLogs.value = logs
+  } catch (error) {
+    console.error('[v0] Error loading system logs:', error)
+    console.error('[v0] Error details:', error.message, error.code)
+    toast.error('Failed to load system logs: ' + error.message)
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+const refreshLogs = async () => {
+  await loadSystemLogs()
+  toast.success('Logs refreshed')
+}
+
+onMounted(() => {
+  loadSystemSettings()
+  loadSystemLogs()
+})
 </script>

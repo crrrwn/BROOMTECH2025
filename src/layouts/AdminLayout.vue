@@ -44,7 +44,7 @@
             
             <router-link to="/admin/orders" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
               </svg>
               Manage Orders
               <span v-if="pendingOrders > 0" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
@@ -82,7 +82,7 @@
             <!-- Added chat monitoring for admin oversight -->
             <router-link to="/admin/chat-monitoring" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
               </svg>
               Chat Monitoring
             </router-link>
@@ -128,45 +128,74 @@
             <div class="flex items-center justify-between">
               <h1 class="text-2xl font-semibold text-gray-900">{{ pageTitle }}</h1>
               
-              <div class="flex items-center space-x-6">
-                <!-- Weather Fee Toggle -->
-                <div class="flex items-center space-x-2">
-                  <span class="text-sm text-gray-600">Bad Weather Fee</span>
-                  <button 
-                    @click="toggleWeatherFee"
-                    :class="[
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      weatherFeeEnabled ? 'bg-red-500' : 'bg-gray-300'
-                    ]"
-                  >
-                    <span 
-                      :class="[
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        weatherFeeEnabled ? 'translate-x-6' : 'translate-x-1'
-                      ]"
-                    />
-                  </button>
+              <div class="flex items-center space-x-4">
+                <!-- Online Drivers Indicator -->
+                <div class="flex items-center space-x-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span class="text-sm font-medium text-blue-900">{{ onlineDrivers }} Online Drivers</span>
                 </div>
                 
-                <!-- Auto Accept Users Toggle -->
-                <div class="flex items-center space-x-2">
-                  <span class="text-sm text-gray-600">Auto-Accept Users</span>
+                <!-- Notification Bell -->
+                <div class="relative">
                   <button 
-                    @click="toggleAutoAccept"
-                    :class="[
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      autoAcceptEnabled ? 'bg-primary' : 'bg-gray-300'
-                    ]"
+                    @click="showNotifications = !showNotifications"
+                    class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <span 
-                      :class="[
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        autoAcceptEnabled ? 'translate-x-6' : 'translate-x-1'
-                      ]"
-                    />
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {{ unreadCount > 9 ? '9+' : unreadCount }}
+                    </span>
                   </button>
+
+                  <!-- Notification Dropdown -->
+                  <div v-if="showNotifications" class="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border z-50">
+                    <div class="p-4 border-b flex items-center justify-between">
+                      <h3 class="font-semibold text-gray-900">Notifications</h3>
+                      <button 
+                        v-if="notifications.length > 0"
+                        @click="markAllAsRead"
+                        class="text-sm text-primary hover:text-green-600"
+                      >
+                        Mark all as read
+                      </button>
+                    </div>
+                    
+                    <div class="max-h-96 overflow-y-auto">
+                      <div v-if="loadingNotifications" class="p-4 text-center text-gray-500">
+                        Loading notifications...
+                      </div>
+                      <div v-else-if="notifications.length === 0" class="p-4 text-center text-gray-500">
+                        No notifications
+                      </div>
+                      <div v-else>
+                        <div 
+                          v-for="notification in notifications" 
+                          :key="notification.id"
+                          @click="markAsRead(notification)"
+                          :class="[
+                            'p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors',
+                            !notification.read ? 'bg-blue-50' : ''
+                          ]"
+                        >
+                          <div class="flex items-start space-x-3">
+                            <div :class="[
+                              'w-2 h-2 rounded-full mt-2',
+                              !notification.read ? 'bg-blue-500' : 'bg-gray-300'
+                            ]"></div>
+                            <div class="flex-1">
+                              <p class="text-sm text-gray-900">{{ notification.message }}</p>
+                              <p class="text-xs text-gray-500 mt-1">{{ formatDate(notification.createdAt) }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
+                <!-- Admin Profile -->
                 <div class="flex items-center space-x-2">
                   <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                     <span class="text-white text-sm font-medium">A</span>
@@ -202,7 +231,9 @@ import {
   doc,
   updateDoc,
   getDoc,
-  setDoc
+  setDoc,
+  orderBy,
+  limit
 } from 'firebase/firestore'
 
 const router = useRouter()
@@ -216,8 +247,11 @@ const onlineDrivers = ref(0)
 const pendingOrders = ref(0)
 const pendingUsers = ref(0)
 const pendingApplications = ref(0)
-const weatherFeeEnabled = ref(false)
-const autoAcceptEnabled = ref(true)
+
+const showNotifications = ref(false)
+const notifications = ref([])
+const loadingNotifications = ref(false)
+const unreadCount = ref(0)
 
 const listeners = ref([])
 
@@ -261,9 +295,8 @@ const fetchActiveOrders = () => {
 const fetchOnlineDrivers = () => {
   try {
     const onlineDriversQuery = query(
-      collection(db, 'users'),
-      where('role', '==', 'driver'),
-      where('status', '==', 'approved'),
+      collection(db, 'drivers'),
+      where('approved', '==', true),
       where('isOnline', '==', true)
     )
 
@@ -337,78 +370,82 @@ const fetchPendingCounts = () => {
   }
 }
 
-const fetchSystemSettings = async () => {
+const fetchNotifications = () => {
   try {
-    console.log('[v0] Fetching system settings...')
-    
-    const settingsRef = doc(db, 'settings', 'system')
-    const settingsDoc = await getDoc(settingsRef)
-    
-    if (settingsDoc.exists()) {
-      const settings = settingsDoc.data()
-      weatherFeeEnabled.value = settings.badWeatherFee || false
-      autoAcceptEnabled.value = settings.autoAcceptUsers !== false
-    } else {
-      console.log('[v0] Settings document does not exist, creating default settings')
-      await setDoc(settingsRef, {
-        badWeatherFee: false,
-        autoAcceptUsers: true,
-        createdAt: new Date()
+    loadingNotifications.value = true
+    const notificationsQuery = query(
+      collection(db, 'notifications'),
+      where('recipientType', '==', 'admin'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    )
+
+    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+      notifications.value = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      
+      unreadCount.value = notifications.value.filter(n => !n.read).length
+      loadingNotifications.value = false
+      console.log('[v0] Admin notifications updated:', notifications.value.length)
+    }, (error) => {
+      console.log('[v0] Notifications listener error:', error.message)
+      loadingNotifications.value = false
+    })
+
+    listeners.value.push(unsubscribe)
+  } catch (error) {
+    console.error('[v0] Error setting up notifications listener:', error)
+    loadingNotifications.value = false
+  }
+}
+
+const markAsRead = async (notification) => {
+  if (notification.read) return
+  
+  try {
+    await updateDoc(doc(db, 'notifications', notification.id), {
+      read: true,
+      readAt: new Date()
+    })
+  } catch (error) {
+    console.error('[v0] Error marking notification as read:', error)
+  }
+}
+
+const markAllAsRead = async () => {
+  try {
+    const unreadNotifications = notifications.value.filter(n => !n.read)
+    const updatePromises = unreadNotifications.map(notification =>
+      updateDoc(doc(db, 'notifications', notification.id), {
+        read: true,
+        readAt: new Date()
       })
-      weatherFeeEnabled.value = false
-      autoAcceptEnabled.value = true
-    }
+    )
     
-    console.log('[v0] System settings loaded:', { weatherFeeEnabled: weatherFeeEnabled.value, autoAcceptEnabled: autoAcceptEnabled.value })
+    await Promise.all(updatePromises)
+    toast.success('All notifications marked as read')
   } catch (error) {
-    console.error('[v0] Error fetching system settings:', error)
-    weatherFeeEnabled.value = false
-    autoAcceptEnabled.value = true
+    console.error('[v0] Error marking all as read:', error)
+    toast.error('Failed to mark notifications as read')
   }
 }
 
-const toggleWeatherFee = async () => {
-  try {
-    weatherFeeEnabled.value = !weatherFeeEnabled.value
-    
-    const settingsRef = doc(db, 'settings', 'system')
-    await updateDoc(settingsRef, {
-      badWeatherFee: weatherFeeEnabled.value,
-      updatedAt: new Date()
-    })
-    
-    toast.success(
-      weatherFeeEnabled.value 
-        ? 'Bad Weather Fee enabled (+₱5)' 
-        : 'Bad Weather Fee disabled'
-    )
-  } catch (error) {
-    console.error('[v0] Error updating weather fee setting:', error)
-    toast.error('Failed to update weather fee setting')
-    weatherFeeEnabled.value = !weatherFeeEnabled.value
-  }
-}
-
-const toggleAutoAccept = async () => {
-  try {
-    autoAcceptEnabled.value = !autoAcceptEnabled.value
-    
-    const settingsRef = doc(db, 'settings', 'system')
-    await updateDoc(settingsRef, {
-      autoAcceptUsers: autoAcceptEnabled.value,
-      updatedAt: new Date()
-    })
-    
-    toast.success(
-      autoAcceptEnabled.value 
-        ? 'Auto-Accept Users enabled' 
-        : 'Auto-Accept Users disabled'
-    )
-  } catch (error) {
-    console.error('[v0] Error updating auto-accept setting:', error)
-    toast.error('Failed to update auto-accept setting')
-    autoAcceptEnabled.value = !autoAcceptEnabled.value
-  }
+const formatDate = (timestamp) => {
+  if (!timestamp) return ''
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 7) return `${days}d ago`
+  return date.toLocaleDateString()
 }
 
 const logout = async () => {
@@ -424,10 +461,10 @@ const logout = async () => {
 onMounted(async () => {
   console.log('[v0] AdminLayout mounted, initializing real-time data...')
   
-  await fetchSystemSettings()
   fetchActiveOrders()
   fetchOnlineDrivers()
   fetchPendingCounts()
+  fetchNotifications()
   
   console.log('[v0] AdminLayout real-time data initialized')
 })

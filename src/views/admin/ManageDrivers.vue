@@ -11,7 +11,7 @@
       <div class="flex">
         <div class="flex-shrink-0">
           <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 00-1.414 1.414L8.707 7.293z" clip-rule="evenodd" />
           </svg>
         </div>
         <div class="ml-3">
@@ -39,10 +39,10 @@
           <button @click="loadDrivers" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
             Refresh Data
           </button>
-          <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+          <button @click="openAddDriverModal" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Add Driver
           </button>
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <button @click="exportReport" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             Export Report
           </button>
         </div>
@@ -58,7 +58,7 @@
             </div>
             <div class="p-3 bg-blue-100 rounded-lg">
               <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
             </div>
           </div>
@@ -95,12 +95,12 @@
         <div class="bg-white p-6 rounded-lg shadow-sm border">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-600">Avg Rating</p>
-              <p class="text-2xl font-bold text-yellow-600">{{ averageRating }}</p>
+              <p class="text-sm text-gray-600">Total Earnings</p>
+              <p class="text-2xl font-bold text-purple-600">₱{{ totalEarnings }}</p>
             </div>
-            <div class="p-3 bg-yellow-100 rounded-lg">
-              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+            <div class="p-3 bg-purple-100 rounded-lg">
+              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
           </div>
@@ -109,7 +109,7 @@
 
       <!-- Filters -->
       <div class="bg-white p-6 rounded-lg shadow-sm border">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
             <select v-model="filters.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
@@ -132,16 +132,6 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-            <select v-model="filters.rating" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              <option value="">All Ratings</option>
-              <option value="5">5 Stars</option>
-              <option value="4">4+ Stars</option>
-              <option value="3">3+ Stars</option>
-              <option value="2">Below 3 Stars</option>
-            </select>
-          </div>
-          <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
             <input
               type="text"
@@ -157,7 +147,7 @@
       <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div v-if="filteredDrivers.length === 0" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">
             {{ drivers.length === 0 ? 'No drivers registered yet' : 'No drivers found' }}
@@ -182,7 +172,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                <!-- Removed Rating column header -->
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -205,24 +195,25 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ driver.vehicleType || 'Not specified' }}</div>
-                  <div class="text-sm text-gray-500">{{ driver.plateNumber || 'No plate' }}</div>
+                  <div class="text-sm text-gray-900">{{ driver.raw?.driverInfo?.motorcycleInfo?.brand || 'Brand not specified' }}</div>
+                  <div class="text-sm text-gray-500">{{ driver.raw?.driverInfo?.motorcycleInfo?.model || 'Model N/A' }}</div>
+                  <div class="text-xs text-gray-400">{{ driver.plateNumber || 'No plate' }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStatusClass(driver.status)" class="px-2 py-1 text-xs font-medium rounded-full">
-                    {{ driver.status || 'active' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="flex text-yellow-400">
-                      <svg v-for="i in 5" :key="i" class="w-4 h-4" :class="i <= (driver.rating || 0) ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                      </svg>
+                  <div class="flex items-center space-x-2">
+                    <!-- Added real-time online status indicator -->
+                    <div class="flex items-center space-x-1">
+                      <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400' ]"></div>
+                      <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-green-600' : 'text-gray-500' ]">
+                        {{ driver.raw?.isOnline ? 'ONLINE' : 'OFFLINE' }}
+                      </span>
                     </div>
-                    <span class="ml-2 text-sm text-gray-600">{{ Number(driver.rating || 0).toFixed(1) }}</span>
+                    <span :class="getStatusClass(driver.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                      {{ driver.status || 'active' }}
+                    </span>
                   </div>
                 </td>
+                <!-- Removed Rating column data cell -->
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ driver.deliveries || 0 }}
                 </td>
@@ -271,35 +262,497 @@
         </div>
       </div>
     </div>
+
+    <!-- View Driver Details Modal -->
+    <div v-if="selectedDriver" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Driver Details</h3>
+            <p class="text-sm text-gray-500">Complete driver information and documents</p>
+          </div>
+          <button @click="selectedDriver = null" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Personal Information -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Personal Information</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.firstName }} {{ selectedDriver.lastName }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.email }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Contact Number</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.phone || 'N/A' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Status</label>
+                <span :class="getStatusClass(selectedDriver.status)" class="inline-flex px-2 py-1 text-xs font-medium rounded-full">
+                  {{ selectedDriver.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Motorcycle Information -->
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Motorcycle Information</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Brand</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.raw?.driverInfo?.motorcycleInfo?.brand || 'N/A' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Model</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.raw?.driverInfo?.motorcycleInfo?.model || 'N/A' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Plate Number</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.plateNumber || 'N/A' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Year</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.raw?.driverInfo?.motorcycleInfo?.year || 'N/A' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Experience & Availability -->
+          <div class="bg-yellow-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Experience & Availability</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Driving Experience</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.raw?.driverInfo?.experience || 'N/A' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Availability</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.raw?.driverInfo?.availability || 'N/A' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Metrics -->
+          <div class="bg-green-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Performance Metrics</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Total Deliveries</label>
+                <p class="text-sm text-gray-900">{{ selectedDriver.deliveries }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Total Earnings</label>
+                <p class="text-sm text-gray-900">₱{{ selectedDriver.earnings.toLocaleString() }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Documents -->
+          <div class="bg-red-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Required Documents</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="border rounded-lg p-3 bg-white">
+                <p class="text-sm font-medium text-gray-900">Driver's License</p>
+                <button 
+                  v-if="selectedDriver.raw?.driverInfo?.documents?.license"
+                  @click="viewDocument(selectedDriver.raw.driverInfo.documents.license)"
+                  class="text-primary hover:text-green-600 text-sm mt-1"
+                >
+                  View Document
+                </button>
+                <p v-else class="text-sm text-gray-500 mt-1">Not uploaded</p>
+              </div>
+              <div class="border rounded-lg p-3 bg-white">
+                <p class="text-sm font-medium text-gray-900">OR/CR</p>
+                <button 
+                  v-if="selectedDriver.raw?.driverInfo?.documents?.orcr"
+                  @click="viewDocument(selectedDriver.raw.driverInfo.documents.orcr)"
+                  class="text-primary hover:text-green-600 text-sm mt-1"
+                >
+                  View Document
+                </button>
+                <p v-else class="text-sm text-gray-500 mt-1">Not uploaded</p>
+              </div>
+              <div class="border rounded-lg p-3 bg-white">
+                <p class="text-sm font-medium text-gray-900">Selfie with License</p>
+                <button 
+                  v-if="selectedDriver.raw?.driverInfo?.documents?.selfie"
+                  @click="viewDocument(selectedDriver.raw.driverInfo.documents.selfie)"
+                  class="text-primary hover:text-green-600 text-sm mt-1"
+                >
+                  View Document
+                </button>
+                <p v-else class="text-sm text-gray-500 mt-1">Not uploaded</p>
+              </div>
+              <div class="border rounded-lg p-3 bg-white">
+                <p class="text-sm font-medium text-gray-900">Profile Picture</p>
+                <button 
+                  v-if="selectedDriver.raw?.driverInfo?.documents?.profilePicture"
+                  @click="viewDocument(selectedDriver.raw.driverInfo.documents.profilePicture)"
+                  class="text-primary hover:text-green-600 text-sm mt-1"
+                >
+                  View Document
+                </button>
+                <p v-else class="text-sm text-gray-500 mt-1">Not uploaded</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+          <button @click="selectedDriver = null" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            Close
+          </button>
+          <button @click="trackDriverFromModal" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            Track Driver
+          </button>
+          <button @click="confirmSuspendDriver" :class="selectedDriver.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" class="px-4 py-2 text-white rounded-lg">
+            {{ selectedDriver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Track Driver Modal -->
+    <div v-if="showTrackingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Live Driver Tracking</h3>
+            <p class="text-sm text-gray-500">Real-time location monitoring with Google Maps</p>
+          </div>
+          <button @click="closeTrackingModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <!-- Driver Info -->
+          <div class="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <img :src="trackedDriver?.profilePicture || '/placeholder.svg?height=50&width=50'" class="w-12 h-12 rounded-full" :alt="trackedDriver?.firstName">
+              <div>
+                <p class="font-medium text-gray-900">{{ trackedDriver?.firstName }} {{ trackedDriver?.lastName }}</p>
+                <p class="text-sm text-gray-500">{{ trackedDriver?.phone }}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div :class="trackedDriver?.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400'" class="w-3 h-3 rounded-full animate-pulse"></div>
+              <span :class="trackedDriver?.raw?.isOnline ? 'text-green-600' : 'text-gray-500'" class="text-sm font-medium">
+                {{ trackedDriver?.raw?.isOnline ? 'ONLINE' : 'OFFLINE' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Replaced Leaflet with Google Maps -->
+          <div id="driver-tracking-map" class="rounded-lg h-96 w-full border border-gray-300"></div>
+
+          <!-- Location Info -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <p class="text-sm text-gray-600">Current Location</p>
+              <p class="font-medium text-gray-900 text-sm">{{ currentDriverLocation }}</p>
+              <p class="text-xs text-gray-500 mt-1">{{ driverLatLng.lat.toFixed(6) }}, {{ driverLatLng.lng.toFixed(6) }}</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg">
+              <p class="text-sm text-gray-600">Distance to Destination</p>
+              <p class="font-medium text-gray-900">{{ distanceToDestination }}</p>
+              <p class="text-xs text-gray-500 mt-1">{{ estimatedArrival }}</p>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg">
+              <p class="text-sm text-gray-600">Last Updated</p>
+              <p class="font-medium text-gray-900">{{ lastLocationUpdate }}</p>
+            </div>
+          </div>
+
+          <!-- Active Order Info (if driver has active order) -->
+          <div v-if="activeOrder" class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+            <h4 class="font-medium text-gray-900 mb-2">Active Order</h4>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-gray-600">Order ID</p>
+                <p class="font-medium">{{ activeOrder.id }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Service Type</p>
+                <p class="font-medium">{{ activeOrder.serviceType }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Pickup Location</p>
+                <p class="font-medium text-xs">{{ activeOrder.pickupAddress }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Delivery Location</p>
+                <p class="font-medium text-xs">{{ activeOrder.deliveryAddress }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+          <button @click="closeTrackingModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            Close
+          </button>
+          <button @click="refreshDriverLocation" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Refresh Location</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suspend Confirmation Modal -->
+    <div v-if="showSuspendModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-md w-full p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend Driver' : 'Suspend Driver' }}
+        </h3>
+        <p class="text-gray-600 mb-6">
+          {{ driverToSuspend?.status === 'suspended' 
+            ? `Are you sure you want to unsuspend ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}? They will be able to accept orders again.`
+            : `Are you sure you want to suspend ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}? They will not be able to accept new orders.`
+          }}
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button @click="showSuspendModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button @click="executeSuspend" :class="driverToSuspend?.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" class="px-4 py-2 text-white rounded-lg">
+            {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Driver Modal -->
+    <div v-if="showAddDriverModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div class="bg-white rounded-lg max-w-4xl w-full my-8">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-lg">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Add New Driver</h3>
+            <p class="text-sm text-gray-500">Enter driver information and upload required documents</p>
+          </div>
+          <button @click="closeAddDriverModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="submitAddDriver" class="p-6 space-y-6">
+           Personal Information 
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Personal Information</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                <input v-model="newDriver.firstName" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                <input v-model="newDriver.lastName" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input v-model="newDriver.email" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                <input v-model="newDriver.password" type="password" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
+                <input v-model="newDriver.contact" type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+            </div>
+          </div>
+
+           Motorcycle Information 
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Motorcycle Information</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Brand *</label>
+                <input v-model="newDriver.motorcycleInfo.brand" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Model *</label>
+                <input v-model="newDriver.motorcycleInfo.model" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number *</label>
+                <input v-model="newDriver.motorcycleInfo.plateNumber" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Year *</label>
+                <input v-model="newDriver.motorcycleInfo.year" type="number" required min="1990" max="2025" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              </div>
+            </div>
+          </div>
+
+           Experience & Availability 
+          <div class="bg-yellow-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Experience & Availability</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Driving Experience *</label>
+                <select v-model="newDriver.experience" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <option value="">Select experience</option>
+                  <option value="Less than 1 year">Less than 1 year</option>
+                  <option value="1-3 years">1-3 years</option>
+                  <option value="3-5 years">3-5 years</option>
+                  <option value="5+ years">5+ years</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Availability *</label>
+                <select v-model="newDriver.availability" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <option value="">Select availability</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Weekends only">Weekends only</option>
+                  <option value="Flexible">Flexible</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+           Documents Upload 
+          <div class="bg-red-50 p-4 rounded-lg">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Required Documents</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Driver's License *</label>
+                <input @change="handleFileUpload($event, 'license')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <p v-if="uploadProgress.license" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.license }}%</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">OR/CR *</label>
+                <input @change="handleFileUpload($event, 'orcr')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <p v-if="uploadProgress.orcr" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.orcr }}%</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Selfie with License *</label>
+                <input @change="handleFileUpload($event, 'selfie')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <p v-if="uploadProgress.selfie" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.selfie }}%</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture *</label>
+                <input @change="handleFileUpload($event, 'profilePicture')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <p v-if="uploadProgress.profilePicture" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.profilePicture }}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4 border-t">
+            <button type="button" @click="closeAddDriverModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" :disabled="isSubmitting" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+              <svg v-if="isSubmitting" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{{ isSubmitting ? 'Adding Driver...' : 'Add Driver' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { collection, query, where, getDocs, doc, updateDoc, onSnapshot } from 'firebase/firestore'
-import { db } from '@/firebase/config'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, addDoc, setDoc } from 'firebase/firestore'
+import { db, auth, storage } from '@/firebase/config'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { useToast } from 'vue-toastification'
+import { loggingService } from '@/services/loggingService'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'ManageDrivers',
   setup() {
     const toast = useToast()
+    const authStore = useAuthStore()
 
-    const drivers = ref([])               // unified list (users+drivers)
+    const drivers = ref([])
     const loading = ref(true)
     const error = ref(null)
     const currentPage = ref(1)
     const itemsPerPage = ref(10)
-    const unsubs = ref([])                // multiple realtime listeners
+    const unsubs = ref([])
+
+    const selectedDriver = ref(null)
+    const showTrackingModal = ref(false)
+    const trackedDriver = ref(null)
+    const currentDriverLocation = ref('Loading location...')
+    const lastLocationUpdate = ref('Just now')
+    const showSuspendModal = ref(false)
+    const driverToSuspend = ref(null)
+    const locationUpdateInterval = ref(null)
+    const driverMap = ref(null)
+    const driverMarker = ref(null)
+    const destinationMarker = ref(null)
+    const directionsRenderer = ref(null)
+    const driverLatLng = ref({ lat: 13.4127, lng: 121.1794 })
+    const distanceToDestination = ref('N/A')
+    const estimatedArrival = ref('N/A')
+    const activeOrder = ref(null)
+
+    const showAddDriverModal = ref(false)
+    const isSubmitting = ref(false)
+    const newDriver = ref({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      contact: '',
+      motorcycleInfo: {
+        brand: '',
+        model: '',
+        plateNumber: '',
+        year: ''
+      },
+      experience: '',
+      availability: '',
+      documents: {
+        license: '',
+        orcr: '',
+        selfie: '',
+        profilePicture: ''
+      }
+    })
+    const uploadProgress = ref({
+      license: 0,
+      orcr: 0,
+      selfie: 0,
+      profilePicture: 0
+    })
 
     const filters = ref({
       status: '',
       vehicleType: '',
-      rating: '',
       search: ''
     })
 
-    // ---- helpers: normalize records from different collections ----
+    // helpers: normalize records from different collections
     const splitName = (full = '') => {
       const parts = full.trim().split(/\s+/)
       const first = parts[0] || ''
@@ -327,7 +780,7 @@ export default {
 
       return {
         id,
-        source, // 'users' | 'drivers'
+        source,
         firstName,
         lastName,
         phone: raw.contact || raw.phone || '',
@@ -345,21 +798,24 @@ export default {
       }
     }
 
-    // ---- metrics ----
+    // metrics
     const totalDrivers = computed(() => drivers.value.length)
-    const onlineDrivers = computed(() => drivers.value.filter(d => d.status === 'online').length)
+    const onlineDrivers = computed(() => 
+      drivers.value.filter(d => 
+        d.status === 'online' || d.raw?.isOnline === true
+      ).length
+    )
     const pendingApplications = computed(() =>
       drivers.value.filter(d =>
         d.status === 'pending' || (!d.approved && d.status !== 'suspended')
       ).length
     )
-    const averageRating = computed(() => {
-      if (drivers.value.length === 0) return '0.0'
-      const total = drivers.value.reduce((sum, d) => sum + (Number(d.rating) || 0), 0)
-      return (total / drivers.value.length).toFixed(1)
+    const totalEarnings = computed(() => {
+      const total = drivers.value.reduce((sum, d) => sum + (Number(d.earnings) || 0), 0)
+      return total.toLocaleString()
     })
 
-    // ---- filters + pagination ----
+    // filters + pagination
     const filteredDrivers = computed(() => {
       let filtered = [...drivers.value]
 
@@ -368,10 +824,6 @@ export default {
       }
       if (filters.value.vehicleType) {
         filtered = filtered.filter(d => (d.vehicleType || '').toLowerCase() === filters.value.vehicleType.toLowerCase())
-      }
-      if (filters.value.rating) {
-        const minRating = parseInt(filters.value.rating)
-        filtered = filtered.filter(d => (Number(d.rating) || 0) >= minRating)
       }
       if (filters.value.search) {
         const s = filters.value.search.toLowerCase()
@@ -391,7 +843,7 @@ export default {
       return filteredDrivers.value.slice(start, end)
     })
 
-    // ---- load data once (both sources) ----
+    // load data once (both sources)
     const loadDrivers = async () => {
       try {
         loading.value = true
@@ -414,7 +866,6 @@ export default {
 
         driversSnap.forEach(d => {
           const unified = toUnifiedDriver(d.data(), d.id, 'drivers')
-          // prefer 'drivers' collection data if duplicate id exists
           mapById.set(d.id, unified)
         })
 
@@ -431,7 +882,7 @@ export default {
       }
     }
 
-    // ---- realtime listeners for both collections ----
+    // realtime listeners for both collections
     const setupRealtimeListeners = () => {
       try {
         const usersQuery = query(collection(db, 'users'), where('role', '==', 'driver'))
@@ -441,7 +892,6 @@ export default {
             existing.set(d.id, toUnifiedDriver(d.data(), d.id, 'users'))
           })
           drivers.value = Array.from(existing.values())
-          console.log('[Realtime] users/driver updated:', qs.size)
         }, (err) => console.error('[Realtime users] error:', err))
 
         const driversCol = collection(db, 'drivers')
@@ -451,7 +901,6 @@ export default {
             existing.set(d.id, toUnifiedDriver(d.data(), d.id, 'drivers'))
           })
           drivers.value = Array.from(existing.values())
-          console.log('[Realtime] drivers collection updated:', qs.size)
         }, (err) => console.error('[Realtime drivers] error:', err))
 
         unsubs.value.push(unsubUsers, unsubDrivers)
@@ -460,7 +909,7 @@ export default {
       }
     }
 
-    // ---- UI helpers & actions ----
+    // UI helpers & actions
     const getStatusClass = (status) => {
       const s = (status || '').toLowerCase()
       const classes = {
@@ -474,24 +923,560 @@ export default {
     }
 
     const viewDriver = (driver) => {
-      toast.info(`Viewing details for ${(driver.firstName || '') + ' ' + (driver.lastName || '')}`)
+      selectedDriver.value = driver
     }
 
-    const trackDriver = (driver) => {
-      toast.info(`Tracking ${(driver.firstName || '') + ' ' + (driver.lastName || '')}`)
+    const viewDocument = (documentUrl) => {
+      if (documentUrl) {
+        window.open(documentUrl, '_blank')
+      } else {
+        toast.error('Document not available')
+      }
     }
 
-    const suspendDriver = async (driver) => {
+    const openAddDriverModal = () => {
+      showAddDriverModal.value = true
+    }
+
+    const closeAddDriverModal = () => {
+      showAddDriverModal.value = false
+      resetNewDriverForm()
+    }
+
+    const resetNewDriverForm = () => {
+      newDriver.value = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        contact: '',
+        motorcycleInfo: {
+          brand: '',
+          model: '',
+          plateNumber: '',
+          year: ''
+        },
+        experience: '',
+        availability: '',
+        documents: {
+          license: '',
+          orcr: '',
+          selfie: '',
+          profilePicture: ''
+        }
+      }
+      uploadProgress.value = {
+        license: 0,
+        orcr: 0,
+        selfie: 0,
+        profilePicture: 0
+      }
+    }
+
+    const handleFileUpload = async (event, docType) => {
+      const file = event.target.files[0]
+      if (!file) return
+
+      console.log('[v0] Starting file upload for:', docType, 'File:', file.name, 'Size:', file.size)
+
       try {
+        const fileRef = storageRef(storage, `driver-documents/${Date.now()}_${file.name}`)
+        console.log('[v0] Storage reference created:', fileRef.fullPath)
+        
+        const uploadTask = uploadBytesResumable(fileRef, file)
+
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            uploadProgress.value[docType] = Math.round(progress)
+            console.log('[v0] Upload progress for', docType, ':', Math.round(progress), '%')
+          },
+          (error) => {
+            console.error('[v0] Upload error for', docType, ':', error)
+            console.error('[v0] Error code:', error.code)
+            console.error('[v0] Error message:', error.message)
+            console.error('[v0] Full error:', JSON.stringify(error, null, 2))
+            
+            // Show more specific error message
+            if (error.code === 'storage/unauthorized') {
+              toast.error(`Permission denied: Please check Firebase Storage rules for ${docType}`)
+            } else if (error.code === 'storage/canceled') {
+              toast.error(`Upload canceled for ${docType}`)
+            } else {
+              toast.error(`Failed to upload ${docType}: ${error.message}`)
+            }
+            uploadProgress.value[docType] = 0
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+            newDriver.value.documents[docType] = downloadURL
+            console.log('[v0] Upload successful for', docType, ':', downloadURL)
+            toast.success(`${docType} uploaded successfully`)
+          }
+        )
+      } catch (err) {
+        console.error('[v0] File upload error for', docType, ':', err)
+        console.error('[v0] Error details:', err.code, err.message)
+        toast.error(`Failed to upload ${docType}: ${err.message}`)
+      }
+    }
+
+    const submitAddDriver = async () => {
+      try {
+        isSubmitting.value = true
+
+        // Validate all documents are uploaded
+        const requiredDocs = ['license', 'orcr', 'selfie', 'profilePicture']
+        for (const doc of requiredDocs) {
+          if (!newDriver.value.documents[doc]) {
+            toast.error(`Please upload ${doc}`)
+            isSubmitting.value = false
+            return
+          }
+        }
+
+        // Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          newDriver.value.email,
+          newDriver.value.password
+        )
+        const userId = userCredential.user.uid
+
+        // Create driver document in Firestore
+        const driverData = {
+          firstName: newDriver.value.firstName,
+          lastName: newDriver.value.lastName,
+          fullName: `${newDriver.value.firstName} ${newDriver.value.lastName}`,
+          email: newDriver.value.email,
+          contact: newDriver.value.contact,
+          phone: newDriver.value.contact,
+          role: 'driver',
+          profilePicture: newDriver.value.documents.profilePicture,
+          status: 'active',
+          approved: true,
+          banned: false,
+          rating: 0,
+          deliveries: 0,
+          earnings: 0,
+          isOnline: false,
+          driverInfo: {
+            motorcycleInfo: {
+              brand: newDriver.value.motorcycleInfo.brand,
+              model: newDriver.value.motorcycleInfo.model,
+              plateNumber: newDriver.value.motorcycleInfo.plateNumber,
+              year: newDriver.value.motorcycleInfo.year
+            },
+            experience: newDriver.value.experience,
+            availability: newDriver.value.availability,
+            documents: {
+              license: newDriver.value.documents.license,
+              orcr: newDriver.value.documents.orcr,
+              selfie: newDriver.value.documents.selfie,
+              profilePicture: newDriver.value.documents.profilePicture
+            },
+            applicationStatus: 'approved',
+            rating: 0
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+
+        // Add to both collections
+        await setDoc(doc(db, 'users', userId), driverData)
+        await setDoc(doc(db, 'drivers', userId), driverData)
+
+        await loggingService.success(
+          `New driver added by admin: ${driverData.fullName}`,
+          loggingService.USER_TYPES.ADMIN,
+          authStore.user?.uid,
+          { action: 'driver_added', driverId: userId, driverName: driverData.fullName }
+        )
+
+        toast.success('Driver added successfully!')
+        closeAddDriverModal()
+        await loadDrivers()
+      } catch (err) {
+        console.error('Error adding driver:', err)
+        toast.error(`Failed to add driver: ${err.message}`)
+      } finally {
+        isSubmitting.value = false
+      }
+    }
+
+    const exportReport = () => {
+      try {
+        // Prepare CSV data
+        const headers = [
+          'Driver ID',
+          'Name',
+          'Email',
+          'Phone',
+          'Vehicle Brand',
+          'Vehicle Model',
+          'Plate Number',
+          'Status',
+          'Deliveries',
+          'Earnings',
+          'Experience',
+          'Availability',
+          'Created At'
+        ]
+
+        const rows = drivers.value.map(driver => [
+          driver.id,
+          `${driver.firstName} ${driver.lastName}`,
+          driver.email,
+          driver.phone || 'N/A',
+          driver.raw?.driverInfo?.motorcycleInfo?.brand || 'N/A',
+          driver.raw?.driverInfo?.motorcycleInfo?.model || 'N/A',
+          driver.plateNumber || 'N/A',
+          driver.status,
+          driver.deliveries,
+          driver.earnings,
+          driver.raw?.driverInfo?.experience || 'N/A',
+          driver.raw?.driverInfo?.availability || 'N/A',
+          driver.raw?.createdAt || 'N/A'
+        ])
+
+        // Create CSV content
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n')
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        
+        link.setAttribute('href', url)
+        link.setAttribute('download', `drivers_report_${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+        
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        toast.success('Driver report exported successfully!')
+      } catch (err) {
+        console.error('Export error:', err)
+        toast.error('Failed to export driver report')
+      }
+    }
+
+
+    watch(showTrackingModal, async (newVal) => {
+      if (newVal && trackedDriver.value) {
+        // Wait for DOM to update
+        await nextTick()
+        // Initialize Google Maps
+        await initializeGoogleMap()
+      }
+    })
+
+    const initializeGoogleMap = async () => {
+      if (driverMap.value) {
+        console.log('[v0] Map already initialized, skipping...')
+        return
+      }
+
+      // Load Google Maps API if not already loaded
+      if (!window.google || !window.google.maps) {
+        console.log('[v0] Loading Google Maps API...')
+        await loadGoogleMapsAPI()
+      }
+
+      const mapElement = document.getElementById('driver-tracking-map')
+      if (!mapElement) {
+        console.error('[v0] Map element not found')
+        return
+      }
+
+      console.log('[v0] Initializing Google Map...')
+
+      // Initialize Google Map centered on Calapan City
+      driverMap.value = new window.google.maps.Map(mapElement, {
+        center: { lat: driverLatLng.value.lat, lng: driverLatLng.value.lng },
+        zoom: 15,
+        mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
+      })
+
+      // Create custom driver marker icon
+      const driverIcon = {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+            <g transform="translate(10, 10)">
+              <path d="M4 8a1 1 0 011-1h10a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V8z" fill="#ffffff"/>
+              <circle cx="7" cy="15" r="1.5" fill="#10B981"/>
+              <circle cx="13" cy="15" r="1.5" fill="#10B981"/>
+            </g>
+          </svg>
+        `),
+        scaledSize: new window.google.maps.Size(40, 40),
+        anchor: new window.google.maps.Point(20, 20)
+      }
+
+      // Add driver marker
+      driverMarker.value = new window.google.maps.Marker({
+        position: { lat: driverLatLng.value.lat, lng: driverLatLng.value.lng },
+        map: driverMap.value,
+        title: `${trackedDriver.value?.firstName} ${trackedDriver.value?.lastName}`,
+        icon: driverIcon,
+        animation: window.google.maps.Animation.DROP
+      })
+
+      console.log('[v0] Map initialized successfully')
+
+      startLocationTracking()
+
+      if (activeOrder.value) {
+        await showRouteToDestination()
+      }
+    }
+
+    const loadGoogleMapsAPI = () => {
+      return new Promise((resolve, reject) => {
+        if (window.google && window.google.maps) {
+          resolve()
+          return
+        }
+
+        const script = document.createElement('script')
+        // Replace with your actual Google Maps API key
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`
+        script.async = true
+        script.defer = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Failed to load Google Maps API'))
+        document.head.appendChild(script)
+      })
+    }
+
+    const showRouteToDestination = async () => {
+      if (!activeOrder.value || !window.google || !window.google.maps) return
+
+      try {
+        const directionsService = new window.google.maps.DirectionsService()
+        
+        // Initialize directions renderer if not exists
+        if (!directionsRenderer.value) {
+          directionsRenderer.value = new window.google.maps.DirectionsRenderer({
+            map: driverMap.value,
+            suppressMarkers: false,
+            polylineOptions: {
+              strokeColor: '#10B981',
+              strokeWeight: 5,
+              strokeOpacity: 0.8
+            }
+          })
+        }
+
+        // Get route from driver's current location to delivery address
+        const request = {
+          origin: { lat: driverLatLng.value.lat, lng: driverLatLng.value.lng },
+          destination: activeOrder.value.deliveryAddress || activeOrder.value.pickupAddress,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+          unitSystem: window.google.maps.UnitSystem.METRIC
+        }
+
+        directionsService.route(request, (result, status) => {
+          if (status === 'OK') {
+            directionsRenderer.value.setDirections(result)
+            
+            const route = result.routes[0].legs[0]
+            distanceToDestination.value = route.distance.text
+            estimatedArrival.value = route.duration.text
+            
+            console.log('[v0] Route calculated:', route.distance.text, route.duration.text)
+          } else {
+            console.error('[v0] Directions request failed:', status)
+            // Fallback to Distance Matrix API
+            calculateDistanceMatrix()
+          }
+        })
+      } catch (err) {
+        console.error('[v0] Error showing route:', err)
+      }
+    }
+
+    const calculateDistanceMatrix = async () => {
+      if (!activeOrder.value || !window.google || !window.google.maps) return
+
+      try {
+        const service = new window.google.maps.DistanceMatrixService()
+        
+        const request = {
+          origins: [{ lat: driverLatLng.value.lat, lng: driverLatLng.value.lng }],
+          destinations: [activeOrder.value.deliveryAddress || activeOrder.value.pickupAddress],
+          travelMode: window.google.maps.TravelMode.DRIVING,
+          unitSystem: window.google.maps.UnitSystem.METRIC
+        }
+
+        service.getDistanceMatrix(request, (response, status) => {
+          if (status === 'OK') {
+            const result = response.rows[0].elements[0]
+            if (result.status === 'OK') {
+              distanceToDestination.value = result.distance.text
+              estimatedArrival.value = result.duration.text
+              console.log('[v0] Distance calculated:', result.distance.text, result.duration.text)
+            }
+          } else {
+            console.error('[v0] Distance Matrix request failed:', status)
+          }
+        })
+      } catch (err) {
+        console.error('[v0] Error calculating distance:', err)
+      }
+    }
+
+    const startLocationTracking = () => {
+      // Calapan City area coordinates - dummy data for simulation
+      const locations = [
+        { name: 'Calapan City Center', lat: 13.4127, lng: 121.1794 },
+        { name: 'Barangay Ibaba East', lat: 13.4089, lng: 121.1823 },
+        { name: 'Barangay Masipit', lat: 13.4156, lng: 121.1756 },
+        { name: 'Barangay Guinobatan', lat: 13.4201, lng: 121.1812 },
+        { name: 'Barangay Canubing I', lat: 13.4078, lng: 121.1745 },
+        { name: 'Barangay San Antonio', lat: 13.4145, lng: 121.1889 }
+      ]
+      
+      let locationIndex = 0
+      currentDriverLocation.value = locations[locationIndex].name
+      driverLatLng.value = { lat: locations[locationIndex].lat, lng: locations[locationIndex].lng }
+      lastLocationUpdate.value = 'Just now'
+
+      if (locationUpdateInterval.value) {
+        clearInterval(locationUpdateInterval.value)
+      }
+
+      locationUpdateInterval.value = setInterval(() => {
+        locationIndex = (locationIndex + 1) % locations.length
+        const newLocation = locations[locationIndex]
+        
+        currentDriverLocation.value = newLocation.name
+        driverLatLng.value = { lat: newLocation.lat, lng: newLocation.lng }
+        lastLocationUpdate.value = 'Just now'
+
+        if (driverMarker.value && driverMap.value) {
+          const newPos = new window.google.maps.LatLng(newLocation.lat, newLocation.lng)
+          driverMarker.value.setPosition(newPos)
+          driverMap.value.panTo(newPos)
+          
+          if (activeOrder.value) {
+            showRouteToDestination()
+          }
+        }
+
+        console.log('[v0] Driver location updated:', currentDriverLocation.value)
+      }, 8000) // Update every 8 seconds
+    }
+
+    const refreshDriverLocation = () => {
+      lastLocationUpdate.value = 'Refreshing...'
+      // In a real app, you'd fetch the latest location from your backend/database here.
+      // For this simulation, we'll just simulate a refresh.
+      setTimeout(() => {
+        lastLocationUpdate.value = 'Just now'
+        if (driverMap.value && driverMarker.value) {
+          driverMap.value.panTo(driverMarker.value.getPosition())
+          if (activeOrder.value) {
+            showRouteToDestination()
+          }
+        }
+        toast.success('Location refreshed')
+      }, 500)
+    }
+
+    const closeTrackingModal = () => {
+      showTrackingModal.value = false
+      trackedDriver.value = null
+      activeOrder.value = null
+      distanceToDestination.value = 'N/A'
+      estimatedArrival.value = 'N/A'
+      
+      if (locationUpdateInterval.value) {
+        clearInterval(locationUpdateInterval.value)
+        locationUpdateInterval.value = null
+      }
+      
+      if (directionsRenderer.value) {
+        directionsRenderer.value.setMap(null)
+        directionsRenderer.value = null
+      }
+      if (driverMarker.value) {
+        driverMarker.value.setMap(null)
+        driverMarker.value = null
+      }
+      if (destinationMarker.value) {
+        destinationMarker.value.setMap(null)
+        destinationMarker.value = null
+      }
+      driverMap.value = null
+    }
+
+    const suspendDriver = (driver) => {
+      driverToSuspend.value = driver
+      showSuspendModal.value = true
+    }
+
+    const confirmSuspendDriver = () => {
+      if (selectedDriver.value) {
+        driverToSuspend.value = selectedDriver.value
+        showSuspendModal.value = true
+      }
+    }
+
+    const executeSuspend = async () => {
+      if (!driverToSuspend.value) return
+
+      try {
+        const driver = driverToSuspend.value
         const newStatus = driver.status === 'suspended' ? 'active' : 'suspended'
         const col = driver.source === 'drivers' ? 'drivers' : 'users'
-        await updateDoc(doc(db, col, driver.id), { status: newStatus })
+        
+        await updateDoc(doc(db, col, driver.id), { 
+          status: newStatus,
+          updatedAt: new Date().toISOString()
+        })
 
-        // local optimistic update
         const idx = drivers.value.findIndex(d => d.id === driver.id)
-        if (idx !== -1) drivers.value[idx].status = newStatus
+        if (idx !== -1) {
+          drivers.value[idx].status = newStatus
+        }
+
+        if (selectedDriver.value?.id === driver.id) {
+          selectedDriver.value.status = newStatus
+        }
+
+        const driverName = `${driver.firstName} ${driver.lastName}`.trim()
+        if (newStatus === 'suspended') {
+          await loggingService.warning(
+            `Driver suspended: ${driverName}`,
+            loggingService.USER_TYPES.ADMIN,
+            authStore.user?.uid,
+            { action: 'driver_suspend', driverId: driver.id, driverName }
+          )
+        } else {
+          await loggingService.success(
+            `Driver unsuspended: ${driverName}`,
+            loggingService.USER_TYPES.ADMIN,
+            authStore.user?.uid,
+            { action: 'driver_unsuspend', driverId: driver.id, driverName }
+          )
+        }
 
         toast.success(newStatus === 'suspended' ? 'Driver suspended successfully' : 'Driver unsuspended successfully')
+        showSuspendModal.value = false
+        driverToSuspend.value = null
       } catch (err) {
         console.error('Error updating driver status:', err)
         toast.error('Failed to update driver status')
@@ -501,14 +1486,104 @@ export default {
     const previousPage = () => { if (currentPage.value > 1) currentPage.value-- }
     const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 
-    onMounted(() => {
+    const trackDriver = async (driver) => {
+      trackedDriver.value = driver
+      showTrackingModal.value = true
+      
+      try {
+        // Query orders collection for active orders assigned to this driver
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('driverId', '==', driver.id),
+          where('status', 'in', ['driver_assigned', 'picked_up', 'in_transit'])
+        )
+        
+        const ordersSnapshot = await getDocs(ordersQuery)
+        
+        if (!ordersSnapshot.empty) {
+          // Get the first active order
+          const orderDoc = ordersSnapshot.docs[0]
+          activeOrder.value = {
+            id: orderDoc.id,
+            ...orderDoc.data()
+          }
+          console.log('[v0] Found active order for driver:', activeOrder.value)
+        } else {
+          activeOrder.value = null
+          distanceToDestination.value = 'No active order'
+          estimatedArrival.value = 'N/A'
+          console.log('[v0] No active order found for driver')
+        }
+      } catch (err) {
+        console.error('[v0] Error fetching driver active order:', err)
+        activeOrder.value = null
+        distanceToDestination.value = 'Error loading'
+        estimatedArrival.value = 'N/A'
+      }
+    }
+
+    const trackDriverFromModal = async () => {
+      if (selectedDriver.value) {
+        trackedDriver.value = selectedDriver.value
+        showTrackingModal.value = true
+        
+        try {
+          const ordersQuery = query(
+            collection(db, 'orders'),
+            where('driverId', '==', selectedDriver.value.id),
+            where('status', 'in', ['driver_assigned', 'picked_up', 'in_transit'])
+          )
+          
+          const ordersSnapshot = await getDocs(ordersQuery)
+          
+          if (!ordersSnapshot.empty) {
+            const orderDoc = ordersSnapshot.docs[0]
+            activeOrder.value = {
+              id: orderDoc.id,
+              ...orderDoc.data()
+            }
+            console.log('[v0] Found active order for driver:', activeOrder.value)
+          } else {
+            activeOrder.value = null
+            distanceToDestination.value = 'No active order'
+            estimatedArrival.value = 'N/A'
+            console.log('[v0] No active order found for driver')
+          }
+        } catch (err) {
+          console.error('[v0] Error fetching driver active order:', err)
+          activeOrder.value = null
+          distanceToDestination.value = 'Error loading'
+          estimatedArrival.value = 'N/A'
+        }
+      }
+    }
+
+    onMounted(async () => {
       loadDrivers()
       setupRealtimeListeners()
+
+      try {
+        console.log('[v0] Preloading Google Maps API...')
+        await loadGoogleMapsAPI()
+        console.log('[v0] Google Maps API preloaded successfully')
+      } catch (err) {
+        console.error('[v0] Failed to preload Google Maps API:', err)
+      }
     })
 
     onUnmounted(() => {
       unsubs.value.forEach(u => { try { u && u() } catch {} })
       unsubs.value = []
+      if (locationUpdateInterval.value) {
+        clearInterval(locationUpdateInterval.value)
+      }
+      // Clean up map instance if it exists
+      if (driverMap.value) {
+        // If using Google Maps, the map object itself doesn't need explicit removal usually
+        // unless you are removing the DOM element.
+        driverMap.value = null
+        driverMarker.value = null
+      }
     })
 
     return {
@@ -521,17 +1596,46 @@ export default {
       totalDrivers,
       onlineDrivers,
       pendingApplications,
-      averageRating,
+      totalEarnings, // Changed from averageRating
       filteredDrivers,
       paginatedDrivers,
       totalPages,
       loadDrivers,
       getStatusClass,
       viewDriver,
+      viewDocument,
       trackDriver,
+      trackDriverFromModal,
       suspendDriver,
+      confirmSuspendDriver,
+      executeSuspend,
       previousPage,
-      nextPage
+      nextPage,
+      selectedDriver,
+      showTrackingModal,
+      trackedDriver,
+      currentDriverLocation,
+      lastLocationUpdate,
+      showSuspendModal,
+      driverToSuspend,
+      refreshDriverLocation,
+      closeTrackingModal,
+      driverLatLng, // for template access
+      distanceToDestination, // for template access
+      estimatedArrival, // for template access
+      activeOrder, // for template access
+      
+      showAddDriverModal,
+      openAddDriverModal,
+      closeAddDriverModal,
+      newDriver,
+      isSubmitting,
+      uploadProgress,
+      handleFileUpload,
+      submitAddDriver,
+      
+      // Export Report
+      exportReport
     }
   }
 }

@@ -21,9 +21,11 @@
             <span class="text-sm font-medium text-gray-700">Status</span>
             <button 
               @click="toggleOnlineStatus"
+              :disabled="!userLoaded"
               :class="[
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                isOnline ? 'bg-primary' : 'bg-gray-300'
+                isOnline ? 'bg-primary' : 'bg-gray-300',
+                !userLoaded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
               ]"
             >
               <span 
@@ -35,7 +37,7 @@
             </button>
           </div>
           <p class="text-xs text-gray-500 mt-1">
-            {{ isOnline ? 'You are online and available for bookings' : 'You are offline' }}
+            {{ userLoaded ? (isOnline ? 'You are online and available for bookings' : 'You are offline') : 'Loading status...' }}
           </p>
         </div>
         
@@ -151,6 +153,8 @@
 
 <script>
 import { useAuthStore } from '@/stores/auth'
+import { doc, updateDoc, getDoc } from 'firebase/firestore'
+import { db } from '@/firebase/config'
 
 export default {
   name: 'DriverLayout',
@@ -161,6 +165,7 @@ export default {
   data() {
     return {
       isOnline: false,
+      userLoaded: false,
       availableBookingsCount: 3,
       activeAssignmentsCount: 1,
       todayEarnings: 450
@@ -172,7 +177,7 @@ export default {
         'driver-dashboard': 'Dashboard',
         'available-bookings': 'Available Bookings',
         'my-assignments': 'My Assignments',
-        'driver-chat': 'Chat with Customers', // Added chat page title
+        'driver-chat': 'Chat with Customers',
         'upload-proof': 'Upload Proof & Payment',
         'driver-profile': 'Profile'
       }
@@ -180,20 +185,169 @@ export default {
     },
     driverName() {
       const profile = this.authStore.userProfile
-      return profile ? `${profile.firstName} ${profile.lastName}` : 'Driver'
+      if (!profile) return 'Driver'
+      
+      if (profile.fullName) {
+        return profile.fullName
+      }
+      return `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Driver'
     },
     driverInitials() {
       const profile = this.authStore.userProfile
       if (!profile) return 'D'
-      return `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
+      
+      if (profile.fullName) {
+        return profile.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+      }
+      return `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase() || 'D'
     }
   },
+  async mounted() {
+    console.log('[v0] DriverLayout mounted, loading driver status...')
+    await this.loadDriverStatus()
+  },
   methods: {
-    toggleOnlineStatus() {
-      this.isOnline = !this.isOnline
-      this.$toast.success(this.isOnline ? 'You are now online!' : 'You are now offline')
+    async loadDriverStatus() {
+      try {
+        const user = this.authStore.user
+        if (!user) {
+          console.log('[v0] No user found, redirecting to login')
+          this.$router.push('/driver/login')
+          return
+        }
+
+        console.log('[v0] Loading driver profile for user:', user.uid)
+        
+        await this.authStore.fetchUserProfile()
+        
+        const profile = this.authStore.userProfile
+        console.log('[v0] Driver profile loaded:', profile)
+        
+        if (!profile) {
+          console.log('[v0] No profile found, redirecting to login')
+          this.$router.push('/driver/login')
+          return
+        }
+
+        if (profile.role !== 'driver') {
+          console.log('[v0] User is not a driver, role:', profile.role)
+          this.$toast.error('Access denied. This account is not registered as a driver.')
+          this.$router.push('/login')
+          return
+        }
+
+        this.isOnline = profile.isOnline === true
+        this.userLoaded = true
+        
+        console.log('[v0] Driver status initialized:', {
+          isOnline: this.isOnline,
+          userLoaded: this.userLoaded,
+          profileRole: profile.role
+        })
+        
+        if (profile.isOnline === undefined) {
+          console.log('[v0] Initializing isOnline field in database')
+          await this.initializeOnlineStatus()
+        }
+        
+      } catch (error) {
+        console.error('[v0] Error loading driver status:', error)
+        this.$toast.error('Error loading driver profile')
+        this.userLoaded = true // Still allow interaction even if there's an error
+      }
     },
+    
+    async initializeOnlineStatus() {
+      try {
+        const user = this.authStore.user
+        if (!user) return
+
+        const driverRef = doc(db, 'drivers', user.uid)
+        await updateDoc(driverRef, {
+          isOnline: false,
+          status: 'offline',
+          lastStatusUpdate: new Date()
+        })
+        
+        // Update local auth store
+        if (this.authStore.userProfile) {
+          this.authStore.userProfile.isOnline = false
+          this.authStore.userProfile.status = 'offline'
+        }
+        
+        console.log('[v0] Initialized online status in database')
+      } catch (error) {
+        console.error('[v0] Error initializing online status:', error)
+      }
+    },
+    
+    async toggleOnlineStatus() {
+      if (!this.userLoaded) {
+        console.log('[v0] User not loaded yet, cannot toggle status')
+        return
+      }
+      
+      try {
+        const user = this.authStore.user
+        if (!user) {
+          this.$toast.error('Please log in to change status')
+          return
+        }
+
+        const profile = this.authStore.userProfile
+        if (!profile || profile.role !== 'driver') {
+          this.$toast.error('Driver profile not found')
+          return
+        }
+
+        const newStatus = !this.isOnline
+        console.log('[v0] Toggling driver status from', this.isOnline, 'to', newStatus)
+        
+        const driverRef = doc(db, 'drivers', user.uid)
+        await updateDoc(driverRef, {
+          isOnline: newStatus,
+          lastStatusUpdate: new Date(),
+          status: newStatus ? 'online' : 'offline'
+        })
+
+        // Update local state
+        this.isOnline = newStatus
+        
+        // Update auth store
+        if (this.authStore.userProfile) {
+          this.authStore.userProfile.isOnline = newStatus
+          this.authStore.userProfile.status = newStatus ? 'online' : 'offline'
+        }
+
+        this.$toast.success(
+          this.isOnline 
+            ? 'You are now online and available for bookings!' 
+            : 'You are now offline'
+        )
+        
+        console.log('[v0] Driver status updated successfully:', newStatus)
+      } catch (error) {
+        console.error('[v0] Error updating driver status:', error)
+        this.$toast.error('Failed to update status. Please try again.')
+      }
+    },
+    
     async logout() {
+      try {
+        const user = this.authStore.user
+        if (user && this.isOnline) {
+          console.log('[v0] Setting driver offline before logout')
+          const driverRef = doc(db, 'drivers', user.uid)
+          await updateDoc(driverRef, {
+            isOnline: false,
+            status: 'offline',
+            lastStatusUpdate: new Date()
+          })
+        }
+      } catch (error) {
+        console.error('[v0] Error setting offline status during logout:', error)
+      }
+
       const result = await this.authStore.logout()
       if (result.success) {
         this.$toast.success(result.message)

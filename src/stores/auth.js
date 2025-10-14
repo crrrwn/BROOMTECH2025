@@ -9,32 +9,23 @@ import {
   signInWithPopup,
   deleteUser,
 } from "firebase/auth"
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-} from "firebase/firestore"
+import { doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where, deleteDoc } from "firebase/firestore"
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
 import { auth, db, storage } from "@/firebase/config"
+import { loggingService } from "@/services/loggingService"
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null,
-    userProfile: null,       // { id, role, approved, ... } (from admins/users/drivers)
+    userProfile: null, // { id, role, approved, ... } (from admins/users/drivers)
     loading: true,
     isAuthenticated: false,
   }),
 
   getters: {
-    isUser:   (s) => s.userProfile?.role === "user",
+    isUser: (s) => s.userProfile?.role === "user",
     isDriver: (s) => s.userProfile?.role === "driver",
-    isAdmin:  (s) => s.userProfile?.role === "admin",
+    isAdmin: (s) => s.userProfile?.role === "admin",
     isApproved: (s) => s.userProfile?.approved === true,
     needsApproval: (s) => s.userProfile?.approved === false,
     needsProfileCompletion: (s) =>
@@ -182,6 +173,13 @@ export const useAuthStore = defineStore("auth", {
           return { success: false, message: "Your account is pending admin approval." }
         }
 
+        if (profile.role === "driver") {
+          await updateDoc(doc(db, "drivers", cred.user.uid), {
+            isOnline: true,
+            lastLoginAt: new Date().toISOString(),
+          })
+        }
+
         // approved user/driver
         this.isAuthenticated = true
         return { success: true, message: "Login successful!" }
@@ -219,6 +217,9 @@ export const useAuthStore = defineStore("auth", {
         }
 
         await setDoc(doc(db, "users", user.uid), userProfileData)
+
+        const userName = `${profileData.firstName} ${profileData.lastName}`.trim()
+        await loggingService.logUserRegistration(user.uid, userName)
 
         const message =
           role === "driver"
@@ -288,6 +289,13 @@ export const useAuthStore = defineStore("auth", {
 
     async logout() {
       try {
+        if (this.userProfile?.role === "driver" && this.user) {
+          await updateDoc(doc(db, "drivers", this.user.uid), {
+            isOnline: false,
+            lastLogoutAt: new Date().toISOString(),
+          })
+        }
+
         await signOut(auth)
         this.user = null
         this.userProfile = null
@@ -385,7 +393,9 @@ export const useAuthStore = defineStore("auth", {
             initials: (userData.fullName
               ? userData.fullName.split(" ").map((n) => n[0])
               : [userData.firstName?.[0] || "", userData.lastName?.[0] || ""]
-            ).join("").toUpperCase(),
+            )
+              .join("")
+              .toUpperCase(),
           })
         })
         return applications
@@ -397,6 +407,10 @@ export const useAuthStore = defineStore("auth", {
 
     async approveDriver(userId, adminId) {
       try {
+        const driverDoc = await getDoc(doc(db, "drivers", userId))
+        const driverData = driverDoc.data()
+        const driverName = driverData?.fullName || `${driverData?.firstName} ${driverData?.lastName}`.trim()
+
         await updateDoc(doc(db, "drivers", userId), {
           approved: true,
           "driverInfo.applicationStatus": "approved",
@@ -404,6 +418,9 @@ export const useAuthStore = defineStore("auth", {
           "driverInfo.approvedBy": adminId,
           updatedAt: new Date().toISOString(),
         })
+
+        await loggingService.logDriverApproval(userId, driverName, adminId)
+
         return { success: true, message: "Driver application approved successfully" }
       } catch (error) {
         return { success: false, message: error.message }
@@ -412,6 +429,10 @@ export const useAuthStore = defineStore("auth", {
 
     async rejectDriver(userId, adminId, reason = "") {
       try {
+        const driverDoc = await getDoc(doc(db, "drivers", userId))
+        const driverData = driverDoc.data()
+        const driverName = driverData?.fullName || `${driverData?.firstName} ${driverData?.lastName}`.trim()
+
         await updateDoc(doc(db, "drivers", userId), {
           "driverInfo.applicationStatus": "rejected",
           "driverInfo.rejectedAt": new Date().toISOString(),
@@ -419,6 +440,9 @@ export const useAuthStore = defineStore("auth", {
           "driverInfo.rejectionReason": reason,
           updatedAt: new Date().toISOString(),
         })
+
+        await loggingService.logDriverRejection(userId, driverName, adminId)
+
         return { success: true, message: "Driver application rejected" }
       } catch (error) {
         return { success: false, message: error.message }
@@ -427,10 +451,21 @@ export const useAuthStore = defineStore("auth", {
 
     async approveUser(userId) {
       try {
+        const userDoc = await getDoc(doc(db, "users", userId))
+        const userData = userDoc.data()
+        const userName = `${userData?.firstName} ${userData?.lastName}`.trim()
+
         await updateDoc(doc(db, "users", userId), {
           approved: true,
           updatedAt: new Date().toISOString(),
         })
+
+        await loggingService.success(`User approved: ${userName}`, loggingService.USER_TYPES.ADMIN, null, {
+          action: "user_approval",
+          userId,
+          userName,
+        })
+
         return { success: true, message: "User approved successfully!" }
       } catch (error) {
         return { success: false, message: error.message }
@@ -475,7 +510,7 @@ export const useAuthStore = defineStore("auth", {
         await setDoc(
           doc(db, "settings", "system"),
           { autoAcceptUsers: enabled, updatedAt: new Date().toISOString() },
-          { merge: true }
+          { merge: true },
         )
         return { success: true, message: "Auto-accept setting updated" }
       } catch (error) {
@@ -513,12 +548,20 @@ export const useAuthStore = defineStore("auth", {
         return { success: true, message: "Administrator account created successfully! You can now login." }
       } catch (error) {
         console.error("Admin registration error:", error)
-        try { if (error.code === "permission-denied" && auth.currentUser) await deleteUser(auth.currentUser) } catch {}
-        if (error.code === "auth/email-already-in-use") return { success: false, message: "This email address is already registered." }
-        if (error.code === "auth/weak-password") return { success: false, message: "Password is too weak. Please use a stronger password." }
+        try {
+          if (error.code === "permission-denied" && auth.currentUser) await deleteUser(auth.currentUser)
+        } catch {}
+        if (error.code === "auth/email-already-in-use")
+          return { success: false, message: "This email address is already registered." }
+        if (error.code === "auth/weak-password")
+          return { success: false, message: "Password is too weak. Please use a stronger password." }
         if (error.code === "auth/invalid-email") return { success: false, message: "Invalid email address format." }
-        if (error.code === "auth/network-request-failed") return { success: false, message: "Network error. Please check your internet connection and try again." }
-        return { success: false, message: error.message || "An error occurred during admin registration. Please try again." }
+        if (error.code === "auth/network-request-failed")
+          return { success: false, message: "Network error. Please check your internet connection and try again." }
+        return {
+          success: false,
+          message: error.message || "An error occurred during admin registration. Please try again.",
+        }
       }
     },
 
@@ -602,16 +645,26 @@ export const useAuthStore = defineStore("auth", {
         }
 
         await setDoc(doc(db, "drivers", user.uid), userProfileData)
+
+        await loggingService.logDriverRegistration(user.uid, profileData.fullName)
+
         return { success: true, message: "Driver application submitted successfully! Please wait for admin approval." }
       } catch (error) {
-        if (error.code === "auth/email-already-in-use") return { success: false, error: "This email address is already registered." }
-        if (error.code === "auth/weak-password") return { success: false, error: "Password must be at least 6 characters long." }
+        if (error.code === "auth/email-already-in-use")
+          return { success: false, error: "This email address is already registered." }
+        if (error.code === "auth/weak-password")
+          return { success: false, error: "Password must be at least 6 characters long." }
         if (error.code === "auth/invalid-email") return { success: false, error: "Please enter a valid email address." }
-        if (error.code === "storage/unauthorized") return { success: false, error: "File upload permission denied. Please contact support." }
-        if (error.code === "storage/canceled") return { success: false, error: "File upload was canceled. Please try again." }
-        if (error.code === "storage/unknown") return { success: false, error: "File upload failed due to server error. Please try again." }
-        if (error.code === "permission-denied") return { success: false, error: "Database permission denied. Please contact support." }
-        if (error.code === "network-request-failed") return { success: false, error: "Network error. Please check your connection and try again." }
+        if (error.code === "storage/unauthorized")
+          return { success: false, error: "File upload permission denied. Please contact support." }
+        if (error.code === "storage/canceled")
+          return { success: false, error: "File upload was canceled. Please try again." }
+        if (error.code === "storage/unknown")
+          return { success: false, error: "File upload failed due to server error. Please try again." }
+        if (error.code === "permission-denied")
+          return { success: false, error: "Database permission denied. Please contact support." }
+        if (error.code === "network-request-failed")
+          return { success: false, error: "Network error. Please check your connection and try again." }
         return { success: false, error: error.message || "Registration failed. Please try again." }
       }
     },

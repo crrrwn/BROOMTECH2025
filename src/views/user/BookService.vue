@@ -29,6 +29,23 @@
       <p class="text-gray-600">Choose your delivery service and get instant quotes</p>
     </div>
 
+    <!-- Bad Weather Warning Banner -->
+    <div v-if="isBadWeather && badWeatherFeeEnabled" class="bg-yellow-100 border-l-4 border-yellow-500 p-6 shadow-lg">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-8 w-8 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-yellow-800 mb-2">⚠️ Bad Weather Alert</h3>
+          <p class="text-base text-yellow-800">
+            Due to current weather conditions (<strong>{{ currentWeather }}</strong>), a <strong class="text-xl">₱5 surcharge</strong> will be automatically added to your delivery fee for safety and driver compensation.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Service Selection -->
     <div v-if="!needsProfileCompletion" class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Select Service Type</h2>
@@ -53,6 +70,8 @@
             <div class="flex-1">
               <h3 class="font-medium text-gray-900">{{ service.name }}</h3>
               <p class="text-sm text-gray-600">{{ service.description }}</p>
+              <!-- Display dynamic minimum rate from pricing settings -->
+              <p class="text-sm font-semibold text-green-600 mt-1">Minimum: ₱{{ getServiceMinRate(service.id) }}</p>
             </div>
           </div>
         </div>
@@ -80,6 +99,25 @@
             >
               Use Current Location
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamically display calculated price -->
+      <div v-if="selectedService && routeInfo.distanceValue > 0" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <h3 class="text-md font-medium text-green-800 mb-3">Estimated Delivery Fee</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-600">Minimum Charge:<span class="font-medium ml-1">₱{{ calculatedPrice.minCharge }}</span></p>
+            <p class="text-sm text-gray-600">Distance Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.distanceFee }}</span></p>
+            <p class="text-sm text-gray-600">Time Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.timeFee }}</span></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Bad Weather Surcharge:<span class="font-medium ml-1">₱{{ calculatedPrice.badWeatherFee }}</span></p>
+            <p v-if="bookingForm.paymentMethod === 'GCASH'" class="text-sm text-gray-600">GCash Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.gcashFee }}</span></p>
+            <hr class="my-2">
+            <p class="text-lg font-bold text-gray-800">Subtotal:<span class="ml-2">₱{{ calculatedPrice.subtotal }}</span></p>
+            <p class="text-xl font-extrabold text-green-700">Estimated Total:<span class="ml-2">₱{{ calculatedPrice.total }}</span></p>
           </div>
         </div>
       </div>
@@ -523,9 +561,11 @@
 
 <script>
 import { db } from '@/firebase/config'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/auth'
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { weatherService } from '@/services/weatherService'
+import { loggingService } from '@/services/loggingService'
 
 export default {
   name: 'BookService',
@@ -541,6 +581,26 @@ export default {
       uploadingBillReceipt: false,
       billReceiptProgress: 0,
 
+      isBadWeather: false,
+      currentWeather: '',
+      badWeatherFeeEnabled: false,
+      weatherCheckInterval: null,
+
+      pricingSettings: {
+        services: [],
+        pricingRules: { peakHours: 1.3, badWeather: 5, highDemand: 1.8 },
+        gcashCharges: []
+      },
+      calculatedPrice: {
+        minCharge: 55,
+        distanceFee: 0,
+        timeFee: 0,
+        badWeatherFee: 0,
+        gcashFee: 0,
+        subtotal: 55,
+        total: 55
+      },
+
       // Maps instances
       map: null,
       directionsService: null,
@@ -550,7 +610,7 @@ export default {
       currentLocationMarker: null,
       pickupMarker: null,
       deliveryMarker: null,
-      routeInfo: { distance: 'N/A', duration: 'N/A' },
+      routeInfo: { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 },
       autocompleteInstances: {},
       mapsReady: false,
       debounceTimer: null,
@@ -591,20 +651,169 @@ export default {
       if (!this.selectedService) return false
       const hasPaymentMethod = !!this.bookingForm.paymentMethod
       const hasRequiredFields = this.checkRequiredFields()
-      // extra guard: wag mag-submit habang nag-a-upload pa ng receipt
       const noBlockingUpload = !(this.selectedService.id === 'bill-payments' && this.uploadingBillReceipt)
       return hasPaymentMethod && hasRequiredFields && noBlockingUpload
     }
   },
-  mounted() {
+  async mounted() {
+    await this.checkProfileCompletion()
+    
     this.loadGoogleMapsAPI()
+    await this.loadPricingSettings()
+    await this.checkBadWeatherFeeEnabled()
+    await this.checkWeather()
+    // Check weather every 10 minutes
+    this.weatherCheckInterval = setInterval(() => {
+      this.checkWeather()
+    }, 10 * 60 * 1000)
+  },
+  beforeUnmount() {
+    if (this.weatherCheckInterval) {
+      clearInterval(this.weatherCheckInterval)
+    }
   },
   methods: {
+    async checkProfileCompletion() {
+      try {
+        const user = this.authStore?.user
+        const userProfile = this.authStore?.userProfile
+        
+        if (!user || !userProfile) {
+          this.needsProfileCompletion = true
+          return
+        }
+
+        // Check if required profile fields are filled
+        const hasRequiredFields = userProfile.firstName && 
+                                 userProfile.lastName && 
+                                 userProfile.phone && 
+                                 userProfile.address
+
+        this.needsProfileCompletion = !hasRequiredFields
+        console.log('[v0] Profile completion check:', {
+          hasRequiredFields,
+          needsProfileCompletion: this.needsProfileCompletion
+        })
+      } catch (error) {
+        console.error('[v0] Error checking profile completion:', error)
+        this.needsProfileCompletion = false
+      }
+    },
+
+    async checkBadWeatherFeeEnabled() {
+      try {
+        this.badWeatherFeeEnabled = await weatherService.isBadWeatherFeeEnabled()
+        console.log('[v0] Bad Weather Fee enabled:', this.badWeatherFeeEnabled)
+      } catch (error) {
+        console.error('[v0] Error checking bad weather fee setting:', error)
+      }
+    },
+
+    async checkWeather() {
+      try {
+        const weatherData = await weatherService.checkWeather()
+        this.isBadWeather = weatherData.isBadWeather
+        this.currentWeather = weatherData.description
+
+        console.log('[v0] Weather check:', {
+          isBadWeather: this.isBadWeather,
+          description: this.currentWeather
+        })
+
+        // Recalculate delivery fee if weather changed
+        if (this.selectedService && this.routeInfo.distanceValue > 0) {
+          this.calculateDeliveryFee()
+        }
+      } catch (error) {
+        console.error('[v0] Error checking weather:', error)
+      }
+    },
+
+    // Method to get minimum rate for a specific service
+    getServiceMinRate(serviceId) {
+      const servicePricing = this.pricingSettings.services?.find(s => s.id === serviceId)
+      return servicePricing?.minCharge || 55
+    },
+
+    calculateDeliveryFee() {
+      if (!this.selectedService || !this.routeInfo.distanceValue) {
+        return
+      }
+
+      // Find service pricing
+      const servicePricing = this.pricingSettings.services?.find(s => s.id === this.selectedService.id)
+      if (!servicePricing) {
+        console.warn('[v0] No pricing found for service:', this.selectedService.id)
+        // Use default pricing if not found
+        this.calculatedPrice = {
+          minCharge: 55,
+          distanceFee: 0,
+          timeFee: 0,
+          badWeatherFee: 0,
+          gcashFee: 0,
+          subtotal: 55,
+          total: 55
+        }
+        return
+      }
+
+      // Base fare (minimum charge)
+      const minCharge = servicePricing.minCharge || 55
+
+      // Distance fee (distance in km × rate per km)
+      const distanceInKm = this.routeInfo.distanceValue / 1000
+      const distanceFee = distanceInKm * (servicePricing.distanceRate || 10)
+
+      // Time fee (time in minutes × rate per minute)
+      const timeInMinutes = this.routeInfo.durationValue / 60
+      const timeFee = timeInMinutes * (servicePricing.timeRate || 2)
+
+      // Bad weather surcharge (₱5 if bad weather detected AND toggle is enabled)
+      const badWeatherFee = (this.isBadWeather && this.badWeatherFeeEnabled) ? 5 : 0
+
+      // Subtotal
+      let subtotal = Math.max(minCharge, minCharge + distanceFee + timeFee + badWeatherFee)
+
+      // GCash fee (if payment method is GCASH)
+      let gcashFee = 0
+      if (this.bookingForm.paymentMethod === 'GCASH') {
+        const gcashTier = this.pricingSettings.gcashCharges?.find(tier => {
+          if (tier.maxAmount === null) {
+            return subtotal >= tier.minAmount
+          }
+          return subtotal >= tier.minAmount && subtotal <= tier.maxAmount
+        })
+        gcashFee = gcashTier?.charge || 0
+      }
+
+      // Total
+      const total = subtotal + gcashFee
+
+      this.calculatedPrice = {
+        minCharge: Math.round(minCharge * 100) / 100,
+        distanceFee: Math.round(distanceFee * 100) / 100,
+        timeFee: Math.round(timeFee * 100) / 100,
+        badWeatherFee: Math.round(badWeatherFee * 100) / 100,
+        gcashFee: Math.round( gcashFee * 100) / 100,
+        subtotal: Math.round(subtotal * 100) / 100,
+        total: Math.round(total * 100) / 100
+      }
+
+      console.log('[v0] Calculated price:', this.calculatedPrice)
+    },
+
     onSelectService(service) {
+      console.log('[v0] Service selected:', service.name)
+      
       this.selectedService = service
       this.formError = ''
-      this.routeInfo = { distance: 'N/A', duration: 'N/A' }
-      if (this.directionsRenderer) this.directionsRenderer.setDirections({ routes: [] })
+      this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
+      this.calculatedPrice = { minCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
+      
+      if (this.directionsRenderer) {
+        this.directionsRenderer.setDirections({ routes: [] })
+      }
+      
       this.$nextTick(() => {
         this.initializeMap()
         this.initializeAutocomplete()
@@ -829,10 +1038,18 @@ export default {
             this.directionsRenderer.setOptions({ suppressMarkers: true })
             this.directionsRenderer.setDirections(response)
             const leg = response.routes[0].legs[0]
-            this.routeInfo = { distance: leg.distance.text, duration: leg.duration.text }
+            this.routeInfo = {
+              distance: leg.distance.text,
+              duration: leg.duration.text,
+              distanceValue: leg.distance.value, // in meters
+              durationValue: leg.duration.value  // in seconds
+            }
+            // Calculate delivery fee after route is updated
+            this.calculateDeliveryFee()
           } else {
             console.error('Directions request failed due to ' + status)
-            this.routeInfo = { distance: 'N/A', duration: 'N/A' }
+            this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
+            this.calculatedPrice = { minCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
           }
         }
       )
@@ -936,7 +1153,6 @@ export default {
       }
     },
 
-    // ✅ SUBMIT TO FIRESTORE
     async submitBooking() {
       try {
         this.formError = ''
@@ -946,6 +1162,7 @@ export default {
         }
 
         const user = this.authStore?.user
+        const userProfile = this.authStore?.userProfile
         if (!user?.uid) {
           this.formError = 'You must be logged in to submit a booking.'
           alert(this.formError)
@@ -973,13 +1190,26 @@ export default {
           serviceName: this.selectedService.name,
           formData: { ...this.bookingForm, billReceiptFile: null }, // wag isama raw file
           routeInfo: { ...this.routeInfo },
+          pricing: { ...this.calculatedPrice }, // Include calculated pricing
           status: 'pending',
           createdAt: serverTimestamp()
         }
 
-        await addDoc(collection(db, 'orders'), payload)
+        const orderRef = await addDoc(collection(db, 'orders'), payload)
 
-        alert('Booking submitted successfully!')
+        const userName = userProfile?.firstName && userProfile?.lastName 
+          ? `${userProfile.firstName} ${userProfile.lastName}`.trim()
+          : user.email || 'Unknown User'
+        
+        await loggingService.logOrderCreated(
+          orderRef.id,
+          user.uid,
+          userName,
+          this.selectedService.name,
+          this.calculatedPrice.total
+        )
+
+        alert(`Booking submitted successfully! Estimated Total: ₱${this.calculatedPrice.total}`)
         this.$router.push('/user/orders')
       } catch (err) {
         console.error('[submitBooking] error:', err)
@@ -988,7 +1218,23 @@ export default {
       } finally {
         this.submitting = false
       }
-    }
+    },
+
+    async loadPricingSettings() {
+      try {
+        const docRef = doc(db, 'settings', 'pricing')
+        const docSnap = await getDoc(docRef)
+        if (docSnap.exists()) {
+          this.pricingSettings = docSnap.data()
+          console.log('[v0] Pricing settings loaded:', this.pricingSettings)
+        } else {
+          console.warn('[v0] No pricing settings found, using defaults')
+        }
+      } catch (error) {
+        console.error('[v0] Error loading pricing settings:', error)
+      }
+    },
+
   },
   watch: {
     async selectedService(newService) {
@@ -1006,6 +1252,9 @@ export default {
           this.initializeAutocomplete()
         })
       }
+    },
+    'bookingForm.paymentMethod'() {
+      this.calculateDeliveryFee()
     }
   }
 }

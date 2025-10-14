@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-6">
-    <!-- Loading State -->
+     Loading State 
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
     </div>
 
     <div v-else>
-      <!-- Overview Stats -->
+       Overview Stats 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="bg-white rounded-lg p-6 shadow-sm border">
           <div class="flex items-center">
@@ -23,6 +23,7 @@
           </div>
         </div>
 
+        <!-- Updated to show 20% commission (admin's share) -->
         <div class="bg-white rounded-lg p-6 shadow-sm border">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -31,13 +32,14 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Revenue Today</p>
-              <p class="text-2xl font-semibold text-gray-900">₱{{ stats.revenueToday.toLocaleString() }}</p>
-              <p class="text-xs text-green-600">+{{ stats.revenueGrowth }}% from yesterday</p>
+              <p class="text-sm font-medium text-gray-600">Revenue Today (20%)</p>
+              <p class="text-2xl font-semibold text-gray-900">₱{{ stats.adminRevenueToday.toLocaleString() }}</p>
+              <p class="text-xs text-gray-500">Total: ₱{{ stats.revenueToday.toLocaleString() }}</p>
             </div>
           </div>
         </div>
 
+        <!-- Changed "Active Drivers" to "Online Drivers" -->
         <div class="bg-white rounded-lg p-6 shadow-sm border">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -46,9 +48,9 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Active Drivers</p>
+              <p class="text-sm font-medium text-gray-600">Online Drivers</p>
               <p class="text-2xl font-semibold text-gray-900">{{ stats.activeDrivers }}</p>
-              <p class="text-xs text-gray-500">{{ stats.totalDrivers }} total</p>
+              <p class="text-xs text-gray-500">{{ stats.totalDrivers }} total drivers</p>
             </div>
           </div>
         </div>
@@ -69,9 +71,9 @@
         </div>
       </div>
 
-      <!-- Quick Actions & Alerts -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Pending Approvals -->
+       Quick Actions & Alerts 
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         Pending Approvals 
         <div class="bg-white rounded-lg p-6 shadow-sm border">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Pending Approvals</h3>
           <div class="space-y-3">
@@ -101,7 +103,7 @@
           </div>
         </div>
 
-        <!-- System Status -->
+         System Status 
         <div class="bg-white rounded-lg p-6 shadow-sm border">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
           <div class="space-y-3">
@@ -157,57 +159,73 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div class="space-y-3">
-            <div v-for="activity in recentActivity" :key="activity.id" class="flex items-start space-x-3">
-              <div :class="[
-                'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                activity.type === 'order' ? 'bg-blue-100' :
-                activity.type === 'user' ? 'bg-green-100' :
-                activity.type === 'driver' ? 'bg-yellow-100' :
-                'bg-gray-100'
-              ]">
-                <svg class="w-4 h-4" :class="[
-                  activity.type === 'order' ? 'text-blue-600' :
-                  activity.type === 'user' ? 'text-green-600' :
-                  activity.type === 'driver' ? 'text-yellow-600' :
-                  'text-gray-600'
-                ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm text-gray-900">{{ activity.message }}</p>
-                <p class="text-xs text-gray-500">{{ activity.time }}</p>
-              </div>
+       Recent Activity 
+      <div class="bg-white rounded-lg p-6 shadow-sm border">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+        <div class="space-y-3">
+          <div v-for="activity in recentActivity" :key="activity.id" class="flex items-start space-x-3">
+            <div :class="[
+              'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+              activity.type === 'order' ? 'bg-blue-100' :
+              activity.type === 'user' ? 'bg-green-100' :
+              activity.type === 'driver' ? 'bg-yellow-100' :
+              'bg-gray-100'
+            ]">
+              <svg class="w-4 h-4" :class="[
+                activity.type === 'order' ? 'text-blue-600' :
+                activity.type === 'user' ? 'text-green-600' :
+                activity.type === 'driver' ? 'text-yellow-600' :
+                'text-gray-600'
+              ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-gray-900">{{ activity.message }}</p>
+              <p class="text-xs text-gray-500">{{ activity.time }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Charts Section -->
+       Charts Section 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Revenue Chart -->
+         Added revenue filter dropdown 
         <div class="bg-white rounded-lg p-6 shadow-sm border">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Revenue (Last 7 Days)</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Daily Revenue</h3>
+            <select 
+              v-model="revenueFilter" 
+              @change="updateRevenueChart"
+              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="today">Today</option>
+              <option value="last7days">Last 7 Days</option>
+              <option value="last30days">Last 30 Days</option>
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+            </select>
+          </div>
           <div class="h-64 flex items-end justify-between space-x-2">
             <div v-for="(day, index) in revenueChart" :key="index" class="flex flex-col items-center flex-1">
               <div 
-                class="bg-primary rounded-t w-full transition-all duration-300 hover:bg-green-600"
-                :style="{ height: `${(day.amount / Math.max(...revenueChart.map(d => d.amount))) * 200}px` }"
-              ></div>
+                class="bg-primary rounded-t w-full transition-all duration-300 hover:bg-green-600 relative group"
+                :style="{ height: `${(day.amount / Math.max(...revenueChart.map(d => d.amount), 1)) * 200}px` }"
+              >
+                <div class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  ₱{{ day.amount.toLocaleString() }}
+                </div>
+              </div>
               <div class="mt-2 text-center">
                 <p class="text-xs text-gray-500">{{ day.day }}</p>
-                <p class="text-sm font-medium text-gray-900">₱{{ day.amount.toLocaleString() }}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Service Distribution -->
+         Fixed service distribution to properly fetch and display order counts 
         <div class="bg-white rounded-lg p-6 shadow-sm border">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Service Distribution</h3>
           <div class="space-y-4">
@@ -225,7 +243,7 @@
         </div>
       </div>
 
-      <!-- Live Orders Table -->
+       Live Orders 
       <div class="bg-white rounded-lg shadow-sm border">
         <div class="px-6 py-4 border-b border-gray-200">
           <div class="flex items-center justify-between">
@@ -255,7 +273,7 @@
               </tr>
               <tr v-for="order in liveOrders" :key="order.id" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #{{ order.id }}
+                  #{{ order.id.substring(0, 8) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ order.customerName }}
@@ -270,7 +288,7 @@
                   <span :class="[
                     'inline-flex px-2 py-1 text-xs font-medium rounded-full',
                     order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                    order.status === 'in_transit' ? 'bg-blue-100 text-blue-800' :
+                    order.status === 'in-transit' ? 'bg-blue-100 text-blue-800' :
                     order.status === 'confirmed' ? 'bg-yellow-100 text-yellow-800' :
                     order.status === 'pending' ? 'bg-red-100 text-red-800' :
                     'bg-gray-100 text-gray-800'
@@ -279,11 +297,10 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ₱{{ order.totalAmount }}
+                  ₱{{ order.totalAmount.toLocaleString() }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button class="text-primary hover:text-green-600 mr-3">View</button>
-                  <button v-if="!order.driverId" class="text-blue-600 hover:text-blue-800">Assign</button>
+                  <router-link :to="`/admin/orders`" class="text-primary hover:text-green-600 mr-3">View</router-link>
                 </td>
               </tr>
             </tbody>
@@ -318,10 +335,12 @@ export default {
     const toast = useToast()
     
     const loading = ref(true)
+    const revenueFilter = ref('last7days')
     
     const stats = ref({
       totalOrders: 0,
       revenueToday: 0,
+      adminRevenueToday: 0,
       ordersGrowth: 12,
       revenueGrowth: 8,
       activeDrivers: 0,
@@ -337,206 +356,449 @@ export default {
     })
 
     const recentActivity = ref([])
-    const revenueChart = ref([
-      { day: 'Mon', amount: 1200 },
-      { day: 'Tue', amount: 1800 },
-      { day: 'Wed', amount: 1500 },
-      { day: 'Thu', amount: 2200 },
-      { day: 'Fri', amount: 1900 },
-      { day: 'Sat', amount: 2800 },
-      { day: 'Sun', amount: 2100 }
-    ])
-    
-    const serviceDistribution = ref([
-      { name: 'Food Delivery', percentage: 45, count: 234, color: 'bg-blue-500' },
-      { name: 'Bill Payment', percentage: 30, count: 156, color: 'bg-green-500' },
-      { name: 'Cleaning Service', percentage: 15, count: 78, color: 'bg-yellow-500' },
-      { name: 'Other Services', percentage: 10, count: 52, color: 'bg-purple-500' }
-    ])
-    
+    const revenueChart = ref([])
+    const serviceDistribution = ref([])
     const liveOrders = ref([])
-
     const listeners = ref([])
+    const allOrders = ref([])
 
-    const fetchDashboardStats = async () => {
+    const setupSystemSettingsListener = () => {
       try {
-        console.log('[v0] Fetching dashboard statistics...')
+        const settingsRef = doc(db, 'settings', 'system')
         
-        // Fetch total orders
-        try {
-          const ordersQuery = query(collection(db, 'orders'))
-          const ordersSnapshot = await getDocs(ordersQuery)
-          stats.value.totalOrders = ordersSnapshot.size
-          console.log('[v0] Total orders:', stats.value.totalOrders)
-        } catch (error) {
-          console.log('[v0] Orders collection might not exist yet, using default value')
-          stats.value.totalOrders = 0
-        }
+        const unsubscribe = onSnapshot(settingsRef, async (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const settings = docSnapshot.data()
+            systemStatus.value.badWeatherFee = settings.badWeatherFee || false
+            systemStatus.value.autoAcceptUsers = settings.autoAcceptUsers !== false
+          } else {
+            await setDoc(settingsRef, {
+              badWeatherFee: false,
+              autoAcceptUsers: true,
+              createdAt: new Date()
+            })
+            systemStatus.value.badWeatherFee = false
+            systemStatus.value.autoAcceptUsers = true
+          }
+        }, (error) => {
+          console.error('[v0] System settings listener error:', error)
+        })
 
-        // Calculate today's revenue
-        try {
-          const today = new Date()
-          today.setHours(0, 0, 0, 0)
-          const todayQuery = query(
-            collection(db, 'orders'),
-            where('createdAt', '>=', today),
-            where('status', '==', 'delivered')
-          )
-          const todaySnapshot = await getDocs(todayQuery)
-          let todayRevenue = 0
-          todaySnapshot.forEach(doc => {
-            const order = doc.data()
-            todayRevenue += order.totalAmount || 0
-          })
-          stats.value.revenueToday = todayRevenue
-          console.log('[v0] Today revenue:', stats.value.revenueToday)
-        } catch (error) {
-          console.log('[v0] Revenue calculation failed, using default value')
-          stats.value.revenueToday = 0
-        }
+        listeners.value.push(unsubscribe)
+      } catch (error) {
+        console.error('[v0] Error setting up system settings listener:', error)
+      }
+    }
 
-        // Fetch driver statistics
-        try {
-          const driversQuery = query(
-            collection(db, 'users'),
-            where('role', '==', 'driver')
-          )
-          const driversSnapshot = await getDocs(driversQuery)
-          stats.value.totalDrivers = driversSnapshot.size
+    const setupPendingUsersListener = () => {
+      try {
+        const pendingUsersQuery = query(
+          collection(db, 'users'),
+          where('role', '==', 'user'),
+          where('status', '==', 'pending')
+        )
+
+        const unsubscribe = onSnapshot(pendingUsersQuery, (snapshot) => {
+          stats.value.pendingUsers = snapshot.size
+        }, (error) => {
+          console.log('[v0] Pending users listener error:', error.message)
+          stats.value.pendingUsers = 0
+        })
+
+        listeners.value.push(unsubscribe)
+      } catch (error) {
+        console.error('[v0] Error setting up pending users listener:', error)
+      }
+    }
+
+    const setupPendingDriversListener = () => {
+      try {
+        const pendingDriversQuery = query(
+          collection(db, 'users'),
+          where('role', '==', 'driver'),
+          where('status', '==', 'pending')
+        )
+
+        const unsubscribe = onSnapshot(pendingDriversQuery, (snapshot) => {
+          stats.value.pendingDrivers = snapshot.size
+        }, (error) => {
+          console.log('[v0] Pending drivers listener error:', error.message)
+          stats.value.pendingDrivers = 0
+        })
+
+        listeners.value.push(unsubscribe)
+      } catch (error) {
+        console.error('[v0] Error setting up pending drivers listener:', error)
+      }
+    }
+
+    const setupUsersListener = () => {
+      try {
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('role', '==', 'user')
+        )
+
+        const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+          stats.value.totalUsers = snapshot.size
+        }, (error) => {
+          console.log('[v0] Users listener error:', error.message)
+          stats.value.totalUsers = 0
+        })
+
+        listeners.value.push(unsubscribe)
+      } catch (error) {
+        console.error('[v0] Error setting up users listener:', error)
+      }
+    }
+
+    const setupDriversListener = () => {
+      try {
+        const driversQuery = query(
+          collection(db, 'users'),
+          where('role', '==', 'driver')
+        )
+
+        const unsubscribe = onSnapshot(driversQuery, (snapshot) => {
+          stats.value.totalDrivers = snapshot.size
           
           let activeDriversCount = 0
-          driversSnapshot.forEach(doc => {
+          snapshot.forEach(doc => {
             const driver = doc.data()
             if (driver.status === 'approved' && driver.isOnline) {
               activeDriversCount++
             }
           })
           stats.value.activeDrivers = activeDriversCount
-          console.log('[v0] Drivers - Total:', stats.value.totalDrivers, 'Active:', stats.value.activeDrivers)
-        } catch (error) {
-          console.log('[v0] Driver statistics failed, using default values')
+        }, (error) => {
+          console.log('[v0] Drivers listener error:', error.message)
           stats.value.totalDrivers = 0
           stats.value.activeDrivers = 0
-        }
+        })
 
-        // Fetch user statistics
-        try {
-          const usersQuery = query(
-            collection(db, 'users'),
-            where('role', '==', 'user')
-          )
-          const usersSnapshot = await getDocs(usersQuery)
-          stats.value.totalUsers = usersSnapshot.size
-
-          let pendingUsersCount = 0
-          usersSnapshot.forEach(doc => {
-            const user = doc.data()
-            if (user.status === 'pending') {
-              pendingUsersCount++
-            }
-          })
-          stats.value.pendingUsers = pendingUsersCount
-          console.log('[v0] Users - Total:', stats.value.totalUsers, 'Pending:', stats.value.pendingUsers)
-        } catch (error) {
-          console.log('[v0] User statistics failed, using default values')
-          stats.value.totalUsers = 0
-          stats.value.pendingUsers = 0
-        }
-
-        // Fetch pending driver applications
-        try {
-          const pendingDriversQuery = query(
-            collection(db, 'users'),
-            where('role', '==', 'driver'),
-            where('status', '==', 'pending')
-          )
-          const pendingDriversSnapshot = await getDocs(pendingDriversQuery)
-          stats.value.pendingDrivers = pendingDriversSnapshot.size
-          console.log('[v0] Pending drivers:', stats.value.pendingDrivers)
-        } catch (error) {
-          console.log('[v0] Pending drivers query failed, using default value')
-          stats.value.pendingDrivers = 0
-        }
-
-        console.log('[v0] Dashboard statistics loaded successfully')
+        listeners.value.push(unsubscribe)
       } catch (error) {
-        console.error('[v0] Error in fetchDashboardStats:', error)
-        toast.error('Some dashboard statistics could not be loaded')
+        console.error('[v0] Error setting up drivers listener:', error)
       }
     }
 
-    const fetchRecentActivity = async () => {
+    const setupOrdersListener = () => {
       try {
-        console.log('[v0] Fetching recent activity...')
-        
-        try {
-          const recentOrdersQuery = query(
-            collection(db, 'orders'),
-            orderBy('createdAt', 'desc'),
-            limit(10)
-          )
-          const recentOrdersSnapshot = await getDocs(recentOrdersQuery)
+        const ordersQuery = query(collection(db, 'orders'))
+
+        const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+          console.log('[v0] Orders snapshot size:', snapshot.size)
           
-          const activities = []
-          recentOrdersSnapshot.forEach(doc => {
+          stats.value.totalOrders = snapshot.size
+
+          const orders = []
+          snapshot.forEach(doc => {
+            orders.push({
+              id: doc.id,
+              ...doc.data()
+            })
+          })
+          allOrders.value = orders
+
+          // Calculate today's revenue (20% commission)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          let todayRevenue = 0
+
+          const serviceNameMap = {
+            'food-delivery': 'Food Delivery',
+            'Food Delivery': 'Food Delivery',
+            'bill-payments': 'Bill Payments',
+            'Bill Payments': 'Bill Payments',
+            'pickup-drop': 'Pick-up & Drop',
+            'Pick-up & Drop': 'Pick-up & Drop',
+            'gift-delivery': 'Gift Delivery',
+            'Gift Delivery': 'Gift Delivery',
+            'medicine-delivery': 'Medicine Delivery',
+            'Medicine Delivery': 'Medicine Delivery',
+            'grocery-shopping': 'Grocery Shopping',
+            'Grocery Shopping': 'Grocery Shopping'
+          }
+
+          const serviceCounts = {
+            'Food Delivery': 0,
+            'Bill Payments': 0,
+            'Pick-up & Drop': 0,
+            'Gift Delivery': 0,
+            'Medicine Delivery': 0,
+            'Grocery Shopping': 0
+          }
+
+          snapshot.forEach(doc => {
             const order = doc.data()
+            const orderDate = order.createdAt?.toDate()
+
+            // Today's revenue
+            if (orderDate >= today && order.status === 'delivered') {
+              todayRevenue += order.totalAmount || 0
+            }
+
+            const serviceId = order.service || order.serviceType || 'unknown'
+            console.log('[v0] Order service:', serviceId)
+            
+            const serviceName = serviceNameMap[serviceId] || serviceId
+            
+            if (serviceCounts.hasOwnProperty(serviceName)) {
+              serviceCounts[serviceName]++
+            } else {
+              console.log('[v0] Unknown service type:', serviceId, '- mapped to:', serviceName)
+            }
+          })
+
+          console.log('[v0] Service counts:', serviceCounts)
+
+          stats.value.revenueToday = todayRevenue
+          stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20)
+
+          const totalServices = Object.values(serviceCounts).reduce((a, b) => a + b, 0)
+          console.log('[v0] Total services:', totalServices)
+          
+          const serviceColors = {
+            'Food Delivery': 'bg-blue-500',
+            'Bill Payments': 'bg-green-500',
+            'Pick-up & Drop': 'bg-yellow-500',
+            'Gift Delivery': 'bg-purple-500',
+            'Medicine Delivery': 'bg-red-500',
+            'Grocery Shopping': 'bg-indigo-500'
+          }
+
+          serviceDistribution.value = Object.entries(serviceCounts)
+            .map(([name, count]) => ({
+              name,
+              count,
+              percentage: totalServices > 0 ? Math.round((count / totalServices) * 100) : 0,
+              color: serviceColors[name] || 'bg-gray-500'
+            }))
+
+          console.log('[v0] Service distribution:', serviceDistribution.value)
+
+          updateRevenueChart()
+
+        }, (error) => {
+          console.log('[v0] Orders listener error:', error.message)
+          stats.value.totalOrders = 0
+          stats.value.revenueToday = 0
+          stats.value.adminRevenueToday = 0
+        })
+
+        listeners.value.push(unsubscribe)
+      } catch (error) {
+        console.error('[v0] Error setting up orders listener:', error)
+      }
+    }
+
+    const updateRevenueChart = () => {
+      const filter = revenueFilter.value
+      const now = new Date()
+      let chartData = []
+
+      if (filter === 'today') {
+        // Show hourly data for today
+        for (let i = 0; i < 24; i++) {
+          chartData.push({
+            day: `${i}:00`,
+            amount: 0
+          })
+        }
+
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        allOrders.value.forEach(order => {
+          const orderDate = order.createdAt?.toDate()
+          if (orderDate >= today && order.status === 'delivered') {
+            const hour = orderDate.getHours()
+            chartData[hour].amount += (order.totalAmount || 0) * 0.20
+          }
+        })
+      } else if (filter === 'last7days') {
+        // Show last 7 days
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date()
+          date.setDate(date.getDate() - i)
+          date.setHours(0, 0, 0, 0)
+          chartData.push({
+            date: date,
+            day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+            amount: 0
+          })
+        }
+
+        allOrders.value.forEach(order => {
+          const orderDate = order.createdAt?.toDate()
+          if (orderDate && order.status === 'delivered') {
+            for (let dayData of chartData) {
+              const nextDay = new Date(dayData.date)
+              nextDay.setDate(nextDay.getDate() + 1)
+              if (orderDate >= dayData.date && orderDate < nextDay) {
+                dayData.amount += (order.totalAmount || 0) * 0.20
+                break
+              }
+            }
+          }
+        })
+      } else if (filter === 'last30days') {
+        // Show last 30 days (grouped by 5 days)
+        for (let i = 29; i >= 0; i -= 5) {
+          const date = new Date()
+          date.setDate(date.getDate() - i)
+          date.setHours(0, 0, 0, 0)
+          chartData.push({
+            date: date,
+            day: `${date.getMonth() + 1}/${date.getDate()}`,
+            amount: 0,
+            endDate: new Date(date.getTime() + 5 * 24 * 60 * 60 * 1000)
+          })
+        }
+
+        allOrders.value.forEach(order => {
+          const orderDate = order.createdAt?.toDate()
+          if (orderDate && order.status === 'delivered') {
+            for (let dayData of chartData) {
+              if (orderDate >= dayData.date && orderDate < dayData.endDate) {
+                dayData.amount += (order.totalAmount || 0) * 0.20
+                break
+              }
+            }
+          }
+        })
+      } else if (filter === 'thisMonth') {
+        // Show this month by weeks
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        
+        let currentWeek = 1
+        for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 7)) {
+          const weekEnd = new Date(d)
+          weekEnd.setDate(weekEnd.getDate() + 7)
+          chartData.push({
+            date: new Date(d),
+            day: `Week ${currentWeek}`,
+            amount: 0,
+            endDate: weekEnd > lastDay ? lastDay : weekEnd
+          })
+          currentWeek++
+        }
+
+        allOrders.value.forEach(order => {
+          const orderDate = order.createdAt?.toDate()
+          if (orderDate && order.status === 'delivered') {
+            for (let dayData of chartData) {
+              if (orderDate >= dayData.date && orderDate < dayData.endDate) {
+                dayData.amount += (order.totalAmount || 0) * 0.20
+                break
+              }
+            }
+          }
+        })
+      } else if (filter === 'lastMonth') {
+        // Show last month by weeks
+        const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
+        
+        let currentWeek = 1
+        for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 7)) {
+          const weekEnd = new Date(d)
+          weekEnd.setDate(weekEnd.getDate() + 7)
+          chartData.push({
+            date: new Date(d),
+            day: `Week ${currentWeek}`,
+            amount: 0,
+            endDate: weekEnd > lastDay ? lastDay : weekEnd
+          })
+          currentWeek++
+        }
+
+        allOrders.value.forEach(order => {
+          const orderDate = order.createdAt?.toDate()
+          if (orderDate && order.status === 'delivered') {
+            for (let dayData of chartData) {
+              if (orderDate >= dayData.date && orderDate < dayData.endDate) {
+                dayData.amount += (order.totalAmount || 0) * 0.20
+                break
+              }
+            }
+          }
+        })
+      }
+
+      revenueChart.value = chartData
+    }
+
+    const setupRecentActivityListener = () => {
+      try {
+        const recentOrdersQuery = query(
+          collection(db, 'orders'),
+          orderBy('createdAt', 'desc'),
+          limit(4)
+        )
+
+        const unsubscribe = onSnapshot(recentOrdersQuery, (snapshot) => {
+          const activities = []
+          snapshot.forEach(doc => {
+            const order = doc.data()
+            const serviceNameMap = {
+              'food-delivery': 'Food Delivery',
+              'bill-payments': 'Bill Payments',
+              'pickup-drop': 'Pick-up & Drop',
+              'gift-delivery': 'Gift Delivery',
+              'medicine-delivery': 'Medicine Delivery',
+              'grocery-shopping': 'Grocery Shopping'
+            }
+            const serviceName = serviceNameMap[order.service] || order.service || 'service'
             activities.push({
               id: doc.id,
               type: 'order',
-              message: `New ${order.service || 'service'} order from ${order.customerName || 'customer'}`,
+              message: `New ${serviceName} order from ${order.customerName || 'customer'}`,
               time: formatTimeAgo(order.createdAt?.toDate())
             })
           })
+          recentActivity.value = activities
+        }, (error) => {
+          console.log('[v0] Recent activity listener error:', error.message)
+          recentActivity.value = []
+        })
 
-          recentActivity.value = activities.slice(0, 4)
-          console.log('[v0] Recent activity loaded:', recentActivity.value.length, 'items')
-        } catch (error) {
-          console.log('[v0] Recent activity query failed, using fallback data')
-          recentActivity.value = [
-            {
-              id: '1',
-              type: 'order',
-              message: 'New cleaning service order from John Doe',
-              time: '5 minutes ago'
-            },
-            {
-              id: '2',
-              type: 'user',
-              message: 'New user registration: Jane Smith',
-              time: '15 minutes ago'
-            },
-            {
-              id: '3',
-              type: 'driver',
-              message: 'Driver application submitted by Mike Johnson',
-              time: '1 hour ago'
-            }
-          ]
-        }
+        listeners.value.push(unsubscribe)
       } catch (error) {
-        console.error('[v0] Error fetching recent activity:', error)
+        console.error('[v0] Error setting up recent activity listener:', error)
       }
     }
 
-    const fetchLiveOrders = () => {
+    const setupLiveOrdersListener = () => {
       try {
-        console.log('[v0] Setting up live orders listener...')
-        
         const liveOrdersQuery = query(
           collection(db, 'orders'),
-          where('status', 'in', ['pending', 'confirmed', 'in_transit']),
+          where('status', 'in', ['pending', 'confirmed', 'in-transit']),
           orderBy('createdAt', 'desc'),
           limit(10)
         )
 
         const unsubscribe = onSnapshot(liveOrdersQuery, (snapshot) => {
           const orders = []
+          const serviceNameMap = {
+            'food-delivery': 'Food Delivery',
+            'bill-payments': 'Bill Payments',
+            'pickup-drop': 'Pick-up & Drop',
+            'gift-delivery': 'Gift Delivery',
+            'medicine-delivery': 'Medicine Delivery',
+            'grocery-shopping': 'Grocery Shopping'
+          }
+
           snapshot.forEach(doc => {
             const order = doc.data()
+            const serviceId = order.service || order.serviceType || 'unknown'
+            const serviceName = serviceNameMap[serviceId] || serviceId
+
             orders.push({
               id: doc.id,
               customerName: order.customerName || 'Unknown',
-              service: order.service || 'Unknown Service',
+              service: serviceName,
               driverName: order.driverName || null,
               driverId: order.driverId || null,
               status: order.status,
@@ -544,9 +806,8 @@ export default {
             })
           })
           liveOrders.value = orders
-          console.log('[v0] Live orders updated:', orders.length, 'orders')
         }, (error) => {
-          console.log('[v0] Live orders listener error (orders collection might not exist):', error.message)
+          console.log('[v0] Live orders listener error:', error.message)
           liveOrders.value = []
         })
 
@@ -557,41 +818,11 @@ export default {
       }
     }
 
-    const fetchSystemSettings = async () => {
-      try {
-        console.log('[v0] Fetching system settings...')
-        
-        const settingsRef = doc(db, 'settings', 'system')
-        const settingsDoc = await getDoc(settingsRef)
-        
-        if (settingsDoc.exists()) {
-          const settings = settingsDoc.data()
-          systemStatus.value.badWeatherFee = settings.badWeatherFee || false
-          systemStatus.value.autoAcceptUsers = settings.autoAcceptUsers !== false // default to true
-        } else {
-          console.log('[v0] Settings document does not exist, creating default settings')
-          await setDoc(settingsRef, {
-            badWeatherFee: false,
-            autoAcceptUsers: true,
-            createdAt: new Date()
-          })
-          systemStatus.value.badWeatherFee = false
-          systemStatus.value.autoAcceptUsers = true
-        }
-        
-        console.log('[v0] System settings loaded:', systemStatus.value)
-      } catch (error) {
-        console.error('[v0] Error fetching system settings:', error)
-        systemStatus.value.badWeatherFee = false
-        systemStatus.value.autoAcceptUsers = true
-      }
-    }
-
     const formatStatus = (status) => {
       const statusMap = {
         'pending': 'Pending',
         'confirmed': 'Confirmed',
-        'in_transit': 'In Transit',
+        'in-transit': 'In Transit',
         'delivered': 'Delivered',
         'cancelled': 'Cancelled'
       }
@@ -662,18 +893,16 @@ export default {
     const initializeDashboard = async () => {
       loading.value = true
       try {
-        console.log('[v0] Initializing dashboard...')
+        setupSystemSettingsListener()
+        setupPendingUsersListener()
+        setupPendingDriversListener()
+        setupUsersListener()
+        setupDriversListener()
+        setupOrdersListener()
+        setupRecentActivityListener()
+        setupLiveOrdersListener()
         
-        await Promise.allSettled([
-          fetchDashboardStats(),
-          fetchRecentActivity(),
-          fetchSystemSettings()
-        ])
-        
-        fetchLiveOrders()
-        
-        console.log('[v0] Dashboard initialization complete')
-        toast.success('Dashboard loaded successfully')
+        toast.success('Dashboard loaded with real-time updates')
       } catch (error) {
         console.error('[v0] Error initializing dashboard:', error)
         toast.error('Dashboard loaded with some limitations')
@@ -693,7 +922,6 @@ export default {
         }
       })
       listeners.value = []
-      console.log('[v0] Dashboard listeners cleaned up')
     })
 
     return {
@@ -702,10 +930,12 @@ export default {
       systemStatus,
       recentActivity,
       revenueChart,
+      revenueFilter,
       serviceDistribution,
       liveOrders,
       toggleWeatherFee,
       toggleAutoAccept,
+      updateRevenueChart,
       formatStatus
     }
   }

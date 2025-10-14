@@ -9,7 +9,9 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore"
+import { loggingService } from "./loggingService"
 
 // Real-time service for live updates
 export class RealtimeService {
@@ -151,11 +153,24 @@ export class RealtimeService {
   async updateOrderStatus(orderId, status, additionalData = {}) {
     try {
       const orderRef = doc(db, "orders", orderId)
+
+      const orderDoc = await getDoc(orderRef)
+      const oldStatus = orderDoc.exists() ? orderDoc.data().status : "unknown"
+
       await updateDoc(orderRef, {
         status,
         ...additionalData,
         updatedAt: serverTimestamp(),
       })
+
+      const orderData = orderDoc.data()
+      await loggingService.logOrderStatusChange(
+        orderId,
+        oldStatus,
+        status,
+        orderData?.userId || orderData?.driverId || null,
+        orderData?.driverId ? loggingService.USER_TYPES.DRIVER : loggingService.USER_TYPES.USER,
+      )
     } catch (error) {
       console.error("Error updating order status:", error)
       throw error
