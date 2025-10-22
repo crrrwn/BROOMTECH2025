@@ -84,12 +84,16 @@
                 </div>
                 <div>
                   <p class="text-sm text-gray-600">Total Amount</p>
-                  <p class="font-medium text-gray-900">₱{{ order.priceEstimate?.total || '0.00' }}</p>
+                  <p class="font-medium text-gray-900">₱{{ order.pricing?.total || order.priceEstimate?.total || '0.00' }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-600">From</p>
+                  <!-- Include storeAddress for gift delivery orders as a possible pickup location -->
                   <p class="font-medium text-gray-900 truncate">
-                    {{ order.pickupAddress || order.formData?.pickupAddress || order.formData?.restaurantAddress }}
+                    {{ order.pickupAddress
+                       || order.formData?.pickupAddress
+                       || order.formData?.restaurantAddress
+                       || order.formData?.storeAddress }}
                   </p>
                 </div>
                 <div>
@@ -199,6 +203,15 @@
                     <div v-if="order.formData?.preferredPickupDateTime">
                       <p class="text-sm text-gray-600">Preferred Pickup Time</p>
                       <p class="font-medium">{{ order.formData.preferredPickupDateTime }}</p>
+                    </div>
+                    <!-- Show store name and store address for gift delivery orders -->
+                    <div v-if="order.formData?.storeName">
+                      <p class="text-sm text-gray-600">Store Name</p>
+                      <p class="font-medium">{{ order.formData.storeName }}</p>
+                    </div>
+                    <div v-if="order.formData?.storeAddress">
+                      <p class="text-sm text-gray-600">Store Address</p>
+                      <p class="font-medium">{{ order.formData.storeAddress }}</p>
                     </div>
                   </div>
                 </div>
@@ -384,24 +397,28 @@
                 </div>
 
                 <!-- Price Breakdown -->
-                <div v-if="order.priceEstimate" class="p-4 bg-white rounded-lg border">
+                <div v-if="order.pricing || order.priceEstimate" class="p-4 bg-white rounded-lg border">
                   <h5 class="text-md font-semibold text-gray-800 mb-3">💰 Price Breakdown</h5>
                   <div class="space-y-2">
-                    <div v-if="order.priceEstimate.base" class="flex justify-between">
-                      <span class="text-gray-600">Base Price:</span>
-                      <span class="font-medium">₱{{ order.priceEstimate.base }}</span>
+                    <div v-if="order.pricing?.baseCharge || order.priceEstimate?.base" class="flex justify-between">
+                      <span class="text-gray-600">Base Charge:</span>
+                      <span class="font-medium">₱{{ order.pricing?.baseCharge || order.priceEstimate?.base }}</span>
                     </div>
-                    <div v-if="order.priceEstimate.distance" class="flex justify-between">
+                    <div v-if="order.pricing?.distanceFee || order.priceEstimate?.distance" class="flex justify-between">
                       <span class="text-gray-600">Distance Fee:</span>
-                      <span class="font-medium">₱{{ order.priceEstimate.distance }}</span>
+                      <span class="font-medium">₱{{ order.pricing?.distanceFee || order.priceEstimate?.distance }}</span>
                     </div>
-                    <div v-if="order.priceEstimate.urgency" class="flex justify-between">
-                      <span class="text-gray-600">Urgency Fee:</span>
-                      <span class="font-medium">₱{{ order.priceEstimate.urgency }}</span>
+                    <div v-if="order.pricing?.badWeatherFee" class="flex justify-between">
+                      <span class="text-gray-600">Bad Weather Surcharge:</span>
+                      <span class="font-medium">₱{{ order.pricing?.badWeatherFee }}</span>
+                    </div>
+                    <div v-if="order.pricing?.gcashFee || order.priceEstimate?.urgency" class="flex justify-between">
+                      <span class="text-gray-600">GCash Fee:</span>
+                      <span class="font-medium">₱{{ order.pricing?.gcashFee || order.priceEstimate?.urgency }}</span>
                     </div>
                     <div class="border-t pt-2 flex justify-between font-semibold">
                       <span>Total:</span>
-                      <span>₱{{ order.priceEstimate.total }}</span>
+                      <span>₱{{ order.pricing?.total || order.priceEstimate?.total }}</span>
                     </div>
                   </div>
                 </div>
@@ -511,7 +528,7 @@
                   :disabled="!isReasonValid || cancelling || modalRemaining <= 0"
                   class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
             <span v-if="cancelling">Cancelling...</span>
-            <span v-else-if="modalRemaining <= 0">Time’s up</span>
+            <span v-else-if="modalRemaining <= 0">Time's up</span>
             <span v-else-if="!isReasonValid">Select Reason</span>
             <span v-else>Confirm Cancel</span>
           </button>

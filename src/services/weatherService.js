@@ -7,6 +7,8 @@ class WeatherService {
     this.lastWeatherCheck = null
     this.cachedWeatherData = null
     this.cacheTimeout = 10 * 60 * 1000 // 10 minutes
+    this.defaultLat = 13.4125
+    this.defaultLon = 121.18
   }
 
   async loadApiKey() {
@@ -14,18 +16,24 @@ class WeatherService {
       const appSettingsDoc = await getDoc(doc(db, "settings", "application"))
       if (appSettingsDoc.exists()) {
         const settings = appSettingsDoc.data()
-        this.apiKey = settings.googleCloudApiKey || "AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o"
+        this.apiKey = settings.openWeatherApiKey || "692a28a1caecfaeca464d1003c39806c"
+        this.defaultLat = settings.defaultLat || 13.4125
+        this.defaultLon = settings.defaultLon || 121.18
       } else {
-        this.apiKey = "AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o"
+        this.apiKey = "692a28a1caecfaeca464d1003c39806c"
       }
       console.log("[v0] Weather service API key loaded")
     } catch (error) {
       console.error("[v0] Error loading API key:", error)
-      this.apiKey = "AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o"
+      this.apiKey = "692a28a1caecfaeca464d1003c39806c"
     }
   }
 
-  async checkWeather(lat = 13.4119, lon = 121.1803) {
+  async checkWeather(lat = null, lon = null) {
+    // Use default coordinates if not provided
+    const latitude = lat || this.defaultLat
+    const longitude = lon || this.defaultLon
+
     // Return cached data if still valid
     if (this.cachedWeatherData && this.lastWeatherCheck) {
       const timeSinceLastCheck = Date.now() - this.lastWeatherCheck
@@ -40,9 +48,9 @@ class WeatherService {
     }
 
     try {
-      // Use Open-Meteo API (free, no key required) for weather data
+      // Use OpenWeather API
       const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=Asia/Manila`,
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${this.apiKey}&units=metric`,
       )
 
       if (!response.ok) {
@@ -51,46 +59,31 @@ class WeatherService {
       }
 
       const data = await response.json()
-      const weatherCode = data.current_weather.weathercode
+      const weatherMain = data.weather[0].main
+      const weatherDescription = data.weather[0].description
+      const weatherCode = data.weather[0].id
 
-      // Weather codes: https://open-meteo.com/en/docs
-      // 51-67: Rain, 71-77: Snow, 80-99: Rain showers/thunderstorms
-      const badWeatherCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99]
+      // OpenWeather codes for bad weather
+      // 2xx: Thunderstorm, 3xx: Drizzle, 5xx: Rain, 6xx: Snow
+      const badWeatherCodes = [
+        // Thunderstorm
+        200, 201, 202, 210, 211, 212, 221, 230, 231, 232,
+        // Drizzle
+        300, 301, 302, 310, 311, 312, 313, 314, 321,
+        // Rain
+        500, 501, 502, 503, 504, 511, 520, 521, 522, 531,
+        // Snow
+        600, 601, 602, 611, 612, 613, 615, 616, 620, 621, 622,
+      ]
+
       const isBadWeather = badWeatherCodes.includes(weatherCode)
-
-      // Map weather code to description
-      const weatherDescriptions = {
-        0: "Clear sky",
-        1: "Mainly clear",
-        2: "Partly cloudy",
-        3: "Overcast",
-        45: "Foggy",
-        48: "Depositing rime fog",
-        51: "Light drizzle",
-        53: "Moderate drizzle",
-        55: "Dense drizzle",
-        61: "Slight rain",
-        63: "Moderate rain",
-        65: "Heavy rain",
-        71: "Slight snow",
-        73: "Moderate snow",
-        75: "Heavy snow",
-        80: "Slight rain showers",
-        81: "Moderate rain showers",
-        82: "Violent rain showers",
-        95: "Thunderstorm",
-        96: "Thunderstorm with slight hail",
-        99: "Thunderstorm with heavy hail",
-      }
-
-      const description = weatherDescriptions[weatherCode] || "Unknown"
 
       const weatherData = {
         isBadWeather,
-        description,
+        description: weatherDescription,
         weatherCode,
-        temperature: data.current_weather.temperature,
-        windSpeed: data.current_weather.windspeed,
+        temperature: data.main.temp,
+        windSpeed: data.wind.speed,
         timestamp: Date.now(),
       }
 

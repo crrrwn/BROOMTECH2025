@@ -77,7 +77,7 @@
       </div>
     </div>
 
-    <!-- Updated service categories to show minimum charge, distance rate, and time rate -->
+    <!-- Updated service categories to show minimum charge and distance rate only -->
     <!-- Service Categories Pricing -->
     <div class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Service Categories</h2>
@@ -104,13 +104,6 @@
                 <input type="number" v-model="service.distanceRate" class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500">
               </div>
             </div>
-            <div class="flex justify-between items-center">
-              <label class="text-sm text-gray-600">Time Rate (per min)</label>
-              <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500">₱</span>
-                <input type="number" v-model="service.timeRate" class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -129,13 +122,13 @@
           <div>
             <h3 class="text-sm font-semibold text-blue-900 mb-1">Dynamic Pricing System</h3>
             <p class="text-sm text-blue-800">
-              Configure base fees, time-based multipliers, weather surcharges, and distance multipliers. The system automatically calculates delivery fees based on these rules and syncs with user bookings in real-time.
+              Configure base fees, weather surcharges, and distance multipliers. The system automatically calculates delivery fees based on these rules and syncs with user bookings in real-time.
             </p>
           </div>
         </div>
       </div>
 
-      <!-- Replaced old pricing rules with new structure: Base Fee, Time Multiplier, Bad Weather, Distance Multiplier -->
+      <!-- Replaced old pricing rules with new structure: Base Fee, Bad Weather, Distance Multiplier -->
       <div class="space-y-6">
          <!-- Base Fee Configuration -->
         <div class="border rounded-lg p-4 bg-gray-50">
@@ -157,61 +150,10 @@
           </div>
         </div>
 
-         <!-- Time-Based Multiplier -->
-        <div class="border rounded-lg p-4 bg-gray-50">
-          <h3 class="text-md font-medium text-gray-800 mb-3">Time-Based Multiplier</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Peak Hours Multiplier</label>
-              <div class="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  v-model.number="pricingRules.peakHoursMultiplier" 
-                  min="1"
-                  max="3"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                >
-                <span class="text-sm text-gray-500">x</span>
-              </div>
-              <p class="text-xs text-gray-500 mt-1">7AM-9AM, 5PM-8PM</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Off-Peak Multiplier</label>
-              <div class="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  v-model.number="pricingRules.offPeakMultiplier" 
-                  min="0.5"
-                  max="1.5"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                >
-                <span class="text-sm text-gray-500">x</span>
-              </div>
-              <p class="text-xs text-gray-500 mt-1">9AM-5PM, 8PM-11PM</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Late Night Multiplier</label>
-              <div class="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  v-model.number="pricingRules.lateNightMultiplier" 
-                  min="1"
-                  max="3"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                >
-                <span class="text-sm text-gray-500">x</span>
-              </div>
-              <p class="text-xs text-gray-500 mt-1">11PM-7AM</p>
-            </div>
-          </div>
-        </div>
-
          <!-- Bad Weather Surcharge -->
         <div class="border rounded-lg p-4 bg-gray-50">
           <h3 class="text-md font-medium text-gray-800 mb-3">Bad Weather Surcharge</h3>
+          <p class="text-sm text-gray-600 mb-4">Applied automatically when bad weather is detected via OpenWeather API</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Rain Surcharge</label>
@@ -320,17 +262,6 @@
               <p class="text-xs text-gray-500 mt-1">{{ aiSuggestions.baseFeeReason }}</p>
               <button 
                 @click="applyAISuggestion('baseFee', aiSuggestions.baseFee)"
-                class="mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium"
-              >
-                Apply this suggestion →
-              </button>
-            </div>
-            <div class="bg-white rounded-lg p-4 border border-purple-200">
-              <h4 class="text-sm font-semibold text-gray-800 mb-2">Peak Hours Multiplier</h4>
-              <p class="text-2xl font-bold text-purple-600">{{ aiSuggestions.peakMultiplier }}x</p>
-              <p class="text-xs text-gray-500 mt-1">{{ aiSuggestions.peakMultiplierReason }}</p>
-              <button 
-                @click="applyAISuggestion('peakHoursMultiplier', aiSuggestions.peakMultiplier)"
                 class="mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium"
               >
                 Apply this suggestion →

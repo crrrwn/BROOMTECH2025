@@ -20,24 +20,24 @@
           <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <span class="text-sm font-medium text-gray-700">Status</span>
             <button 
-              @click="toggleOnlineStatus"
+              @click="handleToggleStatus"
               :disabled="!userLoaded"
               :class="[
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                isOnline ? 'bg-primary' : 'bg-gray-300',
+                driverStore.isOnline ? 'bg-primary' : 'bg-gray-300',
                 !userLoaded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
               ]"
             >
               <span 
                 :class="[
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                  isOnline ? 'translate-x-6' : 'translate-x-1'
+                  driverStore.isOnline ? 'translate-x-6' : 'translate-x-1'
                 ]"
               />
             </button>
           </div>
           <p class="text-xs text-gray-500 mt-1">
-            {{ userLoaded ? (isOnline ? 'You are online and available for bookings' : 'You are offline') : 'Loading status...' }}
+            {{ userLoaded ? (driverStore.isOnline ? 'You are online and available for bookings' : 'You are offline') : 'Loading status...' }}
           </p>
         </div>
         
@@ -47,21 +47,24 @@
           </div>
           
           <div class="mt-2 space-y-1">
+            <button
+              @click="toggleLocationTracking"
+              class="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors text-left"
+              :class="isTrackingLocation ? 'bg-blue-100 text-blue-700' : ''"
+              title="Toggle location tracking"
+            >
+              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <span>{{ isTrackingLocation ? 'Tracking Active' : 'Use My Location' }}</span>
+            </button>
+            
             <router-link to="/driver" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
               </svg>
               Dashboard
-            </router-link>
-            
-            <router-link to="/driver/bookings" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-              </svg>
-              Available Bookings
-              <span v-if="availableBookingsCount > 0" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                {{ availableBookingsCount }}
-              </span>
             </router-link>
             
             <router-link to="/driver/assignments" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
@@ -74,7 +77,6 @@
               </span>
             </router-link>
             
-            <!-- Added chat link for driver-customer communication -->
             <router-link to="/driver/chat" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
@@ -119,16 +121,17 @@
                 <div class="flex items-center space-x-2">
                   <div :class="[
                     'w-3 h-3 rounded-full',
-                    isOnline ? 'bg-green-500' : 'bg-gray-400'
+                    driverStore.isOnline ? 'bg-green-500' : 'bg-gray-400'
                   ]"></div>
-                  <span class="text-sm text-gray-600">{{ isOnline ? 'Online' : 'Offline' }}</span>
+                  <span class="text-sm text-gray-600">{{ driverStore.isOnline ? 'Online' : 'Offline' }}</span>
                 </div>
               </div>
               
               <div class="flex items-center space-x-4">
                 <div class="text-right">
                   <p class="text-sm text-gray-500">Today's Earnings</p>
-                  <p class="text-lg font-semibold text-primary">₱{{ todayEarnings }}</p>
+                  <p class="text-lg font-semibold text-primary">₱{{ driverStore.hasRemitted ? driverStore.todayEarnings.driverShare : '0.00' }}</p>
+                  <p v-if="!driverStore.hasRemitted" class="text-xs text-gray-400">Pending remittance</p>
                 </div>
                 
                 <div class="flex items-center space-x-2">
@@ -153,22 +156,23 @@
 
 <script>
 import { useAuthStore } from '@/stores/auth'
-import { doc, updateDoc, getDoc } from 'firebase/firestore'
-import { db } from '@/firebase/config'
+import { useDriverStore } from '@/stores/driver'
 
 export default {
   name: 'DriverLayout',
   setup() {
     const authStore = useAuthStore()
-    return { authStore }
+    const driverStore = useDriverStore()
+    return { authStore, driverStore }
   },
   data() {
     return {
-      isOnline: false,
       userLoaded: false,
       availableBookingsCount: 3,
       activeAssignmentsCount: 1,
-      todayEarnings: 450
+      isTrackingLocation: false,
+      locationWatchId: null,
+      currentLocation: null
     }
   },
   computed: {
@@ -203,8 +207,15 @@ export default {
     }
   },
   async mounted() {
-    console.log('[v0] DriverLayout mounted, loading driver status...')
+    console.log('[v0] DriverLayout mounted')
     await this.loadDriverStatus()
+  },
+  beforeUnmount() {
+    console.log('[v0] DriverLayout unmounting, cleaning up listeners')
+    this.driverStore.cleanup()
+    if (this.locationWatchId) {
+      navigator.geolocation.clearWatch(this.locationWatchId)
+    }
   },
   methods: {
     async loadDriverStatus() {
@@ -236,124 +247,97 @@ export default {
           return
         }
 
-        this.isOnline = profile.isOnline === true
         this.userLoaded = true
         
-        console.log('[v0] Driver status initialized:', {
-          isOnline: this.isOnline,
-          userLoaded: this.userLoaded,
-          profileRole: profile.role
-        })
+        this.driverStore.initializeStatusListener(user.uid)
         
-        if (profile.isOnline === undefined) {
-          console.log('[v0] Initializing isOnline field in database')
-          await this.initializeOnlineStatus()
-        }
+        console.log('[v0] Driver status listener initialized')
         
       } catch (error) {
         console.error('[v0] Error loading driver status:', error)
         this.$toast.error('Error loading driver profile')
-        this.userLoaded = true // Still allow interaction even if there's an error
+        this.userLoaded = true
       }
     },
-    
-    async initializeOnlineStatus() {
-      try {
-        const user = this.authStore.user
-        if (!user) return
 
-        const driverRef = doc(db, 'drivers', user.uid)
-        await updateDoc(driverRef, {
-          isOnline: false,
-          status: 'offline',
-          lastStatusUpdate: new Date()
-        })
-        
-        // Update local auth store
-        if (this.authStore.userProfile) {
-          this.authStore.userProfile.isOnline = false
-          this.authStore.userProfile.status = 'offline'
-        }
-        
-        console.log('[v0] Initialized online status in database')
-      } catch (error) {
-        console.error('[v0] Error initializing online status:', error)
-      }
-    },
-    
-    async toggleOnlineStatus() {
+    async handleToggleStatus() {
       if (!this.userLoaded) {
         console.log('[v0] User not loaded yet, cannot toggle status')
         return
       }
+
+      const success = await this.driverStore.toggleOnlineStatus()
       
-      try {
-        const user = this.authStore.user
-        if (!user) {
-          this.$toast.error('Please log in to change status')
-          return
-        }
-
-        const profile = this.authStore.userProfile
-        if (!profile || profile.role !== 'driver') {
-          this.$toast.error('Driver profile not found')
-          return
-        }
-
-        const newStatus = !this.isOnline
-        console.log('[v0] Toggling driver status from', this.isOnline, 'to', newStatus)
-        
-        const driverRef = doc(db, 'drivers', user.uid)
-        await updateDoc(driverRef, {
-          isOnline: newStatus,
-          lastStatusUpdate: new Date(),
-          status: newStatus ? 'online' : 'offline'
-        })
-
-        // Update local state
-        this.isOnline = newStatus
-        
-        // Update auth store
-        if (this.authStore.userProfile) {
-          this.authStore.userProfile.isOnline = newStatus
-          this.authStore.userProfile.status = newStatus ? 'online' : 'offline'
-        }
-
+      if (success) {
         this.$toast.success(
-          this.isOnline 
+          this.driverStore.isOnline 
             ? 'You are now online and available for bookings!' 
             : 'You are now offline'
         )
-        
-        console.log('[v0] Driver status updated successfully:', newStatus)
-      } catch (error) {
-        console.error('[v0] Error updating driver status:', error)
+      } else {
         this.$toast.error('Failed to update status. Please try again.')
       }
     },
     
     async logout() {
       try {
-        const user = this.authStore.user
-        if (user && this.isOnline) {
-          console.log('[v0] Setting driver offline before logout')
-          const driverRef = doc(db, 'drivers', user.uid)
-          await updateDoc(driverRef, {
-            isOnline: false,
-            status: 'offline',
-            lastStatusUpdate: new Date()
-          })
+        this.driverStore.cleanup()
+        
+        const result = await this.authStore.logout()
+        if (result.success) {
+          this.$toast.success(result.message)
+          this.$router.push('/')
+        } else {
+          this.$toast.error(result.message)
         }
       } catch (error) {
-        console.error('[v0] Error setting offline status during logout:', error)
+        console.error('[v0] Error during logout:', error)
+        this.$toast.error('Error logging out')
       }
-
-      const result = await this.authStore.logout()
-      if (result.success) {
-        this.$toast.success(result.message)
-        this.$router.push('/')
-      } else {
-        this.$toast.error(result.message)
+    },
+    
+    async toggleLocationTracking() {
+      try {
+        if (!this.isTrackingLocation) {
+          // Start tracking location using Geolocation API
+          if (navigator.geolocation) {
+            this.locationWatchId = navigator.geolocation.watchPosition(
+              (position) => {
+                this.currentLocation = {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                  accuracy: position.coords.accuracy,
+                  timestamp: new Date()
+                }
+                console.log('[v0] Location updated:', this.currentLocation)
+              },
+              (error) => {
+                console.error('[v0] Location tracking error:', error)
+                this.$toast.error('Unable to track location: ' + error.message)
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+              }
+            )
+            this.isTrackingLocation = true
+            this.$toast.success('Location tracking enabled')
+          } else {
+            this.$toast.error('Geolocation not supported on this device')
+          }
+        } else {
+          // Stop tracking location
+          if (this.locationWatchId) {
+            navigator.geolocation.clearWatch(this.locationWatchId)
+            this.locationWatchId = null
+          }
+          this.isTrackingLocation = false
+          this.$toast.success('Location tracking disabled')
+        }
+      } catch (error) {
+        console.error('[v0] Error toggling location tracking:', error)
+        this.$toast.error('Failed to toggle location tracking')
       }
     }
   }

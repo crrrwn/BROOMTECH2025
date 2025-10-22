@@ -36,13 +36,13 @@
           </div>
           <button 
             @click="toggleBadWeatherFee"
-            :class="[
+            :class="[ 
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
               systemStatus.badWeatherFee ? 'bg-red-500' : 'bg-gray-300'
             ]"
           >
             <span 
-              :class="[
+              :class="[ 
                 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
                 systemStatus.badWeatherFee ? 'translate-x-6' : 'translate-x-1'
               ]"
@@ -57,13 +57,13 @@
           </div>
           <button 
             @click="toggleAutoAcceptUsers"
-            :class="[
+            :class="[ 
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
               systemStatus.autoAcceptUsers ? 'bg-primary' : 'bg-gray-300'
             ]"
           >
             <span 
-              :class="[
+              :class="[ 
                 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
                 systemStatus.autoAcceptUsers ? 'translate-x-6' : 'translate-x-1'
               ]"
@@ -78,13 +78,13 @@
           </div>
           <button 
             @click="toggleAutoAcceptOrders"
-            :class="[
+            :class="[ 
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
               systemStatus.autoAcceptOrders ? 'bg-primary' : 'bg-gray-300'
             ]"
           >
             <span 
-              :class="[
+              :class="[ 
                 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
                 systemStatus.autoAcceptOrders ? 'translate-x-6' : 'translate-x-1'
               ]"
@@ -141,6 +141,44 @@
             <option value="en">{{ t('systemSettings.languageEnglish') }}</option>
             <option value="tl">{{ t('systemSettings.languageTagalog') }}</option>
           </select>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-6 border-t">
+        <h4 class="text-md font-semibold text-gray-900 mb-4">Weather API Configuration</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">OpenWeather API Key</label>
+            <input 
+              v-model="appSettings.openWeatherApiKey"
+              type="password" 
+              placeholder="Enter your OpenWeather API key"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+            />
+            <p class="text-xs text-gray-500 mt-1">Get your free API key from <a href="https://openweathermap.org/api" target="_blank" class="text-blue-600 hover:underline">openweathermap.org</a></p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Default Latitude</label>
+            <input 
+              v-model.number="appSettings.defaultLat"
+              type="number" 
+              step="0.0001"
+              placeholder="13.4125"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+            />
+            <p class="text-xs text-gray-500 mt-1">Default location for weather checks</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Default Longitude</label>
+            <input 
+              v-model.number="appSettings.defaultLon"
+              type="number" 
+              step="0.0001"
+              placeholder="121.1800"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+            />
+            <p class="text-xs text-gray-500 mt-1">Default location for weather checks</p>
+          </div>
         </div>
       </div>
     </div>
@@ -285,22 +323,22 @@
       <div v-else class="space-y-2 max-h-96 overflow-y-auto">
         <div v-for="log in systemLogs" :key="log.id" class="flex items-start justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
           <div class="flex items-start space-x-3 flex-1">
-            <div :class="[
+            <div :class="[ 
               'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
-              log.level === 'error' ? 'bg-red-500' :
-              log.level === 'warning' ? 'bg-yellow-500' :
-              log.level === 'info' ? 'bg-blue-500' :
+              log.level === 'error' ? 'bg-red-500' : 
+              log.level === 'warning' ? 'bg-yellow-500' : 
+              log.level === 'info' ? 'bg-blue-500' : 
               'bg-green-500'
             ]"></div>
             <div class="flex-1 min-w-0">
               <p class="text-sm text-gray-900">{{ log.message }}</p>
               <div class="flex items-center space-x-2 mt-1">
                 <p class="text-xs text-gray-500">{{ log.timestamp }}</p>
-                <span v-if="log.userType" :class="[
+                <span v-if="log.userType" :class="[ 
                   'px-2 py-0.5 text-xs font-medium rounded',
-                  log.userType === 'user' ? 'bg-blue-100 text-blue-700' :
-                  log.userType === 'driver' ? 'bg-purple-100 text-purple-700' :
-                  log.userType === 'admin' ? 'bg-green-100 text-green-700' :
+                  log.userType === 'user' ? 'bg-blue-100 text-blue-700' : 
+                  log.userType === 'driver' ? 'bg-purple-100 text-purple-700' : 
+                  log.userType === 'admin' ? 'bg-green-100 text-green-700' : 
                   'bg-gray-100 text-gray-700'
                 ]">
                   {{ log.userType.toUpperCase() }}
@@ -308,11 +346,11 @@
               </div>
             </div>
           </div>
-          <span :class="[
+          <span :class="[ 
             'px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-2',
-            log.level === 'error' ? 'bg-red-100 text-red-800' :
-            log.level === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-            log.level === 'info' ? 'bg-blue-100 text-blue-800' :
+            log.level === 'error' ? 'bg-red-100 text-red-800' : 
+            log.level === 'warning' ? 'bg-yellow-100 text-yellow-800' : 
+            log.level === 'info' ? 'bg-blue-100 text-blue-800' : 
             'bg-green-100 text-green-800'
           ]">
             {{ log.level.toUpperCase() }}
@@ -344,7 +382,10 @@ const defaultAppSettings = {
   name: 'BroomTech Delivery',
   supportPhone: '+63 912 345 6789',
   currency: 'PHP',
-  language: 'en'
+  language: 'en',
+  openWeatherApiKey: '',
+  defaultLat: 13.4125,
+  defaultLon: 121.1800
 }
 
 const defaultNotificationSettings = {
@@ -371,7 +412,10 @@ const appSettings = ref({
   name: 'BroomTech Delivery',
   supportPhone: '+63 912 345 6789',
   currency: 'PHP',
-  language: 'en'
+  language: 'en',
+  openWeatherApiKey: '',
+  defaultLat: 13.4125,
+  defaultLon: 121.1800
 })
 
 const notificationSettings = ref({
@@ -390,6 +434,13 @@ const securitySettings = ref({
 
 const systemLogs = ref([])
 const loadingLogs = ref(false)
+
+const initializeComponent = () => {
+  loadSystemSettings()
+  loadSystemLogs()
+}
+
+onMounted(initializeComponent)
 
 const toggleBadWeatherFee = async () => {
   try {
@@ -690,9 +741,4 @@ const refreshLogs = async () => {
   await loadSystemLogs()
   toast.success('Logs refreshed')
 }
-
-onMounted(() => {
-  loadSystemSettings()
-  loadSystemLogs()
-})
 </script>

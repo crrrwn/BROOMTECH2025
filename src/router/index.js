@@ -25,7 +25,6 @@ import UserChatMessages from "@/views/user/ChatMessages.vue"
 
 // Driver Pages
 import DriverDashboard from "@/views/driver/Dashboard.vue"
-import AvailableBookings from "@/views/driver/AvailableBookings.vue"
 import MyAssignments from "@/views/driver/MyAssignments.vue"
 import UploadProof from "@/views/driver/UploadProof.vue"
 import DriverProfile from "@/views/driver/Profile.vue"
@@ -85,7 +84,6 @@ const routes = [
     meta: { requiresAuth: true, role: "driver" },
     children: [
       { path: "", name: "driver-dashboard", component: DriverDashboard },
-      { path: "bookings", name: "available-bookings", component: AvailableBookings },
       { path: "assignments", name: "my-assignments", component: MyAssignments },
       { path: "proof", name: "upload-proof", component: UploadProof },
       { path: "profile", name: "driver-profile", component: DriverProfile },

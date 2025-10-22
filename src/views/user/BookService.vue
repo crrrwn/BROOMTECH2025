@@ -70,8 +70,6 @@
             <div class="flex-1">
               <h3 class="font-medium text-gray-900">{{ service.name }}</h3>
               <p class="text-sm text-gray-600">{{ service.description }}</p>
-              <!-- Display dynamic minimum rate from pricing settings -->
-              <p class="text-sm font-semibold text-green-600 mt-1">Minimum: ₱{{ getServiceMinRate(service.id) }}</p>
             </div>
           </div>
         </div>
@@ -108,13 +106,13 @@
         <h3 class="text-md font-medium text-green-800 mb-3">Estimated Delivery Fee</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p class="text-sm text-gray-600">Minimum Charge:<span class="font-medium ml-1">₱{{ calculatedPrice.minCharge }}</span></p>
-            <p class="text-sm text-gray-600">Distance Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.distanceFee }}</span></p>
-            <p class="text-sm text-gray-600">Time Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.timeFee }}</span></p>
+            <p class="text-sm text-gray-600">Base Charge (First 3km):<span class="font-medium ml-1">₱{{ calculatedPrice.baseCharge }}</span></p>
+            <p class="text-sm text-gray-600">Distance Fee (After 3km):<span class="font-medium ml-1">₱{{ calculatedPrice.distanceFee }}</span></p>
+            <p class="text-sm text-gray-600">Bad Weather Surcharge:<span class="font-medium ml-1">₱{{ calculatedPrice.badWeatherFee }}</span></p>
           </div>
           <div>
-            <p class="text-sm text-gray-600">Bad Weather Surcharge:<span class="font-medium ml-1">₱{{ calculatedPrice.badWeatherFee }}</span></p>
             <p v-if="bookingForm.paymentMethod === 'GCASH'" class="text-sm text-gray-600">GCash Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.gcashFee }}</span></p>
+            <p v-if="bookingForm.paymentMethod === 'GCASH'" class="text-xs text-gray-500 mt-1">{{ getGcashFeeDescription() }}</p>
             <hr class="my-2">
             <p class="text-lg font-bold text-gray-800">Subtotal:<span class="ml-2">₱{{ calculatedPrice.subtotal }}</span></p>
             <p class="text-xl font-extrabold text-green-700">Estimated Total:<span class="ml-2">₱{{ calculatedPrice.total }}</span></p>
@@ -361,6 +359,25 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Store Name *</label>
+              <input type="text" v-model.trim="bookingForm.storeName" required placeholder="e.g., Flower Shop, Bakery" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Store Address *</label>
+              <input
+                type="text"
+                v-model.trim="bookingForm.storeAddress"
+                required
+                ref="storeAddressInput"
+                @input="onAddressManualInput"
+                placeholder="Store location"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
               <textarea v-model.trim="bookingForm.specialInstructions" rows="3" placeholder="e.g., Wrap with ribbon, Include card" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
             </div>
@@ -592,7 +609,7 @@ export default {
         gcashCharges: []
       },
       calculatedPrice: {
-        minCharge: 55,
+        baseCharge: 55,
         distanceFee: 0,
         timeFee: 0,
         badWeatherFee: 0,
@@ -636,7 +653,7 @@ export default {
         // Grocery
         shoppingList: '', storePreference: '',
         // Gift
-        giftType: '', recipientName: '', recipientContact: '', preferredDateTime: '',
+        giftType: '', recipientName: '', recipientContact: '', preferredDateTime: '', storeName: '', storeAddress: '',
         // Medicine
         medicineNames: '', prescriptionFile: null, quantity: '',
         // Pick-up & Drop
@@ -740,61 +757,52 @@ export default {
         return
       }
 
-      // Find service pricing
-      const servicePricing = this.pricingSettings.services?.find(s => s.id === this.selectedService.id)
-      if (!servicePricing) {
-        console.warn('[v0] No pricing found for service:', this.selectedService.id)
-        // Use default pricing if not found
-        this.calculatedPrice = {
-          minCharge: 55,
-          distanceFee: 0,
-          timeFee: 0,
-          badWeatherFee: 0,
-          gcashFee: 0,
-          subtotal: 55,
-          total: 55
-        }
-        return
-      }
-
-      // Base fare (minimum charge)
-      const minCharge = servicePricing.minCharge || 55
-
-      // Distance fee (distance in km × rate per km)
       const distanceInKm = this.routeInfo.distanceValue / 1000
-      const distanceFee = distanceInKm * (servicePricing.distanceRate || 10)
+      
+      // Base charge: 55 pesos for first 3km
+      const baseCharge = 55
+      
+      // Distance fee: 10 pesos per km after 3km
+      const distanceFee = distanceInKm > 3 ? (distanceInKm - 3) * 10 : 0
 
-      // Time fee (time in minutes × rate per minute)
-      const timeInMinutes = this.routeInfo.durationValue / 60
-      const timeFee = timeInMinutes * (servicePricing.timeRate || 2)
-
-      // Bad weather surcharge (₱5 if bad weather detected AND toggle is enabled)
       const badWeatherFee = (this.isBadWeather && this.badWeatherFeeEnabled) ? 5 : 0
 
-      // Subtotal
-      let subtotal = Math.max(minCharge, minCharge + distanceFee + timeFee + badWeatherFee)
+      // Subtotal (base charge + distance fee + bad weather fee)
+      let subtotal = baseCharge + distanceFee + badWeatherFee
 
-      // GCash fee (if payment method is GCASH)
       let gcashFee = 0
-      if (this.bookingForm.paymentMethod === 'GCASH') {
-        const gcashTier = this.pricingSettings.gcashCharges?.find(tier => {
-          if (tier.maxAmount === null) {
-            return subtotal >= tier.minAmount
-          }
-          return subtotal >= tier.minAmount && subtotal <= tier.maxAmount
-        })
-        gcashFee = gcashTier?.charge || 0
+      if (this.bookingForm.paymentMethod === 'GCASH' && this.bookingForm.budgetRange) {
+        switch (this.bookingForm.budgetRange) {
+          case 'P1-P499':
+            gcashFee = 5
+            break
+          case 'P500-P999':
+            gcashFee = 10
+            break
+          case 'P1000-P1500':
+          case 'Every P1k':
+            gcashFee = 20
+            break
+          case 'P1500':
+            gcashFee = 30
+            break
+          case 'P2000+':
+          case 'P2000':
+            gcashFee = 40
+            break
+          default:
+            gcashFee = 0
+        }
       }
 
       // Total
       const total = subtotal + gcashFee
 
       this.calculatedPrice = {
-        minCharge: Math.round(minCharge * 100) / 100,
+        baseCharge: Math.round(baseCharge * 100) / 100,
         distanceFee: Math.round(distanceFee * 100) / 100,
-        timeFee: Math.round(timeFee * 100) / 100,
         badWeatherFee: Math.round(badWeatherFee * 100) / 100,
-        gcashFee: Math.round( gcashFee * 100) / 100,
+        gcashFee: Math.round(gcashFee * 100) / 100,
         subtotal: Math.round(subtotal * 100) / 100,
         total: Math.round(total * 100) / 100
       }
@@ -808,7 +816,7 @@ export default {
       this.selectedService = service
       this.formError = ''
       this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
-      this.calculatedPrice = { minCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
+      this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
       
       if (this.directionsRenderer) {
         this.directionsRenderer.setDirections({ routes: [] })
@@ -883,7 +891,8 @@ export default {
         'deliveryAddressInput',
         'pickupAddressInput',
         'returnAddressInput',
-        'dropoffAddressInput'
+        'dropoffAddressInput',
+        'storeAddressInput'
       ]
 
       const calapanBounds = new window.google.maps.LatLngBounds(
@@ -921,6 +930,7 @@ export default {
           else if (refKey === 'pickupAddressInput') this.bookingForm.pickupAddress = addr
           else if (refKey === 'returnAddressInput') this.bookingForm.returnAddress = addr
           else if (refKey === 'dropoffAddressInput') this.bookingForm.dropoffAddress = addr
+          else if (refKey === 'storeAddressInput') this.bookingForm.storeAddress = addr
 
           this.addAddressMarker(place.geometry.location, addr, refKey)
           this.updateRoute()
@@ -1049,7 +1059,7 @@ export default {
           } else {
             console.error('Directions request failed due to ' + status)
             this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
-            this.calculatedPrice = { minCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
+            this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
           }
         }
       )
@@ -1138,12 +1148,11 @@ export default {
         case 'food-delivery':
           return f.restaurantName && f.restaurantAddress && f.foodOrderDetails && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
         case 'bill-payments':
-          // REQUIRED na ang receipt/reference URL
           return f.billerName && f.accountName && f.accountNumber && f.amountToPay && f.budgetRange && f.pickupAddress && f.returnAddress && !!f.billReceiptUrl
         case 'grocery-shopping':
           return f.shoppingList && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
         case 'gift-delivery':
-          return f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress
+          return f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress && f.storeName && f.storeAddress
         case 'medicine-delivery':
           return f.medicineNames && f.quantity && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
         case 'pickup-drop':
@@ -1151,6 +1160,23 @@ export default {
         default:
           return false
       }
+    },
+
+    getGcashFeeDescription() {
+      const budgetRange = this.bookingForm.budgetRange
+      if (!budgetRange) return ''
+      
+      const feeMap = {
+        'P1-P499': 'GCash fee for ₱1-₱499 (₱5)',
+        'P500-P999': 'GCash fee for ₱500-₱999 (₱10)',
+        'P1000-P1500': 'GCash fee for ₱1,000-₱1,500 (₱20)',
+        'Every P1k': 'GCash fee for Every P1k (₱20)',
+        'P1500': 'GCash fee for ₱1,500 (₱30)',
+        'P2000+': 'GCash fee for ₱2,000+ (₱40)',
+        'P2000': 'GCash fee for ₱2,000+ (₱40)'
+      }
+      
+      return feeMap[budgetRange] || ''
     },
 
     async submitBooking() {
@@ -1184,13 +1210,50 @@ export default {
           }
         }
 
+        // Determine top-level pickup and delivery addresses for easier querying/display.
+        // For gift delivery orders, use the storeAddress as the pickup location.
+        // For food delivery, use the restaurantAddress.
+        // For bill payments, use pickupAddress and returnAddress.
+        // For pickup-drop, use pickupAddress and dropoffAddress.
+        let topLevelPickup = ''
+        let topLevelDelivery = ''
+        switch (this.selectedService.id) {
+          case 'food-delivery':
+            topLevelPickup = this.bookingForm.restaurantAddress
+            topLevelDelivery = this.bookingForm.deliveryAddress
+            break
+          case 'bill-payments':
+            topLevelPickup = this.bookingForm.pickupAddress
+            topLevelDelivery = this.bookingForm.returnAddress
+            break
+          case 'gift-delivery':
+            topLevelPickup = this.bookingForm.storeAddress
+            topLevelDelivery = this.bookingForm.deliveryAddress
+            break
+          case 'pickup-drop':
+            topLevelPickup = this.bookingForm.pickupAddress
+            topLevelDelivery = this.bookingForm.dropoffAddress
+            break
+          default:
+            // For grocery-shopping and medicine-delivery orders, the pickup is the current location,
+            // so leave topLevelPickup blank; deliveryAddress is still the drop-off address.
+            topLevelPickup = ''
+            topLevelDelivery = this.bookingForm.deliveryAddress || ''
+        }
+
         const payload = {
           userId: user.uid,
           serviceId: this.selectedService.id,
           serviceName: this.selectedService.name,
+          // Save top-level pickup and delivery addresses for easier filtering/display in other components
+          pickupAddress: topLevelPickup || undefined,
+          deliveryAddress: topLevelDelivery || undefined,
           formData: { ...this.bookingForm, billReceiptFile: null }, // wag isama raw file
           routeInfo: { ...this.routeInfo },
           pricing: { ...this.calculatedPrice }, // Include calculated pricing
+          // Include totalAmount and priceEstimate for easier consumption by admin/driver views
+          totalAmount: this.calculatedPrice.total,
+          priceEstimate: { total: this.calculatedPrice.total },
           status: 'pending',
           createdAt: serverTimestamp()
         }

@@ -170,7 +170,8 @@
               <!-- CHANGE: Made order column more compact -->
               <td class="px-4 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900">#{{ order.id.substring(0, 8) }}</div>
-                <div class="text-sm text-gray-500">₱{{ order.totalAmount || order.priceEstimate?.total || 'TBD' }}</div>
+                <!-- Display total amount from top-level field, priceEstimate, or pricing.total -->
+                <div class="text-sm text-gray-500">₱{{ order.totalAmount || order.priceEstimate?.total || order.pricing?.total || 'TBD' }}</div>
               </td>
 
               <!-- CHANGE: Simplified customer display without profile picture -->
@@ -380,10 +381,11 @@
                 </svg>
               </div>
               <div>
+                <!-- Changed title from "AI-Powered" to "Manual Driver Assignment" -->
                 <h3 class="text-lg font-medium text-gray-900">
-                  {{ selectedOrder?.driverName ? 'AI-Powered Driver Reassignment' : 'AI-Powered Driver Assignment' }}
+                  {{ selectedOrder?.driverName ? 'Driver Reassignment' : 'Assign Driver' }}
                 </h3>
-                <p class="text-sm text-gray-500">Smart driver matching based on location, performance, and availability</p>
+                <p class="text-sm text-gray-500">Select a driver based on location and availability</p>
               </div>
             </div>
             <button @click="closeAssignModal" class="text-gray-400 hover:text-gray-600">
@@ -409,12 +411,13 @@
                 <p class="text-gray-600">Service</p>
                 <p class="font-medium">{{ selectedOrder?.serviceName || formatServiceType(selectedOrder?.serviceType || selectedOrder?.serviceId) }}</p>
               </div>
+              <!-- Added total amount display in order details -->
               <div>
-                <p class="text-gray-600">Amount</p>
-                <p class="font-medium">₱{{ selectedOrder?.totalAmount || selectedOrder?.priceEstimate?.total || 'TBD' }}</p>
+                <p class="text-gray-600">Total Amount</p>
+                <!-- Show total using top-level totalAmount, priceEstimate.total or pricing.total -->
+                <p class="font-medium">₱{{ selectedOrder?.totalAmount || selectedOrder?.priceEstimate?.total || selectedOrder?.pricing?.total || 'TBD' }}</p>
               </div>
             </div>
-            <!-- CHANGE: Enhanced location and service details display -->
             <div v-if="selectedOrder?.pickupAddress || getPickupLocation(selectedOrder) || selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder) || getServiceDetails(selectedOrder)" class="mt-3 pt-3 border-t border-gray-200">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div v-if="selectedOrder?.pickupAddress || getPickupLocation(selectedOrder)">
@@ -426,7 +429,6 @@
                   <p class="font-medium">{{ selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder) }}</p>
                 </div>
               </div>
-              <!-- CHANGE: Added detailed service information -->
               <div v-if="getServiceDetails(selectedOrder)" class="mt-2 pt-2 border-t border-gray-100">
                 <p class="text-gray-600 text-xs">Service Details</p>
                 <p class="font-medium text-sm">{{ getServiceDetails(selectedOrder) }}</p>
@@ -434,100 +436,11 @@
             </div>
           </div>
 
-          <!-- CHANGE: AI Recommendations Section -->
-          <div v-if="aiRecommendations.length > 0" class="mb-6">
-            <div class="flex items-center gap-2 mb-3">
-              <div class="p-1 bg-gradient-to-r from-green-500 to-blue-500 rounded">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                </svg>
-              </div>
-              <h4 class="text-lg font-medium text-gray-900">AI Recommendations</h4>
-              <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Smart Match</span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              <div
-                v-for="(recommendation, index) in aiRecommendations.slice(0, 3)"
-                :key="recommendation.driver.id"
-                class="p-4 border-2 rounded-lg cursor-pointer transition-all duration-200"
-                :class="[
-                  selectedDriverId === recommendation.driver.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50',
-                  index === 0 ? 'ring-2 ring-green-200 bg-green-50' : ''
-                ]"
-                @click="selectDriver(recommendation.driver)"
-              >
-                <!-- CHANGE: Enhanced recommendation card with AI score -->
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center">
-                    <!-- CHANGE: Removed profile picture from recommendations -->
-                    <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-sm">
-                      <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                      </svg>
-                    </div>
-                    <div class="ml-3">
-                      <!-- CHANGE: Enhanced driver name display -->
-                      <p class="text-sm font-medium text-gray-900">
-                        {{ getDriverDisplayName(recommendation.driver) }}
-                      </p>
-                      <p class="text-xs text-gray-500">{{ recommendation.driver.phone }}</p>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <div class="flex items-center gap-1">
-                      <span class="text-lg font-bold text-green-600">{{ recommendation.score }}%</span>
-                      <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                      </svg>
-                    </div>
-                    <p class="text-xs text-gray-500">Match Score</p>
-                  </div>
-                </div>
-
-                <div class="space-y-2">
-                  <div class="flex justify-between text-xs">
-                    <span class="text-gray-600">Distance:</span>
-                    <span class="font-medium text-blue-600">{{ recommendation.distance }}km</span>
-                  </div>
-                  <div class="flex justify-between text-xs">
-                    <span class="text-gray-600">Rating:</span>
-                    <span class="font-medium">{{ Number(recommendation.driver.rating || 0).toFixed(1) }}⭐</span>
-                  </div>
-                  <div class="flex justify-between text-xs">
-                    <span class="text-gray-600">Deliveries:</span>
-                    <span class="font-medium">{{ recommendation.driver.deliveries || 0 }}</span>
-                  </div>
-                  <div class="flex justify-between text-xs">
-                    <span class="text-gray-600">Vehicle:</span>
-                    <span class="font-medium">{{ recommendation.driver.vehicleType || 'N/A' }}</span>
-                  </div>
-                </div>
-
-                <!-- CHANGE: Added recommendation reasons -->
-                <div class="mt-3 pt-2 border-t border-gray-200">
-                  <div class="flex flex-wrap gap-1">
-                    <span v-for="reason in recommendation.reasons" :key="reason" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-                      {{ reason }}
-                    </span>
-                  </div>
-                </div>
-
-                <div v-if="index === 0" class="mt-2 flex items-center gap-1 text-xs text-green-600 font-medium">
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                  </svg>
-                  Best Match
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Removed AI Recommendations section entirely -->
 
           <!-- Driver Search -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Search All Available Drivers</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Search Available Drivers</label>
             <input
               v-model="driverSearchQuery"
               type="text"
@@ -539,7 +452,7 @@
           <!-- Available Drivers List -->
           <div class="mb-6">
             <div class="flex items-center justify-between mb-3">
-              <h4 class="text-sm font-medium text-gray-700">All Available Drivers ({{ filteredAvailableDrivers.length }})</h4>
+              <h4 class="text-sm font-medium text-gray-700">Available Drivers ({{ filteredAvailableDrivers.length }})</h4>
               <div class="flex items-center gap-2 text-xs text-gray-500">
                 <div class="flex items-center gap-1">
                   <div class="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -677,7 +590,8 @@
                 </div>
                 <div>
                   <p class="text-gray-600">Total Amount</p>
-                  <p class="font-medium text-green-600">₱{{ selectedOrderForDetails.totalAmount || selectedOrderForDetails.priceEstimate?.total || 'TBD' }}</p>
+                  <!-- Include pricing.total as a fallback for total amount -->
+                  <p class="font-medium text-green-600">₱{{ selectedOrderForDetails.totalAmount || selectedOrderForDetails.priceEstimate?.total || selectedOrderForDetails.pricing?.total || 'TBD' }}</p>
                 </div>
                 <div>
                   <p class="text-gray-600">Created</p>
@@ -1744,8 +1658,7 @@ export default {
       selectedDriverId.value = null
       showAssignModal.value = true
       await fetchAvailableDrivers()
-      // CHANGE: Generate AI recommendations when modal opens
-      await generateAIRecommendations(order)
+      // CHANGE: Removed AI recommendations generation - now manual assignment only
     }
 
     const closeAssignModal = () => {
@@ -1824,7 +1737,8 @@ export default {
           orderId: selectedOrder.value.id,
           customerName: selectedOrder.value.customerName,
           serviceType: selectedOrder.value.serviceType || selectedOrder.value.serviceId,
-          totalAmount: selectedOrder.value.totalAmount || selectedOrder.value.priceEstimate?.total
+          // Provide totalAmount for notification: fallback to pricing.total if necessary
+          totalAmount: selectedOrder.value.totalAmount || selectedOrder.value.priceEstimate?.total || selectedOrder.value.pricing?.total
         })
 
         if (selectedOrder.value.userId) {
@@ -1938,96 +1852,38 @@ export default {
         let assignedCount = 0
 
         for (const order of unassignedOrders.value) {
-          // Generate recommendations for this order
-          const recommendations = []
+          if (onlineDrivers.length === 0) break
 
-          for (const driver of onlineDrivers) {
-            let score = 20 // Base online score
+          // Get a random driver from available online drivers
+          const randomIndex = Math.floor(Math.random() * onlineDrivers.length)
+          const selectedDriver = onlineDrivers[randomIndex]
 
-            // Performance scoring
-            const rating = Number(driver.rating || 0)
-            const deliveries = Number(driver.deliveries || 0)
+          try {
+            await updateDoc(doc(db, 'orders', order.id), {
+              driverId: selectedDriver.id,
+              driverName: getDriverDisplayName(selectedDriver),
+              driverPhone: selectedDriver.phone,
+              driverAvatar: selectedDriver.profilePicture,
+              status: 'driver_assigned',
+              driverAssignedAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            })
 
-            if (rating >= 4.5) score += 25
-            else if (rating >= 4.0) score += 20
-            else if (rating >= 3.5) score += 15
+            // Send notification to driver
+            await realtimeService.sendNotification(selectedDriver.id, {
+              title: 'New Order Assignment',
+              message: `You have been auto-assigned to order #${order.id}`,
+              type: 'order_assignment',
+              orderId: order.id
+            })
 
-            if (deliveries >= 100) score += 15
-            else if (deliveries >= 50) score += 10
-            else if (deliveries >= 20) score += 5
+            assignedCount++
 
-            // Distance simulation (in real app, use actual location data)
-            // const mockDistance = Math.random() * 10 + 0.5
-            // if (mockDistance <= 2) score += 25
-            // else if (mockDistance <= 5) score += 20
-            // else if (mockDistance <= 8) score += 10
-            // else score += 5
+            // Remove assigned driver from available list to prevent double assignment
+            onlineDrivers.splice(randomIndex, 1)
 
-            // Use actual distance calculation if available
-            let distanceScore = 10; // Default score
-            try {
-              if (driver.location && order.pickupAddress) {
-                // const distanceResult = await googleMapsService.getDistance(driver.location, order.pickupAddress);
-                // const distanceInMeters = distanceResult.distance.value;
-                // distanceScore = calculateDistanceScore(distanceInMeters); // Implement this helper function
-                const mockDistance = Math.random() * 10 + 0.5; // Mock for now
-                if (mockDistance <= 2) distanceScore = 25;
-                else if (mockDistance <= 5) distanceScore = 20;
-                else if (mockDistance <= 8) distanceScore = 10;
-                else distanceScore = 5;
-              } else {
-                distanceScore = 10; // Default if no location data
-              }
-            } catch (err) {
-              console.error('Distance calculation error during auto-assignment:', err);
-              distanceScore = 10; // Default score on error
-            }
-            score += distanceScore;
-
-
-            recommendations.push({ driver, score })
-          }
-
-          // Sort by score and get best match
-          recommendations.sort((a, b) => b.score - a.score)
-
-          if (recommendations.length > 0) {
-            const bestDriver = recommendations[0].driver
-
-            try {
-              await updateDoc(doc(db, 'orders', order.id), {
-                driverId: bestDriver.id,
-                driverName: getDriverDisplayName(bestDriver),
-                driverPhone: bestDriver.phone,
-                driverAvatar: bestDriver.profilePicture,
-                // Updated auto-assignment status from 'confirmed' to 'driver_assigned'
-                status: 'driver_assigned',
-                driverAssignedAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-              })
-
-              // Send notification to driver
-              await realtimeService.sendNotification(bestDriver.id, {
-                title: 'New Order Assignment',
-                message: `You have been auto-assigned to order #${order.id}`,
-                type: 'order_assignment',
-                orderId: order.id
-              })
-
-              assignedCount++
-
-              // Remove assigned driver from available list to prevent double assignment
-              const driverIndex = onlineDrivers.findIndex(d => d.id === bestDriver.id)
-              if (driverIndex > -1) {
-                onlineDrivers.splice(driverIndex, 1)
-              }
-
-              // Stop if no more drivers available
-              if (onlineDrivers.length === 0) break
-
-            } catch (err) {
-              console.error(`Error auto-assigning order ${order.id}:`, err)
-            }
+          } catch (err) {
+            console.error(`Error auto-assigning order ${order.id}:`, err)
           }
         }
 
@@ -2038,8 +1894,8 @@ export default {
         }
 
       } catch (err) {
-        console.error('Error performing auto-assignment:', err)
-        toast.error('Failed to perform auto-assignment. Please try again.')
+        console.error('Error during auto-assignment:', err)
+        toast.error('Error during auto-assignment. Please try again.')
       } finally {
         autoAssigning.value = false
       }
@@ -2804,7 +2660,8 @@ export default {
             order.driverPhone || getDriverPhoneById(order.driverId) || 'N/A',
             order.pickupAddress || getPickupLocation(order) || 'N/A',
             order.deliveryAddress || getDeliveryLocation(order) || 'N/A',
-            `₱${order.totalAmount || order.priceEstimate?.total || 'TBD'}`,
+            // Export total amount including pricing.total fallback
+            `₱${order.totalAmount || order.priceEstimate?.total || order.pricing?.total || 'TBD'}`,
             formatDate(order.createdAt),
             formatDate(order.driverAssignedAt)
           ]
