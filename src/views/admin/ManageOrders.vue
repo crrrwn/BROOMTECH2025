@@ -923,6 +923,9 @@ export default {
 
     // CHANGE: Added separate array for all drivers lookup
     const allDriversForLookup = ref([])
+    const driversUnsubscribe = ref(null)
+    // CHANGE: Removed usersUnsubscribe as it's no longer needed.
+    // const usersUnsubscribe = ref(null)
 
     // CHANGE: Added Order Details Modal state
     const showOrderDetailsModal = ref(false)
@@ -1145,105 +1148,76 @@ export default {
       }
     }
 
-    const fetchAllDriversForLookup = async () => {
+    // CHANGE: Removed users collection listener - only fetch from drivers collection as source of truth
+    const setupRealtimeDriverListeners = () => {
       try {
-        console.log('[v0] Fetching all drivers for name lookup...')
+        console.log('[v0] Setting up real-time driver listeners...')
 
-        const usersQuery = query(collection(db, 'users'), where('role', '==', 'driver'))
-        const usersSnapshot = await getDocs(usersQuery)
+        // Real-time listener for drivers collection ONLY
+        driversUnsubscribe.value = onSnapshot(collection(db, 'drivers'), (driversSnapshot) => {
+          console.log('[v0] Drivers collection updated, processing...')
+          const driversMap = new Map()
 
-        const driversSnapshot = await getDocs(collection(db, 'drivers'))
+          driversSnapshot.forEach((doc) => {
+            const driverData = doc.data()
+            const firstName = driverData.firstName || driverData.first_name || ''
+            const lastName = driverData.lastName || driverData.last_name || ''
+            const fullName = driverData.fullName || driverData.full_name || `${firstName} ${lastName}`.trim()
+            
+            driversMap.set(doc.id, {
+              id: doc.id,
+              firstName: firstName,
+              lastName: lastName,
+              fullName: fullName || 'No Name',
+              phone: driverData.phone || driverData.contact || driverData.phoneNumber || '',
+              email: driverData.email || '',
+              profilePicture: driverData.profilePicture || driverData.avatar || '',
+              vehicleType: driverData.vehicleType || driverData.vehicle_type || '',
+              plateNumber: driverData.plateNumber || driverData.plate_number || '',
+              rating: Number(driverData.rating || 0),
+              deliveries: Number(driverData.deliveries || driverData.totalDeliveries || 0),
+              status: driverData.status || 'active',
+              approved: Boolean(driverData.approved),
+              banned: Boolean(driverData.banned),
+              isOnline: Boolean(driverData.isOnline || driverData.online),
+              location: driverData.location || driverData.currentLocation,
+            })
+            console.log('[v0] Updated driver from drivers collection:', fullName || 'No Name', doc.id)
+          })
 
-        const driversMap = new Map()
-
-        // Process users with driver role
-        usersSnapshot.forEach(doc => {
-          const data = doc.data()
-          const firstName = data.firstName || data.first_name || data.name?.split(' ')[0] || ''
-          const lastName = data.lastName || data.last_name || data.name?.split(' ').slice(1).join(' ') || ''
-          const fullName = data.fullName || data.full_name || `${firstName} ${lastName}`.trim() || data.displayName || data.name || ''
-
-          const driverData = {
-            id: doc.id,
-            firstName: firstName,
-            lastName: lastName,
-            fullName: fullName,
-            phone: data.phone || data.contact || data.phoneNumber || '',
-            email: data.email || '',
-            profilePicture: data.profilePicture || data.avatar || data.photoURL,
-            vehicleType: data.vehicleType || data.vehicle_type || '',
-            plateNumber: data.plateNumber || data.plate_number || '',
-            status: data.status || 'active',
-            rating: Number(data.rating || 0),
-            deliveries: Number(data.deliveries || data.totalDeliveries || 0),
-            isOnline: Boolean(data.isOnline || data.online),
-            location: data.location || data.currentLocation,
-            approved: Boolean(data.approved),
-            banned: Boolean(data.banned),
-            source: 'users'
-          }
-          driversMap.set(doc.id, driverData)
-          console.log('[v0] Added driver from users for lookup:', fullName || 'No Name', doc.id)
+          updateAvailableDrivers(driversMap)
+        }, (error) => {
+          console.error('[v0] Error listening to drivers collection:', error)
         })
-
-        // Process drivers collection (may override users data)
-        driversSnapshot.forEach(doc => {
-          const data = doc.data()
-          const motorcycleInfo = data.driverInfo?.motorcycleInfo || {}
-          const firstName = data.firstName || data.first_name || data.name?.split(' ')[0] || ''
-          const lastName = data.lastName || data.last_name || data.name?.split(' ').slice(1).join(' ') || ''
-          const fullName = data.fullName || data.full_name || `${firstName} ${lastName}`.trim() || data.displayName || data.name || ''
-
-          const driverData = {
-            id: doc.id,
-            firstName: firstName,
-            lastName: lastName,
-            fullName: fullName,
-            phone: data.contact || data.phone || data.phoneNumber || '',
-            email: data.email || '',
-            profilePicture: data.profilePicture || data.driverInfo?.documents?.profilePicture || data.avatar,
-            vehicleType: data.vehicleType || motorcycleInfo.type || motorcycleInfo.vehicleType || data.vehicle_type || '',
-            plateNumber: data.plateNumber || motorcycleInfo.plateNumber || motorcycleInfo.plate || data.plate_number || '',
-            status: data.status || 'active',
-            rating: Number(data.rating || data.driverInfo?.rating || 0),
-            deliveries: Number(data.deliveries || data.totalDeliveries || 0),
-            isOnline: Boolean(data.isOnline || data.online),
-            location: data.location || data.currentLocation,
-            approved: Boolean(data.approved),
-            banned: Boolean(data.banned),
-            source: 'drivers'
-          }
-          driversMap.set(doc.id, driverData)
-          console.log('[v0] Added/Updated driver from drivers collection for lookup:', fullName || 'No Name', doc.id)
-        })
-
-        const allDrivers = Array.from(driversMap.values())
-        console.log('[v0] Total drivers loaded for lookup:', allDrivers.length)
-
-        allDriversForLookup.value = allDrivers
-
-        console.log('[v0] All drivers for lookup updated:', allDriversForLookup.value.length)
 
       } catch (err) {
-        console.error('Error fetching all drivers for lookup:', err)
+        console.error('[v0] Error setting up real-time driver listeners:', err)
       }
+    }
+
+    const updateAvailableDrivers = (driversMap) => {
+      const allDrivers = Array.from(driversMap.values())
+      console.log('[v0] Total drivers loaded:', allDrivers.length)
+      allDriversForLookup.value = allDrivers
+
+      // Filter only available drivers for assignment
+      availableDrivers.value = allDrivers.filter(driver =>
+        driver.approved && !driver.banned && driver.status !== 'suspended'
+      )
+
+      console.log('[v0] Available drivers for assignment:', availableDrivers.value.length)
+    }
+
+    const fetchAllDriversForLookup = async () => {
+      console.log('[v0] fetchAllDriversForLookup called - using real-time listeners instead')
     }
 
     const fetchAvailableDrivers = async () => {
       try {
         loadingDrivers.value = true
-
-        await fetchAllDriversForLookup()
-
-        // Filter only available drivers for assignment
-        availableDrivers.value = allDriversForLookup.value.filter(driver =>
-          driver.approved && !driver.banned && driver.status !== 'suspended'
-        )
-
-        console.log('[v0] Available drivers for assignment:', availableDrivers.value.length)
-
+        console.log('[v0] Real-time driver listeners are active')
       } catch (err) {
-        console.error('Error fetching available drivers:', err)
+        console.error('Error with available drivers:', err)
         toast.error('Failed to load available drivers')
       } finally {
         loadingDrivers.value = false
@@ -2108,6 +2082,9 @@ export default {
       }
     }
 
+    // This function `trackOrder` is now superseded by `trackDriver` for map tracking.
+    // It's kept here to avoid linting errors if it was intended for other purposes,
+    // but it's not called in the current template.
     const trackOrder = (order) => {
       console.log('Tracking order:', order)
       // TODO: Implement order tracking functionality
@@ -2237,81 +2214,8 @@ export default {
     }
 
     // CHANGE: Added trackDriver function for admin to track drivers
-    // const trackDriver = (order) => {
-    //   if (!order.driverId) {
-    //     toast.warning('No driver assigned to track')
-    //     return
-    //   }
-
-    //   const driver = allDriversForLookup.value.find(d => d.id === order.driverId)
-    //   if (!driver) {
-    //     toast.error('Driver not found for tracking')
-    //     return
-    //   }
-
-    //   trackedOrder.value = order
-    //   trackedDriverName.value = getDriverDisplayName(driver)
-    //   trackedDriverPhone.value = driver.phone || 'No phone'
-    //   showTrackingModal.value = true
-
-    //   // Start real-time location updates
-    //   startDriverLocationTracking()
-
-    //   toast.success(`Now tracking ${trackedDriverName.value}`)
-    // }
-
-    // const closeTrackingModal = () => {
-    //   showTrackingModal.value = false
-    //   trackedOrder.value = null
-    //   trackedDriverName.value = ''
-    //   trackedDriverPhone.value = ''
-
-    //   // Stop location updates
-    //   if (locationUpdateInterval.value) {
-    //     clearInterval(locationUpdateInterval.value)
-    //     locationUpdateInterval.value = null
-    //   }
-    // }
-
-    // const startDriverLocationTracking = () => {
-    //   // Simulate real-time location updates
-    //   const locations = [
-    //     'Quezon City, Metro Manila',
-    //     'EDSA Cubao, Quezon City',
-    //     'Ortigas Center, Pasig City',
-    //     'Makati CBD, Makati City',
-    //     'BGC, Taguig City',
-    //     'Alabang, Muntinlupa City'
-    //   ]
-
-    //   const distances = ['3.2 km', '2.8 km', '2.1 km', '1.5 km', '0.8 km', '0.3 km']
-    //   const times = ['18 mins', '15 mins', '12 mins', '8 mins', '5 mins', '2 mins']
-
-    //   let locationIndex = 0
-
-    //   // Initial location
-    //   currentDriverLocation.value = locations[locationIndex]
-    //   remainingDistance.value = distances[locationIndex]
-    //   estimatedArrival.value = times[locationIndex]
-
-    //   // Update location every 5 seconds
-    //   locationUpdateInterval.value = setInterval(() => {
-    //     locationIndex = (locationIndex + 1) % locations.length
-    //     currentDriverLocation.value = locations[locationIndex]
-    //     remainingDistance.value = distances[locationIndex]
-    //     estimatedArrival.value = times[locationIndex]
-
-    //     console.log('[v0] Driver location updated:', currentDriverLocation.value)
-    //   }, 5000)
-    // }
-
-    // const refreshDriverLocation = () => {
-    //   if (locationUpdateInterval.value) {
-    //     clearInterval(locationUpdateInterval.value)
-    //   }
-    //   startDriverLocationTracking()
-    //   toast.success('Driver location refreshed')
-    // }
+    // Removed duplicate trackDriver definition
+    // const trackDriver = async (order) => { ... }
 
     const getTrackingStepClass = (status) => {
       if (isTrackingStepCompleted(status)) {
@@ -2414,7 +2318,7 @@ export default {
 
     onMounted(() => {
       fetchOrders()
-      fetchAllDriversForLookup()
+      setupRealtimeDriverListeners()
       
       // Preload Google Maps API
       initializeGoogleMaps().catch(error => {
@@ -2424,6 +2328,12 @@ export default {
 
     // CHANGE: Updated onUnmounted to reset unsubscribe.value to null for memory leak prevention
     onUnmounted(() => {
+      // CHANGE: Removed usersUnsubscribe logic as it's no longer needed.
+      // if (usersUnsubscribe.value) {
+      //   usersUnsubscribe.value()
+      //   usersUnsubscribe.value = null
+      // }
+      
       if (unsubscribe.value) {
         unsubscribe.value()
         unsubscribe.value = null
@@ -2434,6 +2344,10 @@ export default {
       }
       if (locationUpdateInterval.value) {
         clearInterval(locationUpdateInterval.value)
+      }
+      if (driversUnsubscribe.value) {
+        driversUnsubscribe.value()
+        driversUnsubscribe.value = null
       }
     })
 
@@ -2751,7 +2665,7 @@ export default {
       getPickupLocation,
       getDeliveryLocation,
       viewOrder,
-      trackOrder,
+      // trackOrder, // Removed as it's now superseded by trackDriver
       cancelOrder,
       goToPage,
       nextPage,
@@ -2772,7 +2686,7 @@ export default {
       formatAssignmentTime,
       fetchAllDriversForLookup,
       getDriverDisplayName,
-      trackDriver,
+      trackDriver, // Keep trackDriver for map tracking functionality
       closeOrderDetailsModal,
       formatOrderDate,
       closeTrackingModal,

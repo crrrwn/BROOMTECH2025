@@ -849,20 +849,10 @@ export default {
         loading.value = true
         error.value = null
 
-        const usersQuery = query(collection(db, 'users'), where('role', '==', 'driver'))
         const driversCol = collection(db, 'drivers')
-
-        const [usersSnap, driversSnap] = await Promise.all([
-          getDocs(usersQuery),
-          getDocs(driversCol)
-        ])
+        const driversSnap = await getDocs(driversCol)
 
         const mapById = new Map()
-
-        usersSnap.forEach(d => {
-          const unified = toUnifiedDriver(d.data(), d.id, 'users')
-          mapById.set(d.id, unified)
-        })
 
         driversSnap.forEach(d => {
           const unified = toUnifiedDriver(d.data(), d.id, 'drivers')
@@ -885,15 +875,6 @@ export default {
     // realtime listeners for both collections
     const setupRealtimeListeners = () => {
       try {
-        const usersQuery = query(collection(db, 'users'), where('role', '==', 'driver'))
-        const unsubUsers = onSnapshot(usersQuery, (qs) => {
-          const existing = new Map(drivers.value.map(d => [d.id, d]))
-          qs.forEach(d => {
-            existing.set(d.id, toUnifiedDriver(d.data(), d.id, 'users'))
-          })
-          drivers.value = Array.from(existing.values())
-        }, (err) => console.error('[Realtime users] error:', err))
-
         const driversCol = collection(db, 'drivers')
         const unsubDrivers = onSnapshot(driversCol, (qs) => {
           const existing = new Map(drivers.value.map(d => [d.id, d]))
@@ -903,7 +884,7 @@ export default {
           drivers.value = Array.from(existing.values())
         }, (err) => console.error('[Realtime drivers] error:', err))
 
-        unsubs.value.push(unsubUsers, unsubDrivers)
+        unsubs.value.push(unsubDrivers)
       } catch (err) {
         console.error('[Realtime] setup error:', err)
       }
