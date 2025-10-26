@@ -255,21 +255,23 @@ export const useAuthStore = defineStore("auth", {
             profileComplete: false,
             phone: "",
             address: "",
+            barangay: "",
+            contact: "",
+            middleName: "",
             createdAt: new Date().toISOString(),
           })
         }
 
-        // refresh to get the latest approved flag
-        const profile = await this.refreshAndGetProfile()
-
-        if (!profile) {
+        const userProfile = await getDoc(doc(db, "users", user.uid))
+        if (!userProfile.exists()) {
           await signOut(auth)
           return { success: false, message: "Profile not found. Please contact support." }
         }
 
-        if (profile.role === "admin") {
-          return { success: true, message: "Admin login successful!" }
-        }
+        const profile = { id: userProfile.id, ...userProfile.data() }
+        this.user = user
+        this.userProfile = profile
+        this.isAuthenticated = true
 
         if (profile.banned === true) {
           await signOut(auth)
@@ -283,6 +285,7 @@ export const useAuthStore = defineStore("auth", {
 
         return { success: true, message: "Google login successful!" }
       } catch (error) {
+        console.error("Google login error:", error)
         return { success: false, message: error.message }
       }
     },

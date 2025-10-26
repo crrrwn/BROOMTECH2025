@@ -304,7 +304,14 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Store Preference (Optional)</label>
-              <input type="text" v-model.trim="bookingForm.storePreference" placeholder="e.g., SM, Robinson's, Mercury Drug" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+              <input 
+                type="text" 
+                v-model.trim="bookingForm.storePreference" 
+                ref="storePreferenceInput"
+                placeholder="e.g., SM, Robinson's, Mercury Drug" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+              <p class="text-xs text-gray-500 mt-1">Start typing to search for stores</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
@@ -690,6 +697,43 @@ export default {
     }
   },
   methods: {
+    // ---------- helpers to sanitize data for Firestore ----------
+    _sanitizeForFirestore(value) {
+      // remove undefined, convert to null; strip File objects
+      if (value === undefined) return null
+      if (value instanceof File) return null
+      if (value && typeof value === 'object') {
+        // shallow clone; deep handled in deepClean
+        return value
+      }
+      return value
+    },
+    _deepClean(obj) {
+      if (obj === null || obj === undefined) return null
+      if (obj instanceof File) return null
+      if (Array.isArray(obj)) {
+        return obj.map(v => this._deepClean(v)).filter(v => v !== undefined)
+      }
+      if (typeof obj === 'object') {
+        const out = {}
+        Object.keys(obj).forEach(k => {
+          const v = this._deepClean(obj[k])
+          if (v === undefined) {
+            out[k] = null
+          } else {
+            out[k] = v
+          }
+        })
+        return out
+      }
+      return obj
+    },
+    _stringOrEmpty(v) {
+      if (v === undefined || v === null) return ''
+      return String(v)
+    },
+    // ------------------------------------------------------------
+
     async checkProfileCompletion() {
       try {
         const user = this.authStore?.user
@@ -707,12 +751,12 @@ export default {
                                  userProfile.address
 
         this.needsProfileCompletion = !hasRequiredFields
-        console.log('[v0] Profile completion check:', {
+        console.log('[v1] Profile completion check:', {
           hasRequiredFields,
           needsProfileCompletion: this.needsProfileCompletion
         })
       } catch (error) {
-        console.error('[v0] Error checking profile completion:', error)
+        console.error('[v1] Error checking profile completion:', error)
         this.needsProfileCompletion = false
       }
     },
@@ -720,9 +764,9 @@ export default {
     async checkBadWeatherFeeEnabled() {
       try {
         this.badWeatherFeeEnabled = await weatherService.isBadWeatherFeeEnabled()
-        console.log('[v0] Bad Weather Fee enabled:', this.badWeatherFeeEnabled)
+        console.log('[v1] Bad Weather Fee enabled:', this.badWeatherFeeEnabled)
       } catch (error) {
-        console.error('[v0] Error checking bad weather fee setting:', error)
+        console.error('[v1] Error checking bad weather fee setting:', error)
       }
     },
 
@@ -732,7 +776,7 @@ export default {
         this.isBadWeather = weatherData.isBadWeather
         this.currentWeather = weatherData.description
 
-        console.log('[v0] Weather check:', {
+        console.log('[v1] Weather check:', {
           isBadWeather: this.isBadWeather,
           description: this.currentWeather
         })
@@ -742,7 +786,7 @@ export default {
           this.calculateDeliveryFee()
         }
       } catch (error) {
-        console.error('[v0] Error checking weather:', error)
+        console.error('[v1] Error checking weather:', error)
       }
     },
 
@@ -807,14 +851,15 @@ export default {
         total: Math.round(total * 100) / 100
       }
 
-      console.log('[v0] Calculated price:', this.calculatedPrice)
+      console.log('[v1] Calculated price:', this.calculatedPrice)
     },
 
     onSelectService(service) {
-      console.log('[v0] Service selected:', service.name)
+      console.log('[v1] Service selected:', service.name)
       
       this.selectedService = service
       this.formError = ''
+      this.resetBookingForm()
       this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
       this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
       
@@ -826,6 +871,20 @@ export default {
         this.initializeMap()
         this.initializeAutocomplete()
       })
+    },
+
+    resetBookingForm() {
+      this.bookingForm = {
+        paymentMethod: 'COD',
+        restaurantName: '', restaurantAddress: '', foodOrderDetails: '', specialInstructions: '', budgetRange: '',
+        receiverName: '', receiverContact: '', deliveryAddress: '', landmark: '', preferredTime: '',
+        billerName: '', accountName: '', accountNumber: '', amountToPay: '', dueDate: '', pickupAddress: '', returnAddress: '', preferredSchedule: '',
+        billReceiptFile: null, billReceiptUrl: '',
+        shoppingList: '', storePreference: '',
+        giftType: '', recipientName: '', recipientContact: '', preferredDateTime: '', storeName: '', storeAddress: '',
+        medicineNames: '', prescriptionFile: null, quantity: '',
+        pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
+      }
     },
 
     onAddressManualInput() {
@@ -892,7 +951,8 @@ export default {
         'pickupAddressInput',
         'returnAddressInput',
         'dropoffAddressInput',
-        'storeAddressInput'
+        'storeAddressInput',
+        'storePreferenceInput'
       ]
 
       const calapanBounds = new window.google.maps.LatLngBounds(
@@ -904,13 +964,16 @@ export default {
         const input = this.$refs[refKey]
         if (!input) return
 
-        const ac = new window.google.maps.places.Autocomplete(input, {
+        const isStorePreference = refKey === 'storePreferenceInput'
+        const acOptions = {
           componentRestrictions: { country: 'ph' },
           fields: ['place_id', 'geometry', 'name', 'formatted_address'],
           bounds: calapanBounds,
           strictBounds: false,
-          types: ['establishment', 'geocode']
-        })
+          types: isStorePreference ? ['establishment'] : ['establishment', 'geocode']
+        }
+
+        const ac = new window.google.maps.places.Autocomplete(input, acOptions)
 
         ac.addListener('place_changed', () => {
           const place = ac.getPlace()
@@ -924,6 +987,11 @@ export default {
 
           const addr = place.formatted_address
           input.value = addr
+
+          if (refKey === 'storePreferenceInput') {
+            this.bookingForm.storePreference = place.name || addr
+            return
+          }
 
           if (refKey === 'restaurantAddressInput') this.bookingForm.restaurantAddress = addr
           else if (refKey === 'deliveryAddressInput') this.bookingForm.deliveryAddress = addr
@@ -943,15 +1011,12 @@ export default {
     addAddressMarker(location, address, inputType) {
       if (!this.map) return
 
-      let markerColor = '#FF0000'
       let markerLabel = 'A'
 
       if (inputType.includes('pickup') || inputType.includes('restaurant')) {
-        markerColor = '#00AA55'
         markerLabel = 'P'
         if (this.pickupMarker) this.pickupMarker.setMap(null)
       } else if (inputType.includes('delivery') || inputType.includes('dropoff') || inputType.includes('return')) {
-        markerColor = '#D33'
         markerLabel = 'D'
         if (this.deliveryMarker) this.deliveryMarker.setMap(null)
       }
@@ -971,6 +1036,12 @@ export default {
       if (!navigator.geolocation) {
         alert("Error: Your browser doesn't support geolocation.")
         return
+      }
+
+      const options = {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 0
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -999,9 +1070,21 @@ export default {
             }
           })
         },
-        () => {
-          alert('Error: The Geolocation service failed.')
-        }
+        (error) => {
+          let errorMsg = 'Error: The Geolocation service failed.'
+          
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMsg = 'Geolocation permission denied. Please enable location access in your browser settings.'
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMsg = 'Your location is currently unavailable. Please try again or enter address manually.'
+          } else if (error.code === error.TIMEOUT) {
+            errorMsg = 'Location request timed out. Please try again or enter address manually.'
+          }
+          
+          alert(errorMsg)
+          console.error('[v1] Geolocation error:', error.code, error.message)
+        },
+        options
       )
     },
 
@@ -1057,7 +1140,7 @@ export default {
             // Calculate delivery fee after route is updated
             this.calculateDeliveryFee()
           } else {
-            console.error('Directions request failed due to ' + status)
+            console.error('[v1] Directions request failed:', status)
             this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
             this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
           }
@@ -1114,7 +1197,7 @@ export default {
             },
             (err) => {
               this.uploadingBillReceipt = false
-              console.error('upload error:', err.code, err.message)
+              console.error('[v1] upload error:', err.code, err.message)
               if (err.code === 'storage/unauthenticated') {
                 alert('Please log in before uploading a receipt.')
               } else if (err.code === 'storage/unauthorized') {
@@ -1135,7 +1218,7 @@ export default {
           )
         } catch (err) {
           this.uploadingBillReceipt = false
-          console.error('upload exception:', err)
+          console.error('[v1] upload exception:', err)
           reject(err)
         }
       })
@@ -1152,11 +1235,11 @@ export default {
         case 'grocery-shopping':
           return f.shoppingList && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
         case 'gift-delivery':
-          return f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress && f.storeName && f.storeAddress
+          return f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress && f.storeAddress
         case 'medicine-delivery':
           return f.medicineNames && f.quantity && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
         case 'pickup-drop':
-          return f.pickupAddress && f.pickupContact && f.itemDescription && f.itemType && f.budgetRange && f.dropoffAddress && f.receiverContact
+          return f.pickupAddress && f.pickupContact && f.itemDescription && f.itemType && f.budgetRange && f.dropoffAddress
         default:
           return false
       }
@@ -1179,6 +1262,7 @@ export default {
       return feeMap[budgetRange] || ''
     },
 
+    // ----------------- FIXED submitBooking -----------------
     async submitBooking() {
       try {
         this.formError = ''
@@ -1195,6 +1279,14 @@ export default {
           return
         }
 
+        const requiredFieldsCheck = this.checkRequiredFields()
+        console.debug('[v1] Booking validation check:', {
+          selectedService: this.selectedService?.id,
+          requiredFieldsCheck,
+          paymentMethod: this.bookingForm.paymentMethod,
+          canSubmitBooking: this.canSubmitBooking
+        })
+
         if (!this.canSubmitBooking) {
           this.formError = 'Please fill all required fields.'
           return
@@ -1202,7 +1294,7 @@ export default {
 
         this.submitting = true
 
-        // Safety: kung may file pero di pa uploaded
+        // Upload pending receipt if needed
         if (this.selectedService?.id === 'bill-payments' && this.bookingForm.billReceiptFile && !this.bookingForm.billReceiptUrl) {
           await this.uploadBillReceipt(this.bookingForm.billReceiptFile, user.uid)
           if (!this.bookingForm.billReceiptUrl) {
@@ -1210,11 +1302,7 @@ export default {
           }
         }
 
-        // Determine top-level pickup and delivery addresses for easier querying/display.
-        // For gift delivery orders, use the storeAddress as the pickup location.
-        // For food delivery, use the restaurantAddress.
-        // For bill payments, use pickupAddress and returnAddress.
-        // For pickup-drop, use pickupAddress and dropoffAddress.
+        // Determine top-level pickup and delivery addresses
         let topLevelPickup = ''
         let topLevelDelivery = ''
         switch (this.selectedService.id) {
@@ -1226,8 +1314,16 @@ export default {
             topLevelPickup = this.bookingForm.pickupAddress
             topLevelDelivery = this.bookingForm.returnAddress
             break
+          case 'grocery-shopping':
+            topLevelPickup = ''
+            topLevelDelivery = this.bookingForm.deliveryAddress
+            break
           case 'gift-delivery':
             topLevelPickup = this.bookingForm.storeAddress
+            topLevelDelivery = this.bookingForm.deliveryAddress
+            break
+          case 'medicine-delivery':
+            topLevelPickup = ''
             topLevelDelivery = this.bookingForm.deliveryAddress
             break
           case 'pickup-drop':
@@ -1235,53 +1331,68 @@ export default {
             topLevelDelivery = this.bookingForm.dropoffAddress
             break
           default:
-            // For grocery-shopping and medicine-delivery orders, the pickup is the current location,
-            // so leave topLevelPickup blank; deliveryAddress is still the drop-off address.
             topLevelPickup = ''
             topLevelDelivery = this.bookingForm.deliveryAddress || ''
         }
+
+        // Clean formData: remove undefined & File objects safely
+        const { billReceiptFile, prescriptionFile, ...restForm } = this.bookingForm
+        const cleanedForm = this._deepClean(restForm)
 
         const payload = {
           userId: user.uid,
           serviceId: this.selectedService.id,
           serviceName: this.selectedService.name,
-          // Save top-level pickup and delivery addresses for easier filtering/display in other components
-          pickupAddress: topLevelPickup || undefined,
-          deliveryAddress: topLevelDelivery || undefined,
-          formData: { ...this.bookingForm, billReceiptFile: null }, // wag isama raw file
-          routeInfo: { ...this.routeInfo },
-          pricing: { ...this.calculatedPrice }, // Include calculated pricing
-          // Include totalAmount and priceEstimate for easier consumption by admin/driver views
-          totalAmount: this.calculatedPrice.total,
-          priceEstimate: { total: this.calculatedPrice.total },
+          // Always send strings, never undefined
+          pickupAddress: this._stringOrEmpty(topLevelPickup),
+          deliveryAddress: this._stringOrEmpty(topLevelDelivery),
+          formData: cleanedForm,
+          routeInfo: this._deepClean(this.routeInfo),
+          pricing: this._deepClean(this.calculatedPrice),
+          totalAmount: Number(this.calculatedPrice?.total || 0),
+          priceEstimate: { total: Number(this.calculatedPrice?.total || 0) },
           status: 'pending',
           createdAt: serverTimestamp()
         }
 
-        const orderRef = await addDoc(collection(db, 'orders'), payload)
+        console.debug('[v1 ✅] Clean payload ready for Firestore:', payload)
 
-        const userName = userProfile?.firstName && userProfile?.lastName 
-          ? `${userProfile.firstName} ${userProfile.lastName}`.trim()
-          : user.email || 'Unknown User'
-        
-        await loggingService.logOrderCreated(
-          orderRef.id,
-          user.uid,
-          userName,
-          this.selectedService.name,
-          this.calculatedPrice.total
-        )
+        const orderRef = await addDoc(collection(db, 'orders'), payload)
+        console.debug('[v1 ✅] Firestore write success. Order ID:', orderRef.id)
+
+        // Safe logging (non-blocking)
+        try {
+          const userName = (userProfile?.firstName || userProfile?.lastName)
+            ? `${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`.trim()
+            : (user.email || 'Unknown User')
+          await loggingService.logOrderCreated(
+            orderRef.id,
+            user.uid,
+            userName,
+            this.selectedService.name,
+            Number(this.calculatedPrice?.total || 0)
+          )
+        } catch (logErr) {
+          console.warn('[v1 ⚠️] loggingService.logOrderCreated failed (non-blocking):', logErr?.message || logErr)
+        }
 
         alert(`Booking submitted successfully! Estimated Total: ₱${this.calculatedPrice.total}`)
         this.$router.push('/user/orders')
       } catch (err) {
-        console.error('[submitBooking] error:', err)
-        this.formError = 'Error submitting booking. Please try again.'
+        console.error('[v1 🔥] submitBooking error:', { code: err?.code, message: err?.message, err })
+        if (err?.code === 'permission-denied') {
+          this.formError = 'Booking failed: Firestore rules blocked this write.'
+        } else if (err?.code === 'invalid-argument') {
+          this.formError = 'Invalid data in booking form. Please review your inputs.'
+        } else {
+          this.formError = 'Error submitting booking. Please try again.'
+        }
         alert(this.formError)
       } finally {
         this.submitting = false
       }
     },
+    // -------------------------------------------------------
 
     async loadPricingSettings() {
       try {
@@ -1289,12 +1400,12 @@ export default {
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
           this.pricingSettings = docSnap.data()
-          console.log('[v0] Pricing settings loaded:', this.pricingSettings)
+          console.log('[v1] Pricing settings loaded:', this.pricingSettings)
         } else {
-          console.warn('[v0] No pricing settings found, using defaults')
+          console.warn('[v1] No pricing settings found, using defaults')
         }
       } catch (error) {
-        console.error('[v0] Error loading pricing settings:', error)
+        console.error('[v1] Error loading pricing settings:', error)
       }
     },
 

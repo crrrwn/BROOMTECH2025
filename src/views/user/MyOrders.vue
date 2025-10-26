@@ -133,11 +133,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                 </div>
-                <p class="text-green-700 mb-3">Your order has been successfully delivered! Please rate your experience.</p>
-                <button @click="showFeedbackModal(order.id)"
-                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  Rate & Review
-                </button>
+                <p class="text-green-700 mb-3">Your order has been successfully delivered!</p>
               </div>
 
               <!-- Show existing feedback for delivered orders -->
@@ -428,6 +424,16 @@
               <div class="flex items-center justify-between text-sm text-gray-600">
                 <span>{{ formatDate(order.createdAt) }}</span>
                 <div class="flex items-center space-x-3">
+                  <button @click="openChatWithDriver(order)"
+                          v-if="order.driver"
+                          class="text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-1"
+                          title="Message driver">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <span>Message</span>
+                  </button>
+
                   <button @click="viewOrder(order.id)"
                           class="text-blue-600 hover:text-blue-800 font-medium">
                     {{ expandedOrderId === order.id ? 'Hide Details' : 'View Details' }}
@@ -909,6 +915,32 @@ export default {
         alert('Error submitting feedback. Please try again.')
       } finally {
         this.submittingFeedback = false
+      }
+    },
+
+    async openChatWithDriver(order) {
+      if (!order.driver) {
+        alert('Driver information not available')
+        return
+      }
+
+      try {
+        // Create or get chat room with driver
+        const { chatService } = await import('@/services/chatService')
+        const chatRoomId = await chatService.createChatRoom(
+          this.authStore.user.uid,
+          order.driver.uid,
+          order.id
+        )
+
+        // Navigate to ChatMessages with the chat ID
+        this.$router.push({
+          name: 'user-chat-messages',
+          params: { chatId: chatRoomId }
+        })
+      } catch (error) {
+        console.error('Error opening chat:', error)
+        alert('Error opening chat. Please try again.')
       }
     },
 
