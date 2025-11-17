@@ -76,6 +76,16 @@
             <option value="gift">Surprise Gift</option>
           </select>
         </div>
+        <!-- Add Payment Method filter -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+          <select v-model="filters.paymentMethod"
+                  class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary">
+            <option value="">All Methods</option>
+            <option value="GCASH">GCash</option>
+            <option value="COD">Cash on Delivery</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -132,10 +142,21 @@
                 </p>
               </div>
             </div>
-            <div class="mb-4">
+            <!-- Payment Method display badge - now properly shows actual payment method from Firestore -->
+            <div class="mb-4 flex items-center gap-2">
               <span :class="getStatusBadgeClass(booking.status)"
                     class="px-3 py-1 text-xs font-medium rounded-full">
                 {{ formatStatus(booking.status) }}
+              </span>
+              <!-- Display payment method from booking data -->
+              <span v-if="booking.paymentMethod && booking.paymentMethod.trim()"
+                    :class="getPaymentMethodBadge(booking.paymentMethod)"
+                    class="px-3 py-1 text-xs font-medium rounded-full">
+                {{ formatPaymentMethod(booking.paymentMethod) }}
+              </span>
+              <!-- Fallback: show placeholder if payment method is missing -->
+              <span v-else class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                💳 Payment Pending
               </span>
             </div>
             <div v-if="booking.notes"
@@ -147,11 +168,18 @@
           </div>
           <div class="ml-6 text-right">
             <div class="mb-4">
+              <!-- CHANGE: Use totalAmount directly from Firestore if available (saved from Set Items Total), otherwise calculate -->
               <p class="text-2xl font-bold text-primary">
-                <!-- Display total earnings from totalAmount, priceEstimate.total, or pricing.total -->
-                ₱{{ booking.totalAmount || booking.priceEstimate?.total || booking.pricing?.total || 'TBD' }}
+                ₱{{ (booking.totalAmount || calculateFinalAmount(booking)).toFixed(2) }}
               </p>
               <p class="text-sm text-gray-500">Total Earnings</p>
+              <!-- CHANGE: Only show GCash fee note if payment method is GCash, not COD -->
+              <p v-if="booking.paymentMethod?.toUpperCase() !== 'COD'" class="text-xs text-gray-500 mt-1">
+                (includes ₱{{ calculateGCashFee(booking) }} GCash fee)
+              </p>
+              <p v-else class="text-xs text-gray-500 mt-1">
+                (Cash on Delivery - No GCash fee)
+              </p>
             </div>
             <div class="space-y-2">
               <button
@@ -325,12 +353,26 @@
               <div>
                 <p class="text-gray-600">Total Amount</p>
                 <p class="font-medium text-green-600">
-                  ₱{{ selectedBooking.totalAmount || selectedBooking.priceEstimate?.total || 'TBD' }}
+                  ₱{{ calculateFinalAmount(selectedBooking) }}
                 </p>
               </div>
               <div>
                 <p class="text-gray-600">Created</p>
                 <p class="font-medium">{{ formatDate(selectedBooking.createdAt) }}</p>
+              </div>
+            </div>
+            <!-- Display payment method in details modal -->
+            <div v-if="selectedBooking.paymentMethod" class="mt-3 pt-3 border-t border-gray-200 text-xs">
+              <div class="flex justify-between text-gray-600">
+                <span>Payment Method:</span>
+                <span class="font-medium">{{ formatPaymentMethod(selectedBooking.paymentMethod) }}</span>
+              </div>
+            </div>
+            <!-- Only display GCash fee if payment method is GCash -->
+            <div v-if="selectedBooking.paymentMethod?.toUpperCase() !== 'COD'" class="mt-3 pt-3 border-t border-gray-200 text-xs">
+              <div class="flex justify-between text-gray-600">
+                <span>GCash Fee Included:</span>
+                <span class="font-medium">₱{{ calculateGCashFee(selectedBooking) }}</span>
               </div>
             </div>
           </div>
@@ -404,6 +446,52 @@
               </div>
             </div>
           </div>
+          <div v-if="selectedBooking.formData?.billReceiptUrl || selectedBooking.proofOfDelivery?.url"
+               class="bg-white p-4 rounded-lg border">
+            <h4 class="font-medium text-gray-900 mb-3">Receipt / Proof</h4>
+            <div class="space-y-3">
+              <div v-if="selectedBooking.formData?.billReceiptUrl">
+                <p class="text-sm text-gray-600 mb-2">User's Receipt/Reference</p>
+                <a :href="selectedBooking.formData.billReceiptUrl"
+                   target="_blank"
+                   rel="noopener"
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  View Receipt
+                </a>
+                <div v-if="isImageUrl(selectedBooking.formData.billReceiptUrl)" class="mt-3">
+                  <img :src="selectedBooking.formData.billReceiptUrl"
+                       alt="Receipt"
+                       class="max-w-xs rounded-lg border shadow-sm"
+                       @click="openReceiptPreview(selectedBooking.formData.billReceiptUrl)"
+                       style="cursor: pointer; max-height: 200px; object-fit: contain;" />
+                </div>
+              </div>
+              <div v-if="selectedBooking.proofOfDelivery?.url" class="pt-3 border-t">
+                <p class="text-sm text-gray-600 mb-2">Proof of Delivery</p>
+                <a :href="selectedBooking.proofOfDelivery.url"
+                   target="_blank"
+                   rel="noopener"
+                   class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  View Proof
+                </a>
+                <div class="mt-3">
+                  <img :src="selectedBooking.proofOfDelivery.url"
+                       alt="Proof of Delivery"
+                       class="max-w-xs rounded-lg border shadow-sm"
+                       @click="openReceiptPreview(selectedBooking.proofOfDelivery.url)"
+                       style="cursor: pointer; max-height: 200px; object-fit: contain;" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -463,12 +551,6 @@
                   ₱{{ selectedBooking.pricing?.badWeatherFee }}
                 </span>
               </div>
-              <div class="flex justify-between">
-                <span>GCash Fee:</span>
-                <span class="font-medium">
-                  ₱{{ selectedBooking.pricing?.gcashFee || '0.00' }}
-                </span>
-              </div>
               <div v-if="itemsTotal > 0"
                    class="flex justify-between border-t pt-1 mt-1">
                 <span>Items Total:</span>
@@ -476,17 +558,25 @@
                   ₱{{ itemsTotal.toFixed(2) }}
                 </span>
               </div>
+              <!-- Hide GCash Fee display when payment method is COD -->
+              <div v-if="selectedBooking.paymentMethod?.toUpperCase() !== 'COD'"
+                   class="flex justify-between">
+                <span>GCash Fee:</span>
+                <span class="font-medium">
+                  ₱{{ calculateGCashFeeFromNewTotal().toFixed(2) }}
+                </span>
+              </div>
               <div class="flex justify-between border-t pt-1 mt-1 font-bold">
                 <span>New Total:</span>
                 <span class="text-green-600">
-                  ₱{{ calculateNewTotal().toFixed(2) }}
+                  ₱{{ calculateNewTotalWithGCash().toFixed(2) }}
                 </span>
               </div>
             </div>
           </div>
           <button
             @click="saveItemsTotal"
-            :disabled="itemsTotal <= 0 || savingItems"
+            :disabled="itemsTotal < 0 || savingItems"
             class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {{ savingItems ? 'Saving...' : 'Save Items Total' }}
@@ -588,14 +678,47 @@
         </div>
       </div>
     </div>
+
+    <!-- Receipt Preview Modal -->
+    <div v-if="showReceiptPreviewModal"
+         class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900">Receipt / Proof Preview</h2>
+          <button
+            @click="showReceiptPreviewModal = false"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="p-6 flex items-center justify-center">
+          <img v-if="receiptPreviewUrl"
+               :src="receiptPreviewUrl"
+               alt="Receipt Preview"
+               class="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain" />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { useToast } from 'vue-toastification'
 import { weatherService } from '@/services/weatherService'
 import { db } from '@/firebase/config'
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+  getDoc,
+  serverTimestamp
+} from 'firebase/firestore'
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { useAuthStore } from '@/stores/auth'
 
 export default {
@@ -634,7 +757,9 @@ export default {
       proofPreview: null,
       uploadingProof: false,
       dragOverProof: false,
-      showItemsModal: false
+      showItemsModal: false,
+      showReceiptPreviewModal: false,
+      receiptPreviewUrl: null
     }
   },
   computed: {
@@ -643,7 +768,7 @@ export default {
         if (this.filters.status && booking.status !== this.filters.status) return false
         if (this.filters.serviceType && booking.serviceType !== this.filters.serviceType) return false
         if (this.filters.distance && booking.distance > parseInt(this.filters.distance)) return false
-        if (this.filters.paymentMethod && booking.paymentMethod?.toLowerCase() !== this.filters.paymentMethod) return false
+        if (this.filters.paymentMethod && booking.paymentMethod?.toUpperCase() !== this.filters.paymentMethod.toUpperCase()) return false
         return true
       })
     }
@@ -661,8 +786,40 @@ export default {
       }
       return colors[serviceType] || 'bg-gray-500'
     },
-    getServiceIcon(serviceType) {
+    getServiceIcon() {
       return 'svg'
+    },
+    calculateFinalAmount(booking) {
+      const baseAmount = booking.totalAmount || booking.priceEstimate?.total || booking.pricing?.total || 0
+      const itemsTotal = booking.pricing?.itemsTotal || 0
+      const subtotal = baseAmount + itemsTotal
+      const gcashFee = this.calculateGCashFeeForAmount(subtotal)
+      const finalAmount = subtotal + gcashFee
+      return finalAmount.toFixed(2)
+    },
+    calculateGCashFee(booking) {
+      if (booking.paymentMethod?.toUpperCase() === 'COD') {
+        return 0
+      }
+      
+      const baseAmount = booking.totalAmount || booking.priceEstimate?.total || booking.pricing?.total || 0
+      if (baseAmount <= 0) return 0
+      if (baseAmount <= 499) return 5
+      if (baseAmount <= 999) return 10
+      if (baseAmount < 1500) return 20
+      if (baseAmount < 2000) return 30
+      return 40
+    },
+    calculateGCashFeeForAmount(amount) {
+      if (this.selectedBooking?.paymentMethod?.toUpperCase() === 'COD') {
+        return 0
+      }
+      if (amount <= 0) return 0
+      if (amount <= 499) return 5
+      if (amount <= 999) return 10
+      if (amount < 1500) return 20
+      if (amount < 2000) return 30
+      return 40
     },
     getStatusBadgeClass(status) {
       const classes = {
@@ -674,6 +831,16 @@ export default {
       }
       return classes[status] || 'bg-gray-100 text-gray-800'
     },
+    getPaymentMethodBadge(paymentMethod) {
+      if (!paymentMethod) return 'bg-gray-100 text-gray-800'
+      const method = paymentMethod.toUpperCase()
+      if (method === 'GCASH') {
+        return 'bg-blue-100 text-blue-800'
+      } else if (method === 'COD') {
+        return 'bg-green-100 text-green-800'
+      }
+      return 'bg-gray-100 text-gray-800'
+    },
     formatStatus(status) {
       const statusMap = {
         'driver_assigned': 'Assigned',
@@ -683,6 +850,13 @@ export default {
         'delivered': 'Delivered'
       }
       return statusMap[status] || status
+    },
+    formatPaymentMethod(paymentMethod) {
+      if (!paymentMethod) return 'Unknown'
+      const method = paymentMethod.toUpperCase()
+      if (method === 'GCASH') return '💳 GCash'
+      if (method === 'COD') return '💰 Cash on Delivery'
+      return paymentMethod
     },
     formatDate(timestamp) {
       if (!timestamp) return 'N/A'
@@ -702,8 +876,6 @@ export default {
       return descriptions[serviceType] || 'Delivery service'
     },
     getPickupLocation(booking) {
-      // Determine the pickup location based on available formData fields.
-      // Include storeAddress for gift-delivery orders so drivers see where to pick up the gift.
       if (!booking?.formData) return booking.pickupAddress || 'N/A'
       const formData = booking.formData
       return (
@@ -740,7 +912,7 @@ export default {
         .trim()
     },
     refreshBookings() {
-      this.$toast.success('Assignments refreshed!')
+      this.$toast?.success?.('Assignments refreshed!')
       this.loadAssignedBookings()
     },
     async startDelivery(booking) {
@@ -751,9 +923,9 @@ export default {
           await updateDoc(bookingRef, {
             status: 'picked_up',
             driverLocation: this.currentLocation,
-            confirmedAt: new Date()
+            confirmedAt: serverTimestamp()
           })
-          this.$toast.success('Booking confirmed automatically!')
+          this.$toast?.success?.('Booking confirmed automatically!')
         } catch (error) {
           console.error('[v0] Error auto-confirming delivery:', error)
         }
@@ -766,11 +938,8 @@ export default {
       this.selectedBooking = booking
       this.showDetailsModal = true
     },
-    openChat(booking) {
-      this.$router.push({
-        name: 'DriverChat',
-        params: { orderId: booking.id }
-      })
+    openChat() {
+      this.$router.push('/driver/chat')
     },
     async checkWeatherStatus() {
       try {
@@ -789,6 +958,13 @@ export default {
         console.error('[v0] Driver ID not found')
         return
       }
+
+      // ensure single active listener
+      if (this.unsubscribe) {
+        this.unsubscribe()
+        this.unsubscribe = null
+      }
+
       try {
         const q = query(
           collection(db, 'orders'),
@@ -805,13 +981,12 @@ export default {
           for (const userId of userIds) {
             try {
               const userDoc = await this.getUserData(userId)
-              if (userDoc) {
-                usersMap[userId] = userDoc
-              }
+              if (userDoc) usersMap[userId] = userDoc
             } catch (error) {
               console.error('[v0] Error fetching user data:', error)
             }
           }
+          // Extract payment method from different possible locations in the booking object
           this.bookings = snapshot.docs.map(docu => {
             const order = {
               id: docu.id,
@@ -824,11 +999,23 @@ export default {
               order.customerEmail = userData.email
               order.customerAvatar = userData.profilePicture || userData.avatar
             }
+            // Extract payment method from different possible locations in the booking object
+            if (!order.paymentMethod) {
+              // Try to get it from formData if it exists
+              if (order.formData?.paymentMethod) {
+                order.paymentMethod = order.formData.paymentMethod
+              } else {
+                // Check for a default payment method if none is found
+                // This might need adjustment based on how payment methods are handled in your system
+                // For now, defaulting to 'COD' if no other payment method is specified
+                order.paymentMethod = 'COD'
+              }
+            }
             return order
           })
         }, (error) => {
           console.error('[v0] Error loading assignments:', error)
-          this.$toast.error('Failed to load assignments')
+          this.$toast?.error?.('Failed to load assignments')
         })
       } catch (error) {
         console.error('[v0] Error setting up listener:', error)
@@ -837,19 +1024,13 @@ export default {
     async getUserData(userId) {
       try {
         const userRef = doc(db, 'users', userId)
-        const userSnap = await this.getDoc(userRef)
-        if (userSnap.exists()) {
-          return userSnap.data()
-        }
+        const userSnap = await getDoc(userRef)
+        if (userSnap.exists()) return userSnap.data()
         return null
       } catch (error) {
         console.error('[v0] Error getting user data:', error)
         return null
       }
-    },
-    async getDoc(docRef) {
-      const { getDoc } = await import('firebase/firestore')
-      return getDoc(docRef)
     },
     getCurrentLocation() {
       if (navigator.geolocation) {
@@ -862,7 +1043,7 @@ export default {
           },
           (error) => {
             console.error('[v0] Error getting location:', error)
-            this.$toast.error('Unable to get your current location')
+            this.$toast?.error?.('Unable to get your current location')
           }
         )
       }
@@ -895,7 +1076,7 @@ export default {
     },
     async shareLocation() {
       if (!this.currentLocation) {
-        this.$toast.error('Unable to get your location')
+        this.$toast?.error?.('Unable to get your location')
         return
       }
       try {
@@ -908,16 +1089,16 @@ export default {
           })
         } else {
           await navigator.clipboard.writeText(locationUrl)
-          this.$toast.success('Location link copied to clipboard!')
+          this.$toast?.success?.('Location link copied to clipboard!')
         }
       } catch (error) {
         console.error('[v0] Error sharing location:', error)
-        this.$toast.error('Failed to share location')
+        this.$toast?.error?.('Failed to share location')
       }
     },
     async navigateToPickup() {
       if (!this.currentLocation || !this.selectedBooking) {
-        this.$toast.error('Missing location information')
+        this.$toast?.error?.('Missing location information')
         return
       }
       try {
@@ -933,15 +1114,15 @@ export default {
           if (status === window.google.maps.DirectionsStatus.OK) {
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(pickupAddress)}&travelmode=driving`
             window.open(mapsUrl, '_blank')
-            this.$toast.success('Opening directions in Google Maps')
+            this.$toast?.success?.('Opening directions in Google Maps')
           } else {
             console.error('[v0] Directions request failed:', status)
-            this.$toast.error('Unable to get directions')
+            this.$toast?.error?.('Unable to get directions')
           }
         })
       } catch (error) {
         console.error('[v0] Error getting directions:', error)
-        this.$toast.error('Failed to get directions')
+        this.$toast?.error?.('Failed to get directions')
       }
     },
     async confirmStartDelivery() {
@@ -951,14 +1132,13 @@ export default {
         await updateDoc(bookingRef, {
           status: 'picked_up',
           driverLocation: this.currentLocation,
-          startedAt: new Date()
+          startedAt: serverTimestamp()
         })
-        this.$toast.success('Delivery started!')
+        this.$toast?.success?.('Delivery started!')
         this.showStartDeliveryModal = false
-        this.loadAssignedBookings()
       } catch (error) {
         console.error('[v0] Error starting delivery:', error)
-        this.$toast.error('Failed to start delivery')
+        this.$toast?.error?.('Failed to start delivery')
       }
     },
     async useMyLocation() {
@@ -979,7 +1159,7 @@ export default {
                     driverLocation: {
                       lat: this.currentLocation.lat,
                       lng: this.currentLocation.lng,
-                      timestamp: this.currentLocation.timestamp
+                      timestamp: serverTimestamp()
                     }
                   })
                 } catch (error) {
@@ -988,7 +1168,7 @@ export default {
               },
               (error) => {
                 console.error('[v0] Location tracking error:', error)
-                this.$toast.error('Unable to track location')
+                this.$toast?.error?.('Unable to track location')
               },
               {
                 enableHighAccuracy: true,
@@ -997,7 +1177,7 @@ export default {
               }
             )
             this.isTrackingLocation = true
-            this.$toast.success('Location tracking enabled')
+            this.$toast?.success?.('Location tracking enabled')
           }
         } else {
           if (this.locationWatchId) {
@@ -1005,16 +1185,16 @@ export default {
             this.locationWatchId = null
           }
           this.isTrackingLocation = false
-          this.$toast.success('Location tracking disabled')
+          this.$toast?.success?.('Location tracking disabled')
         }
       } catch (error) {
         console.error('[v0] Error toggling location tracking:', error)
-        this.$toast.error('Failed to toggle location tracking')
+        this.$toast?.error?.('Failed to toggle location tracking')
       }
     },
     async showNavigationMap() {
       if (!this.currentLocation || !this.selectedBooking) {
-        this.$toast.error('Missing location information')
+        this.$toast?.error?.('Missing location information')
         return
       }
       try {
@@ -1024,11 +1204,11 @@ export default {
           this.selectedBooking.deliveryAddress || this.getDeliveryLocation(this.selectedBooking)
         const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
         window.open(mapsUrl, '_blank')
-        this.$toast.success('Navigation opened in Google Maps')
+        this.$toast?.success?.('Navigation opened in Google Maps')
         this.showStartDeliveryModal = false
       } catch (error) {
         console.error('[v0] Error opening navigation:', error)
-        this.$toast.error('Failed to open navigation')
+        this.$toast?.error?.('Failed to open navigation')
       }
     },
     async initializeNavigationMap() {
@@ -1050,7 +1230,7 @@ export default {
         await this.calculateAndDisplayRoute()
       } catch (error) {
         console.error('[v0] Error initializing navigation map:', error)
-        this.$toast.error('Failed to load map')
+        this.$toast?.error?.('Failed to load map')
       }
     },
     async calculateAndDisplayRoute() {
@@ -1083,12 +1263,12 @@ export default {
             }
           } else {
             console.error('[v0] Directions request failed:', status)
-            this.$toast.error('Unable to calculate route')
+            this.$toast?.error?.('Unable to calculate route')
           }
         })
       } catch (error) {
         console.error('[v0] Error calculating route:', error)
-        this.$toast.error('Failed to calculate route')
+        this.$toast?.error?.('Failed to calculate route')
       }
     },
     showDirections() {
@@ -1097,7 +1277,7 @@ export default {
         this.selectedBooking.pickupAddress || this.getPickupLocation(this.selectedBooking)
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(pickupAddress)}&travelmode=driving`
       window.open(mapsUrl, '_blank')
-      this.$toast.success('Opening directions in Google Maps')
+      this.$toast?.success?.('Opening directions in Google Maps')
     },
     startNavigation() {
       if (!this.currentLocation || !this.selectedBooking) return
@@ -1107,11 +1287,11 @@ export default {
         this.selectedBooking.deliveryAddress || this.getDeliveryLocation(this.selectedBooking)
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
       window.open(mapsUrl, '_blank')
-      this.$toast.success('Navigation started in Google Maps')
+      this.$toast?.success?.('Navigation started in Google Maps')
     },
     showItemsTotalModal(booking) {
       this.selectedBooking = booking
-      this.itemsTotal = 0
+      this.itemsTotal = booking.pricing?.itemsTotal || 0
       this.showItemsModal = true
     },
     showProofModal(booking) {
@@ -1120,33 +1300,63 @@ export default {
       this.proofPreview = null
       this.showProofOfDeliveryModal = true
     },
+    // Subtotal without GCash fee (includes items total)
     calculateNewTotal() {
       const baseCharge = this.selectedBooking?.pricing?.baseCharge || 0
       const distanceFee = this.selectedBooking?.pricing?.distanceFee || 0
       const badWeatherFee = this.selectedBooking?.pricing?.badWeatherFee || 0
-      const gcashFee = this.selectedBooking?.pricing?.gcashFee || 0
-      return baseCharge + distanceFee + badWeatherFee + gcashFee + this.itemsTotal
+      const itemsTotal = this.itemsTotal || this.selectedBooking?.pricing?.itemsTotal || 0
+      return baseCharge + distanceFee + badWeatherFee + itemsTotal
+    },
+    calculateGCashFeeFromNewTotal() {
+      if (this.selectedBooking?.paymentMethod?.toUpperCase() === 'COD') {
+        return 0
+      }
+      const subtotal = this.calculateNewTotal()
+      return this.calculateGCashFeeForAmount(subtotal)
+    },
+    calculateNewTotalWithGCash() {
+      const subtotal = this.calculateNewTotal()
+      const gcashFee = this.calculateGCashFeeFromNewTotal()
+      return subtotal + gcashFee
     },
     async saveItemsTotal() {
-      if (!this.selectedBooking || this.itemsTotal <= 0) {
-        this.$toast.error('Please enter a valid amount')
+      if (!this.selectedBooking) return
+      if (this.itemsTotal < 0) {
+        this.$toast?.error?.('Items total cannot be negative.')
         return
       }
+
       this.savingItems = true
+
+      // Optimistic UI update
+      const prevPricing = { ...(this.selectedBooking.pricing || {}) }
+      const newSubtotal = this.calculateNewTotal()
+      const gcashFee = this.calculateGCashFeeFromNewTotal()
+      const newTotal = newSubtotal + gcashFee
+
+      this.selectedBooking.pricing = {
+        ...prevPricing,
+        itemsTotal: this.itemsTotal,
+        total: newTotal,
+        gcashFee: gcashFee
+      }
+      this.showItemsModal = false
+
       try {
         const bookingRef = doc(db, 'orders', this.selectedBooking.id)
-        const newTotal = this.calculateNewTotal()
         await updateDoc(bookingRef, {
           'pricing.itemsTotal': this.itemsTotal,
           'pricing.total': newTotal,
-          itemsAddedAt: new Date()
+          'pricing.gcashFee': gcashFee,
+          totalAmount: newTotal,
+          itemsAddedAt: serverTimestamp()
         })
-        this.$toast.success('Items total saved successfully!')
-        this.showItemsModal = false
-        this.loadAssignedBookings()
+        this.$toast?.success?.('✓ Items total saved')
       } catch (error) {
+        this.selectedBooking.pricing = prevPricing
         console.error('[v0] Error saving items total:', error)
-        this.$toast.error('Failed to save items total')
+        this.$toast?.error?.('Failed to save items total')
       } finally {
         this.savingItems = false
       }
@@ -1154,6 +1364,14 @@ export default {
     handleProofFileSelect(event) {
       const file = event.target.files?.[0]
       if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          this.$toast?.error?.('File size exceeds 10MB limit.')
+          return
+        }
+        if (!file.type.startsWith('image/')) {
+          this.$toast?.error?.('Please upload an image file.')
+          return
+        }
         this.proofFile = file
         const reader = new FileReader()
         reader.onload = (e) => {
@@ -1165,7 +1383,15 @@ export default {
     handleProofDrop(event) {
       this.dragOverProof = false
       const file = event.dataTransfer?.files?.[0]
-      if (file && file.type.startsWith('image/')) {
+      if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          this.$toast?.error?.('File size exceeds 10MB limit.')
+          return
+        }
+        if (!file.type.startsWith('image/')) {
+          this.$toast?.error?.('Please upload an image file.')
+          return
+        }
         this.proofFile = file
         const reader = new FileReader()
         reader.onload = (e) => {
@@ -1176,37 +1402,68 @@ export default {
     },
     async uploadProofOfDelivery() {
       if (!this.proofFile || !this.selectedBooking) {
-        this.$toast.error('Please select a photo')
+        this.$toast?.error?.('Please select a photo')
         return
       }
       this.uploadingProof = true
+
       try {
-        const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
         const storage = getStorage()
-        const timestamp = new Date().getTime()
-        const filename = `proof_${this.selectedBooking.id}_${timestamp}.jpg`
-        const storageRef = ref(storage, `proof-of-delivery/${filename}`)
-        await uploadBytes(storageRef, this.proofFile)
-        const downloadURL = await getDownloadURL(storageRef)
-        const bookingRef = doc(db, 'orders', this.selectedBooking.id)
-        await updateDoc(bookingRef, {
-          status: 'delivered',
-          proofOfDelivery: {
-            url: downloadURL,
-            uploadedAt: new Date(),
-            fileName: filename
+        const authStore = useAuthStore()
+        const driverId = authStore.user?.uid
+        if (!driverId) {
+          this.$toast?.error?.('Missing driver ID')
+          this.uploadingProof = false
+          return
+        }
+
+        const timestamp = Date.now()
+        const ext = (this.proofFile.name.split('.').pop() || 'jpg').toLowerCase()
+        const filename = `proof_${this.selectedBooking.id}_${timestamp}.${ext}`
+
+        // ✅ ALIGN WITH RULES: proof-of-delivery/{userId}/{fileName}
+        const storageRef = ref(storage, `proof-of-delivery/${driverId}/${filename}`)
+
+        // Resumable upload + progress
+        const task = uploadBytesResumable(storageRef, this.proofFile)
+        task.on('state_changed',
+          (snap) => {
+            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
+            this.$toast?.info?.(`Uploading... ${pct}%`, { id: 'proof-progress', timeout: 900 })
           },
-          deliveredAt: new Date()
-        })
-        this.$toast.success('Proof of delivery submitted! Order marked as delivered.')
-        this.showProofOfDeliveryModal = false
-        this.proofFile = null
-        this.proofPreview = null
-        this.loadAssignedBookings()
+          (error) => {
+            console.error('[v0] Upload error:', error)
+            this.$toast?.dismiss?.('proof-progress')
+            this.$toast?.error?.('Failed to upload proof of delivery')
+            this.uploadingProof = false
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(task.snapshot.ref)
+            const bookingRef = doc(db, 'orders', this.selectedBooking.id)
+            await updateDoc(bookingRef, {
+              status: 'delivered',
+              proofOfDelivery: {
+                url: downloadURL,
+                uploadedAt: serverTimestamp(),
+                fileName: filename,
+                path: `proof-of-delivery/${driverId}/${filename}`,
+                driverId
+              },
+              deliveredAt: serverTimestamp()
+            })
+
+            this.$toast?.dismiss?.('proof-progress')
+            this.$toast?.success?.('✓ Proof submitted. Order marked as delivered.')
+            this.showProofOfDeliveryModal = false
+            this.proofFile = null
+            this.proofPreview = null
+            this.uploadingProof = false
+          }
+        )
       } catch (error) {
         console.error('[v0] Error uploading proof:', error)
-        this.$toast.error('Failed to upload proof of delivery')
-      } finally {
+        this.$toast?.dismiss?.('proof-progress')
+        this.$toast?.error?.('Failed to upload proof of delivery')
         this.uploadingProof = false
       }
     },
@@ -1217,24 +1474,31 @@ export default {
         const updateData = {
           status: newStatus,
           driverLocation: this.currentLocation,
-          updatedAt: new Date()
+          updatedAt: serverTimestamp()
         }
         if (newStatus === 'in_transit') {
-          updateData.inTransitAt = new Date()
+          updateData.inTransitAt = serverTimestamp()
         } else if (newStatus === 'on_the_way') {
-          updateData.onTheWayAt = new Date()
+          updateData.onTheWayAt = serverTimestamp()
         } else if (newStatus === 'delivered') {
-          updateData.deliveredAt = new Date()
+          updateData.deliveredAt = serverTimestamp()
         }
         await updateDoc(bookingRef, updateData)
-        this.$toast.success(`Status updated to ${this.formatStatus(newStatus)}!`)
+        this.$toast?.success?.(`Status updated to ${this.formatStatus(newStatus)}!`)
         this.showStartDeliveryModal = false
-        this.loadAssignedBookings()
       } catch (error) {
         console.error('[v0] Error updating delivery status:', error)
-        this.$toast.error('Failed to update status')
+        this.$toast?.error?.('Failed to update status')
       }
-    }
+    },
+    isImageUrl(url) {
+      if (!url) return false
+      return /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.includes('firebasestorage')
+    },
+    openReceiptPreview(url) {
+      this.receiptPreviewUrl = url
+      this.showReceiptPreviewModal = true
+    },
   },
   mounted() {
     this.checkWeatherStatus()
@@ -1242,15 +1506,9 @@ export default {
     this.weatherInterval = setInterval(() => this.checkWeatherStatus(), 10 * 60 * 1000)
   },
   beforeUnmount() {
-    if (this.weatherInterval) {
-      clearInterval(this.weatherInterval)
-    }
-    if (this.unsubscribe) {
-      this.unsubscribe()
-    }
-    if (this.locationWatchId) {
-      navigator.geolocation.clearWatch(this.locationWatchId)
-    }
+    if (this.weatherInterval) clearInterval(this.weatherInterval)
+    if (this.unsubscribe) this.unsubscribe()
+    if (this.locationWatchId) navigator.geolocation.clearWatch(this.locationWatchId)
   }
 }
 </script>

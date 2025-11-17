@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { doc, updateDoc, getDoc, onSnapshot } from "firebase/firestore"
+import { doc, updateDoc, getDoc, onSnapshot, setDoc } from "firebase/firestore"
 import { db } from "@/firebase/config"
 import { useAuthStore } from "./auth"
 
@@ -156,6 +156,48 @@ export const useDriverStore = defineStore("driver", {
         }
       } catch (error) {
         console.error("[v0] Error loading earnings data:", error)
+      }
+    },
+
+    async remitPayment(amount, paymentMethod, receiptFile) {
+      const authStore = useAuthStore()
+      const user = authStore.user
+
+      if (!user) {
+        console.log("[v0] No user found for remittance")
+        return false
+      }
+
+      try {
+        const driverShare = amount * 0.8
+        const adminShare = amount * 0.2
+
+        // Update driver record with remittance
+        const driverRef = doc(db, "drivers", user.uid)
+        const today = new Date().toDateString()
+
+        await updateDoc(driverRef, {
+          totalEarningsToday: this.totalEarningsToday + driverShare,
+          lastRemitDate: today,
+          hasRemitted: true,
+        })
+
+        // Update admin revenue
+        const adminRef = doc(db, "settings", "admin")
+        await updateDoc(adminRef, {
+          totalAdminRevenue: adminShare,
+        }).catch(async () => {
+          // Create if doesn't exist
+          await setDoc(adminRef, {
+            totalAdminRevenue: adminShare,
+          })
+        })
+
+        console.log("[v0] Remittance processed successfully")
+        return true
+      } catch (error) {
+        console.error("[v0] Error processing remittance:", error)
+        return false
       }
     },
 

@@ -304,11 +304,11 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Store Preference (Optional)</label>
-              <input 
-                type="text" 
-                v-model.trim="bookingForm.storePreference" 
+              <input
+                type="text"
+                v-model.trim="bookingForm.storePreference"
                 ref="storePreferenceInput"
-                placeholder="e.g., SM, Robinson's, Mercury Drug" 
+                placeholder="e.g., SM, Robinson's, Mercury Drug"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
               <p class="text-xs text-gray-500 mt-1">Start typing to search for stores</p>
@@ -681,7 +681,7 @@ export default {
   },
   async mounted() {
     await this.checkProfileCompletion()
-    
+
     this.loadGoogleMapsAPI()
     await this.loadPricingSettings()
     await this.checkBadWeatherFeeEnabled()
@@ -738,16 +738,16 @@ export default {
       try {
         const user = this.authStore?.user
         const userProfile = this.authStore?.userProfile
-        
+
         if (!user || !userProfile) {
           this.needsProfileCompletion = true
           return
         }
 
         // Check if required profile fields are filled
-        const hasRequiredFields = userProfile.firstName && 
-                                 userProfile.lastName && 
-                                 userProfile.phone && 
+        const hasRequiredFields = userProfile.firstName &&
+                                 userProfile.lastName &&
+                                 userProfile.phone &&
                                  userProfile.address
 
         this.needsProfileCompletion = !hasRequiredFields
@@ -802,10 +802,10 @@ export default {
       }
 
       const distanceInKm = this.routeInfo.distanceValue / 1000
-      
+
       // Base charge: 55 pesos for first 3km
       const baseCharge = 55
-      
+
       // Distance fee: 10 pesos per km after 3km
       const distanceFee = distanceInKm > 3 ? (distanceInKm - 3) * 10 : 0
 
@@ -837,6 +837,8 @@ export default {
           default:
             gcashFee = 0
         }
+      } else {
+        gcashFee = 0
       }
 
       // Total
@@ -856,17 +858,17 @@ export default {
 
     onSelectService(service) {
       console.log('[v1] Service selected:', service.name)
-      
+
       this.selectedService = service
       this.formError = ''
       this.resetBookingForm()
       this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
       this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
-      
+
       if (this.directionsRenderer) {
         this.directionsRenderer.setDirections({ routes: [] })
       }
-      
+
       this.$nextTick(() => {
         this.initializeMap()
         this.initializeAutocomplete()
@@ -1072,7 +1074,7 @@ export default {
         },
         (error) => {
           let errorMsg = 'Error: The Geolocation service failed.'
-          
+
           if (error.code === error.PERMISSION_DENIED) {
             errorMsg = 'Geolocation permission denied. Please enable location access in your browser settings.'
           } else if (error.code === error.POSITION_UNAVAILABLE) {
@@ -1080,7 +1082,7 @@ export default {
           } else if (error.code === error.TIMEOUT) {
             errorMsg = 'Location request timed out. Please try again or enter address manually.'
           }
-          
+
           alert(errorMsg)
           console.error('[v1] Geolocation error:', error.code, error.message)
         },
@@ -1248,7 +1250,7 @@ export default {
     getGcashFeeDescription() {
       const budgetRange = this.bookingForm.budgetRange
       if (!budgetRange) return ''
-      
+
       const feeMap = {
         'P1-P499': 'GCash fee for ₱1-₱499 (₱5)',
         'P500-P999': 'GCash fee for ₱500-₱999 (₱10)',
@@ -1258,11 +1260,10 @@ export default {
         'P2000+': 'GCash fee for ₱2,000+ (₱40)',
         'P2000': 'GCash fee for ₱2,000+ (₱40)'
       }
-      
+
       return feeMap[budgetRange] || ''
     },
 
-    // ----------------- FIXED submitBooking -----------------
     async submitBooking() {
       try {
         this.formError = ''
@@ -1351,6 +1352,8 @@ export default {
           pricing: this._deepClean(this.calculatedPrice),
           totalAmount: Number(this.calculatedPrice?.total || 0),
           priceEstimate: { total: Number(this.calculatedPrice?.total || 0) },
+          paymentMethod: this.bookingForm.paymentMethod,
+          gcashCharge: this.bookingForm.paymentMethod === 'GCASH' ? Number(this.calculatedPrice?.gcashFee || 0) : 0,
           status: 'pending',
           createdAt: serverTimestamp()
         }
@@ -1392,7 +1395,6 @@ export default {
         this.submitting = false
       }
     },
-    // -------------------------------------------------------
 
     async loadPricingSettings() {
       try {

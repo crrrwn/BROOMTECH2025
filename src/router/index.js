@@ -27,9 +27,11 @@ import UserChatMessages from "@/views/user/ChatMessages.vue"
 import DriverDashboard from "@/views/driver/Dashboard.vue"
 import MyAssignments from "@/views/driver/MyAssignments.vue"
 import UploadProof from "@/views/driver/UploadProof.vue"
+import RemitPayment from "@/views/driver/RemitPayment.vue"
 import DriverProfile from "@/views/driver/Profile.vue"
 import DriverLogin from "@/views/driver/DriverLogin.vue"
 import DriverRegister from "@/views/driver/DriverRegister.vue"
+import DriverChat from "@/views/driver/Chat.vue"
 
 // Admin Pages
 import AdminDashboard from "@/views/admin/Dashboard.vue"
@@ -42,6 +44,7 @@ import SystemSettings from "@/views/admin/SystemSettings.vue"
 import ChatMonitoring from "@/views/admin/ChatMonitoring.vue"
 import AdminLogin from "@/views/admin/AdminLogin.vue"
 import AdminRegister from "@/views/admin/AdminRegister.vue"
+import ManageRemittances from "@/views/admin/ManageRemittances.vue"
 
 /* -------------------- Routes -------------------- */
 const routes = [
@@ -73,7 +76,7 @@ const routes = [
       { path: "orders", name: "my-orders", component: MyOrders },
       { path: "payment", name: "upload-payment", component: UploadPayment },
       { path: "profile", name: "user-profile", component: UserProfile },
-      { path: "chat-messages", name: "user-chat-messages", component: UserChatMessages },
+      { path: "chat-messages/:chatId?", name: "user-chat-messages", component: UserChatMessages },
     ],
   },
 
@@ -86,7 +89,9 @@ const routes = [
       { path: "", name: "driver-dashboard", component: DriverDashboard },
       { path: "assignments", name: "my-assignments", component: MyAssignments },
       { path: "proof", name: "upload-proof", component: UploadProof },
+      { path: "remit", name: "remit-payment", component: RemitPayment },
       { path: "profile", name: "driver-profile", component: DriverProfile },
+      { path: "chat", name: "driver-chat", component: DriverChat },
     ],
   },
 
@@ -101,6 +106,7 @@ const routes = [
       { path: "drivers", name: "manage-drivers", component: ManageDrivers },
       { path: "users", name: "manage-users", component: ManageUsers },
       { path: "applications", name: "driver-applications", component: DriverApplications },
+      { path: "remittances", name: "manage-remittances", component: ManageRemittances },
       { path: "pricing", name: "pricing-panel", component: PricingPanel },
       { path: "settings", name: "system-settings", component: SystemSettings },
       { path: "chat-monitoring", name: "chat-monitoring", component: ChatMonitoring },
@@ -351,10 +357,12 @@ onAuthStateChanged(auth, (user) => {
 /* Cross-tab sync: single channel listener */
 if (bc) {
   bc.addEventListener("message", (evt) => {
-    const { type, data } = evt.data || {}
+    const data = evt.data
+    if (!data) return
+    const { type, data: messageData } = data
     if (!type) return
-    realTimeSync.updateCache(type, data)
-    window.dispatchEvent(new CustomEvent("realtimeUpdate", { detail: { type, data } }))
+    realTimeSync.updateCache(type, messageData)
+    window.dispatchEvent(new CustomEvent("realtimeUpdate", { detail: { type, data: messageData } }))
   })
 }
 

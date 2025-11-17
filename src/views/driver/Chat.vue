@@ -31,10 +31,10 @@
                       {{ chat.customerName || 'Customer' }}
                     </p>
                     <p class="text-sm text-gray-600 truncate">
-                      Order #{{ chat.orderId }}
+                      Order #{{ chat.orderId ? chat.orderId.substring(0, 8) : 'N/A' }}
                     </p>
                     <p class="text-xs text-gray-500 truncate">
-                      {{ chat.lastMessage }}
+                      {{ chat.lastMessage || 'No messages yet' }}
                     </p>
                   </div>
                 </div>
@@ -83,57 +83,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="mt-6 bg-white rounded-lg shadow-sm border p-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <button
-          @click="sendQuickUpdate('on_way')"
-          :disabled="!selectedChatId"
-          class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg class="w-6 h-6 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
-          <p class="text-sm font-medium">I'm on my way</p>
-        </button>
-        
-        <button
-          @click="sendQuickUpdate('arrived')"
-          :disabled="!selectedChatId"
-          class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg class="w-6 h-6 text-green-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-          <p class="text-sm font-medium">I've arrived</p>
-        </button>
-        
-        <button
-          @click="sendQuickUpdate('delay')"
-          :disabled="!selectedChatId"
-          class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg class="w-6 h-6 text-yellow-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-sm font-medium">Running late</p>
-        </button>
-        
-        <button
-          @click="sendQuickUpdate('completed')"
-          :disabled="!selectedChatId"
-          class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg class="w-6 h-6 text-purple-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-sm font-medium">Service completed</p>
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -142,7 +91,7 @@ import ChatWindow from '@/components/ChatWindow.vue'
 import { chatService } from '@/services/chatService'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore'
 
 export default {
   name: 'DriverChat',
@@ -160,12 +109,7 @@ export default {
       selectedOrderId: null,
       selectedChatPartner: null,
       loading: true,
-      quickMessages: {
-        on_way: "I'm on my way to your location. I'll be there shortly!",
-        arrived: "I've arrived at your location. Please let me know if you need help finding me.",
-        delay: "I'm running a bit late due to traffic. I'll be there in about 10-15 minutes. Thank you for your patience!",
-        completed: "Service completed! Thank you for choosing BroomTech. Please let me know if you need anything else."
-      }
+      unsubscribeOrders: null
     }
   },
   computed: {
@@ -177,6 +121,9 @@ export default {
     await this.loadActiveChats()
   },
   beforeUnmount() {
+    if (this.unsubscribeOrders) {
+      this.unsubscribeOrders()
+    }
     chatService.unsubscribe(`driver_chats_${this.currentDriverId}`)
   },
   methods: {
@@ -184,39 +131,86 @@ export default {
       try {
         this.loading = true
         
-        // Subscribe to driver's chats
-        chatService.subscribeToUserChats(this.currentDriverId, async (chats) => {
-          // Enhance chats with customer information
-          const enhancedChats = await Promise.all(
-            chats.map(async (chat) => {
-              try {
-                // Get customer info
-                const customerDoc = await getDoc(doc(db, 'users', chat.userId))
-                const customerData = customerDoc.exists() ? customerDoc.data() : {}
-                
-                return {
-                  ...chat,
-                  customerName: customerData.firstName && customerData.lastName 
-                    ? `${customerData.firstName} ${customerData.lastName}`
-                    : 'Customer',
-                  customerPhone: customerData.contact
-                }
-              } catch (error) {
-                console.error('Error loading customer data:', error)
-                return { ...chat, customerName: 'Customer' }
+        if (!this.currentDriverId) {
+          console.error('No driver ID found')
+          return
+        }
+
+        console.log('[v0] Loading orders for driver:', this.currentDriverId)
+        
+        // Query orders assigned to this driver with real-time updates
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('driverId', '==', this.currentDriverId),
+          where('status', 'in', ['driver_assigned', 'in_transit', 'on_the_way', 'arrived']),
+          orderBy('createdAt', 'desc')
+        )
+        
+        // Subscribe to real-time updates
+        this.unsubscribeOrders = onSnapshot(ordersQuery, async (snapshot) => {
+          console.log('[v0] Orders snapshot received, count:', snapshot.size)
+          
+          const chatsPromises = snapshot.docs.map(async (orderDoc) => {
+            const order = { id: orderDoc.id, ...orderDoc.data() }
+            
+            try {
+              // Get or create chat room for this order
+              const chatRoomId = await chatService.createChatRoom(
+                order.userId,
+                this.currentDriverId,
+                order.id
+              )
+              
+              // Get customer information
+              const customerDoc = await getDoc(doc(db, 'users', order.userId))
+              const customerData = customerDoc.exists() ? customerDoc.data() : {}
+              
+              // Get chat data to check for unread messages
+              const chatDoc = await getDoc(doc(db, 'chats', chatRoomId))
+              const chatData = chatDoc.exists() ? chatDoc.data() : {}
+              
+              return {
+                id: chatRoomId,
+                orderId: order.id,
+                userId: order.userId,
+                driverId: this.currentDriverId,
+                customerName: customerData.firstName && customerData.lastName 
+                  ? `${customerData.firstName} ${customerData.lastName}`
+                  : 'Customer',
+                customerPhone: customerData.contact,
+                lastMessage: chatData.lastMessage || null,
+                lastMessageAt: chatData.lastMessageAt || order.createdAt,
+                unreadCount: chatData.unreadCount || {},
+                order: order
               }
-            })
-          )
+            } catch (error) {
+              console.error('[v0] Error processing order:', order.id, error)
+              return null
+            }
+          })
           
-          this.activeChats = enhancedChats
+          const chats = (await Promise.all(chatsPromises)).filter(chat => chat !== null)
           
-          // Auto-select first chat if none selected
-          if (!this.selectedChatId && enhancedChats.length > 0) {
-            this.selectChat(enhancedChats[0])
+          // Sort by last message time
+          chats.sort((a, b) => {
+            const timeA = a.lastMessageAt?.toMillis?.() || 0
+            const timeB = b.lastMessageAt?.toMillis?.() || 0
+            return timeB - timeA
+          })
+          
+          this.activeChats = chats
+          console.log('[v0] Active chats loaded:', chats.length)
+          
+          // Auto-select first chat if none selected and chats exist
+          if (!this.selectedChatId && chats.length > 0) {
+            this.selectChat(chats[0])
           }
+        }, (error) => {
+          console.error('[v0] Error in orders subscription:', error)
         })
+        
       } catch (error) {
-        console.error('Error loading active chats:', error)
+        console.error('[v0] Error loading active chats:', error)
       } finally {
         this.loading = false
       }
@@ -239,27 +233,6 @@ export default {
         await chatService.markMessagesAsRead(chat.id, this.currentDriverId)
       } catch (error) {
         console.error('Error marking messages as read:', error)
-      }
-    },
-
-    async sendQuickUpdate(type) {
-      if (!this.selectedChatId) return
-      
-      const message = this.quickMessages[type]
-      if (!message) return
-      
-      try {
-        await chatService.sendMessage(
-          this.selectedChatId,
-          this.currentDriverId,
-          'driver',
-          message
-        )
-        
-        this.$toast.success('Quick update sent!')
-      } catch (error) {
-        console.error('Error sending quick update:', error)
-        this.$toast.error('Failed to send update')
       }
     },
 

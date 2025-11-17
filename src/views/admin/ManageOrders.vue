@@ -151,7 +151,7 @@
       </div>
     </div>
 
-    <!-- CHANGE: Made table more compact and responsive -->
+    <!-- Orders Table -->
     <div v-if="!loading && !error" class="bg-white rounded-lg shadow-sm border overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full min-w-full">
@@ -170,8 +170,8 @@
               <!-- CHANGE: Made order column more compact -->
               <td class="px-4 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900">#{{ order.id.substring(0, 8) }}</div>
-                <!-- Display total amount from top-level field, priceEstimate, or pricing.total -->
-                <div class="text-sm text-gray-500">₱{{ order.totalAmount || order.priceEstimate?.total || order.pricing?.total || 'TBD' }}</div>
+                <!-- Calculate total with driver's items total + GCash fee -->
+                <div class="text-sm text-gray-500">₱{{ calculateTotalWithItems(order) }}</div>
               </td>
 
               <!-- CHANGE: Simplified customer display without profile picture -->
@@ -205,9 +205,6 @@
                     </div>
                     <div class="text-sm text-gray-500">
                       {{ order.driverPhone || getDriverPhoneById(order.driverId) }}
-                    </div>
-                    <div v-if="order.driverAssignedAt" class="text-xs text-gray-400">
-                      {{ formatAssignmentTime(order.driverAssignedAt) }}
                     </div>
                   </div>
                   <div class="ml-2 flex items-center gap-2">
@@ -415,7 +412,7 @@
               <div>
                 <p class="text-gray-600">Total Amount</p>
                 <!-- Show total using top-level totalAmount, priceEstimate.total or pricing.total -->
-                <p class="font-medium">₱{{ selectedOrder?.totalAmount || selectedOrder?.priceEstimate?.total || selectedOrder?.pricing?.total || 'TBD' }}</p>
+                <p class="font-medium">₱{{ calculateTotalWithItems(selectedOrder) }}</p>
               </div>
             </div>
             <div v-if="selectedOrder?.pickupAddress || getPickupLocation(selectedOrder) || selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder) || getServiceDetails(selectedOrder)" class="mt-3 pt-3 border-t border-gray-200">
@@ -590,13 +587,18 @@
                 </div>
                 <div>
                   <p class="text-gray-600">Total Amount</p>
-                  <!-- Include pricing.total as a fallback for total amount -->
-                  <p class="font-medium text-green-600">₱{{ selectedOrderForDetails.totalAmount || selectedOrderForDetails.priceEstimate?.total || selectedOrderForDetails.pricing?.total || 'TBD' }}</p>
+                  <!-- Display total including driver's items total and GCash fee -->
+                  <p class="font-medium text-green-600">₱{{ calculateTotalWithItems(selectedOrderForDetails) }}</p>
                 </div>
                 <div>
                   <p class="text-gray-600">Created</p>
                   <p class="font-medium">{{ formatOrderDate(selectedOrderForDetails.createdAt) }}</p>
                 </div>
+              </div>
+              <!-- Added items total display from driver -->
+              <div v-if="selectedOrderForDetails.pricing?.itemsTotal" class="mt-3 pt-3 border-t border-blue-200">
+                <p class="text-gray-600 text-xs mb-1">Items Total (Set by Driver)</p>
+                <p class="font-medium text-blue-600">₱{{ selectedOrderForDetails.pricing.itemsTotal.toFixed(2) }}</p>
               </div>
             </div>
 
@@ -611,10 +613,6 @@
                 <div>
                   <p class="text-gray-600">Phone</p>
                   <p class="font-medium">{{ selectedOrderForDetails.customerPhone || 'No phone' }}</p>
-                </div>
-                <div>
-                  <p class="text-gray-600">Email</p>
-                  <p class="font-medium">{{ selectedOrderForDetails.customerEmail || 'No email' }}</p>
                 </div>
               </div>
             </div>
@@ -697,27 +695,76 @@
             </div>
 
             Price Breakdown
-            <div v-if="selectedOrderForDetails.priceEstimate" class="bg-white p-4 rounded-lg border">
+            <div v-if="selectedOrderForDetails.pricing" class="bg-white p-4 rounded-lg border">
               <h4 class="font-medium text-gray-900 mb-3">Price Breakdown</h4>
               <div class="space-y-2 text-sm">
-                <div v-if="selectedOrderForDetails.priceEstimate.basePrice" class="flex justify-between">
-                  <span class="text-gray-600">Base Price:</span>
-                  <span>₱{{ selectedOrderForDetails.priceEstimate.basePrice }}</span>
+                <div v-if="selectedOrderForDetails.pricing.baseCharge" class="flex justify-between">
+                  <span class="text-gray-600">Base Charge:</span>
+                  <span>₱{{ selectedOrderForDetails.pricing.baseCharge.toFixed(2) }}</span>
                 </div>
-                <div v-if="selectedOrderForDetails.priceEstimate.distancePrice" class="flex justify-between">
+                <div v-if="selectedOrderForDetails.pricing.distanceFee" class="flex justify-between">
                   <span class="text-gray-600">Distance Fee:</span>
-                  <span>₱{{ selectedOrderForDetails.priceEstimate.distancePrice }}</span>
+                  <span>₱{{ selectedOrderForDetails.pricing.distanceFee.toFixed(2) }}</span>
                 </div>
-                <div v-if="selectedOrderForDetails.priceEstimate.serviceFee" class="flex justify-between">
-                  <span class="text-gray-600">Service Fee:</span>
-                  <span>₱{{ selectedOrderForDetails.priceEstimate.serviceFee }}</span>
+                <div v-if="selectedOrderForDetails.pricing.badWeatherFee" class="flex justify-between">
+                  <span class="text-gray-600">Bad Weather Fee:</span>
+                  <span>₱{{ selectedOrderForDetails.pricing.badWeatherFee.toFixed(2) }}</span>
+                </div>
+                <!-- Added items total in price breakdown -->
+                <div v-if="selectedOrderForDetails.pricing.itemsTotal" class="flex justify-between">
+                  <span class="text-gray-600">Items Total:</span>
+                  <span class="text-blue-600 font-medium">₱{{ selectedOrderForDetails.pricing.itemsTotal.toFixed(2) }}</span>
+                </div>
+                <!-- GCash fee display -->
+                <div v-if="selectedOrderForDetails.paymentMethod === 'GCASH' && selectedOrderForDetails.pricing.gcashFee" class="flex justify-between">
+                  <span class="text-gray-600">GCash Fee:</span>
+                  <span>₱{{ selectedOrderForDetails.pricing.gcashFee.toFixed(2) }}</span>
+                </div>
+                <!-- Message for COD orders with no GCash fee -->
+                <div v-else-if="selectedOrderForDetails.paymentMethod === 'COD'" class="flex justify-between text-gray-500">
+                  <span class="text-gray-600">GCash Fee:</span>
+                  <span>No charge (Cash on Delivery)</span>
                 </div>
                 <div class="flex justify-between font-medium text-green-600 pt-2 border-t">
                   <span>Total:</span>
-                  <span>₱{{ selectedOrderForDetails.priceEstimate.total }}</span>
+                  <span>₱{{ calculateTotalWithItems(selectedOrderForDetails) }}</span>
                 </div>
               </div>
             </div>
+
+            <!-- New section: Proof of Delivery from driver -->
+            <div v-if="selectedOrderForDetails.proofOfDelivery?.url" class="bg-white p-4 rounded-lg border">
+              <h4 class="font-medium text-gray-900 mb-3">Proof of Delivery</h4>
+              <div class="space-y-3">
+                <div>
+                  <p class="text-sm text-gray-600 mb-2">Uploaded by Driver</p>
+                  <div v-if="selectedOrderForDetails.proofOfDelivery.uploadedAt" class="text-xs text-gray-500 mb-2">
+                    {{ formatOrderDate(selectedOrderForDetails.proofOfDelivery.uploadedAt) }}
+                  </div>
+                </div>
+                <div class="relative">
+                  <img
+                    :src="selectedOrderForDetails.proofOfDelivery.url"
+                    alt="Proof of Delivery"
+                    class="rounded-lg border shadow-sm max-h-96 w-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                    @click="openProofPreview(selectedOrderForDetails.proofOfDelivery.url)"
+                  />
+                </div>
+                <a
+                  :href="selectedOrderForDetails.proofOfDelivery.url"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  View Full Resolution
+                </a>
+              </div>
+            </div>
+
           </div>
 
           Action Buttons
@@ -958,7 +1005,7 @@ export default {
     const inTransitOrders = computed(() => orders.value.filter(order => order.status === 'in_transit').length)
     const completedOrders = computed(() => orders.value.filter(order => order.status === 'delivered').length)
 
-    const unassignedOrders = computed(() => orders.value.filter(order => !order.driverId && order.status === 'pending'))
+    const unassignedOrders = computed(() => orders.value.filter(order => !order.driverId && order.status !== 'cancelled'))
 
     const filteredAvailableDrivers = computed(() => {
       if (!driverSearchQuery.value) return availableDrivers.value
@@ -2316,6 +2363,30 @@ export default {
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
     }
 
+    // CHANGE: Added new computed method to calculate total with driver's items total
+    const calculateTotalWithItems = (order) => {
+      if (!order) return 'TBD'
+      
+      // CHANGE: Use the exact totalAmount from Firestore (saved from Set Items Total in MyAssignments)
+      // This is the NEW TOTAL that includes all charges (base + distance + weather + items + GCash fee if applicable)
+      if (order.totalAmount) {
+        return parseFloat(order.totalAmount).toFixed(2)
+      }
+      
+      // Fallback calculation if totalAmount is missing
+      const baseTotal = order.priceEstimate?.total || order.pricing?.total || 0
+      const itemsTotal = order.pricing?.itemsTotal || 0
+      const gcashFee = order.pricing?.gcashFee || 0
+      
+      return (baseTotal + itemsTotal + gcashFee).toFixed(2)
+    }
+
+    // CHANGE: Implement opening proof of delivery image in a modal or new tab
+    const openProofPreview = (url) => {
+      window.open(url, '_blank') // Open in new tab
+      // Alternatively, implement a modal for preview
+    }
+
     onMounted(() => {
       fetchOrders()
       setupRealtimeDriverListeners()
@@ -2609,7 +2680,9 @@ export default {
       }
     }
 
+    // ** END OF SETUP FUNCTION **
     return {
+      // Refs and computed properties
       orders,
       loading,
       error,
@@ -2623,7 +2696,7 @@ export default {
       pendingOrders,
       inTransitOrders,
       completedOrders,
-      filteredOrders,
+      filteredOrders, // Computed: currently paginated orders
       totalPages,
       visiblePages,
       showAssignModal,
@@ -2654,7 +2727,8 @@ export default {
       showOrderProgressModal,
       selectedOrderForProgress,
       exportingOrders,
-      // Functions
+
+      // Methods
       getStatusClass,
       formatStatus,
       formatServiceType,
@@ -2704,7 +2778,13 @@ export default {
       getFilteredBookingDetails,
       formatFieldLabel,
       formatFieldValue,
-      exportOrders
+      exportOrders,
+      calculateTotalWithItems,
+      // New methods for Order Details Modal
+      openProofPreview,
+      // Expose methods from data() in the original setup function if needed
+      // e.g., if you had methods defined in data() earlier.
+      // For this specific merge, most logic is in setup.
     }
   }
 }

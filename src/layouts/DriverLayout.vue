@@ -84,11 +84,12 @@
               Chat with Customers
             </router-link>
             
-            <router-link to="/driver/proof" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
+            <!-- Updated menu item from "Upload Proof & Payment" to "Remit Payment" -->
+            <router-link to="/driver/remit" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 11-8 0 4 4 0 018 0zM15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
               </svg>
-              Upload Proof & Payment
+              Remit Payment
             </router-link>
             
             <router-link to="/driver/profile" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
@@ -182,7 +183,7 @@ export default {
         'available-bookings': 'Available Bookings',
         'my-assignments': 'My Assignments',
         'driver-chat': 'Chat with Customers',
-        'upload-proof': 'Upload Proof & Payment',
+        'remit': 'Remit Payment',
         'driver-profile': 'Profile'
       }
       return titles[this.$route.name] || 'Dashboard'
@@ -279,21 +280,14 @@ export default {
       }
     },
     
-    async logout() {
-      try {
-        this.driverStore.cleanup()
-        
-        const result = await this.authStore.logout()
-        if (result.success) {
-          this.$toast.success(result.message)
-          this.$router.push('/')
-        } else {
-          this.$toast.error(result.message)
-        }
-      } catch (error) {
-        console.error('[v0] Error during logout:', error)
-        this.$toast.error('Error logging out')
-      }
+    logout() {
+      this.$router.push('/')
+      
+      // Perform cleanup and logout in background without blocking
+      this.driverStore.cleanup()
+      this.authStore.logout().catch(error => {
+        console.error('[v0] Logout error:', error)
+      })
     },
     
     async toggleLocationTracking() {

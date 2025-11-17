@@ -45,16 +45,7 @@
         <div class="max-w-xs lg:max-w-md">
           <!-- Message Bubble -->
           <div :class="getMessageBubbleClass(message)" class="px-4 py-2 rounded-lg">
-            <!-- Bot/System Message Icon -->
-            <div v-if="message.senderRole === 'bot'" class="flex items-center space-x-2 mb-2">
-              <div class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                </svg>
-              </div>
-              <span class="text-xs text-blue-600 font-medium">BroomTech Bot</span>
-            </div>
-
+            <!-- Removed bot icon display, showing only user/driver messages -->
             <p class="text-sm">{{ message.message }}</p>
             
             <!-- Message Status -->
@@ -131,7 +122,6 @@
 
 <script>
 import { chatService } from '@/services/chatService'
-import { chatbotService } from '@/services/chatbotService'
 import { useAuthStore } from '@/stores/auth'
 
 export default {
@@ -181,7 +171,6 @@ export default {
     }
   },
   async mounted() {
-    await this.initializeChat()
     this.subscribeToMessages()
     this.markMessagesAsRead()
   },
@@ -189,60 +178,13 @@ export default {
     chatService.unsubscribe(`messages_${this.chatId}`)
   },
   methods: {
-    async initializeChat() {
-      this.loading = true
-      try {
-        // Send welcome bot message if this is a new chat and user is not a driver
-        if (this.messages.length === 0 && !this.isDriver) {
-          await chatService.sendBotMessage(
-            this.chatId,
-            "Hello! I'm your BroomTech assistant. I can help you with order updates, driver information, and general questions. Your driver will also be available to chat with you directly."
-          )
-        }
-      } catch (error) {
-        console.error('Error initializing chat:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-
     subscribeToMessages() {
       chatService.subscribeToMessages(this.chatId, (messages) => {
         this.messages = messages
         this.$nextTick(() => {
           this.scrollToBottom()
         })
-        
-        // Auto-respond with bot for certain messages (only for user messages, not driver)
-        if (!this.isDriver) {
-          const lastMessage = messages[messages.length - 1]
-          if (lastMessage && lastMessage.senderId === this.currentUserId && lastMessage.senderRole === 'user') {
-            this.handleBotResponse(lastMessage.message)
-          }
-        }
       })
-    },
-
-    async handleBotResponse(userMessage) {
-      // Check if message needs bot response
-      if (chatbotService.needsHumanIntervention(userMessage)) {
-        setTimeout(async () => {
-          await chatService.sendBotMessage(
-            this.chatId,
-            "I understand this is important. I'm notifying your driver and our support team to assist you right away."
-          )
-        }, 1000)
-        return
-      }
-
-      // Generate contextual bot response
-      const orderData = { id: this.orderId, status: 'confirmed' } // This should come from props or API
-      const botResponse = chatbotService.generateContextualResponse(userMessage, orderData)
-      
-      // Send bot response after a short delay to simulate typing
-      setTimeout(async () => {
-        await chatService.sendBotMessage(this.chatId, botResponse)
-      }, 1500)
     },
 
     async sendMessage() {
@@ -260,7 +202,7 @@ export default {
         this.newMessage = ''
       } catch (error) {
         console.error('Error sending message:', error)
-        this.$toast.error('Failed to send message')
+        this.$toast?.error('Failed to send message')
       } finally {
         this.sending = false
       }
@@ -280,12 +222,10 @@ export default {
     },
 
     handleTyping() {
-      // Clear existing timeout
       if (this.typingTimeout) {
         clearTimeout(this.typingTimeout)
       }
 
-      // Set typing indicator (in a real app, you'd send this to other participants)
       this.typingTimeout = setTimeout(() => {
         // Stop typing indicator
       }, 1000)
@@ -307,9 +247,7 @@ export default {
     },
 
     getMessageBubbleClass(message) {
-      if (message.senderRole === 'bot') {
-        return 'bg-blue-50 text-blue-900 border border-blue-200'
-      } else if (message.senderId === this.currentUserId) {
+      if (message.senderId === this.currentUserId) {
         return 'bg-primary text-white'
       } else {
         return 'bg-gray-100 text-gray-900'
@@ -320,14 +258,14 @@ export default {
       if (this.chatPartner?.name) {
         return this.chatPartner.name
       }
-      return this.isDriver ? 'Customer' : 'BroomTech Support'
+      return this.isDriver ? 'Customer' : 'Driver'
     },
 
     getPartnerRole() {
       if (this.isDriver) {
         return 'Customer'
       }
-      return this.chatPartner?.role === 'driver' ? 'Your Driver' : 'Customer Support'
+      return this.chatPartner?.role === 'driver' ? 'Your Driver' : 'Driver'
     },
 
     formatTime(timestamp) {

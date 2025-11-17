@@ -21,6 +21,7 @@
           <option value="pending">Pending</option>
           <option value="confirmed">Confirmed</option>
           <option value="in_transit">In Transit</option>
+          <option value="on_the_way">On The Way</option>
           <option value="delivered">Delivered</option>
           <option value="cancelled">Cancelled</option>
         </select>
@@ -104,24 +105,30 @@
                 </div>
               </div>
 
-              <div v-if="order.driver" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-4">
-                <img :src="order.driver.avatar" :alt="order.driver.name" class="w-10 h-10 rounded-full">
+              <!-- Show chat button when driverId exists, not just when driver object exists -->
+              <div v-if="order.driverId || order.driver" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-4">
+                <img v-if="order.driver" :src="order.driver.avatar" :alt="order.driver.name" class="w-10 h-10 rounded-full">
+                <div v-else class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
+                  D
+                </div>
                 <div class="flex-1">
-                  <p class="font-medium text-gray-900">{{ order.driver.name }}</p>
-                  <p class="text-sm text-gray-600">{{ order.driver.vehicle }}</p>
+                  <p class="font-medium text-gray-900">{{ order.driver?.name || 'Driver Assigned' }}</p>
+                  <p class="text-sm text-gray-600">{{ order.driver?.vehicle || 'Loading driver info...' }}</p>
                 </div>
                 <div class="flex space-x-2">
-                  <button @click="callDriver(order.driver.phone)"
-                          class="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                  <!-- Removed phone button, keeping only message button -->
+                  <button @click="openChatWithDriver(order)"
+                          class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          title="Chat with driver">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                     </svg>
                   </button>
                 </div>
               </div>
 
-              <!-- Live Tracking for in-transit orders -->
-              <div v-if="order.status === 'in_transit'" class="mb-4">
+              <!-- Live Tracking for in-transit and on_the_way orders -->
+              <div v-if="order.status === 'in_transit' || order.status === 'on_the_way'" class="mb-4">
                 <LiveTracking :order-id="order.id" />
               </div>
 
@@ -424,8 +431,9 @@
               <div class="flex items-center justify-between text-sm text-gray-600">
                 <span>{{ formatDate(order.createdAt) }}</span>
                 <div class="flex items-center space-x-3">
+                  <!-- Chat button in actions row - shows when driverId exists -->
                   <button @click="openChatWithDriver(order)"
-                          v-if="order.driver"
+                          v-if="order.driverId || order.driver"
                           class="text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-1"
                           title="Message driver">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -635,7 +643,7 @@
 import { realtimeService } from '@/services/realtime'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore'
 import LiveTracking from '@/components/LiveTracking.vue'
 
 export default {
@@ -919,19 +927,30 @@ export default {
     },
 
     async openChatWithDriver(order) {
-      if (!order.driver) {
-        alert('Driver information not available')
+      console.log('[v0] Opening chat for order:', order.id, 'driverId:', order.driverId)
+      
+      if (!order.driverId && !order.driver) {
+        alert('No driver assigned to this order yet')
         return
       }
 
       try {
+        const driverId = order.driverId || order.driver?.uid
+        
+        if (!driverId) {
+          alert('Driver information not available')
+          return
+        }
+
         // Create or get chat room with driver
         const { chatService } = await import('@/services/chatService')
         const chatRoomId = await chatService.createChatRoom(
           this.authStore.user.uid,
-          order.driver.uid,
+          driverId,
           order.id
         )
+
+        console.log('[v0] Chat room created/retrieved:', chatRoomId)
 
         // Navigate to ChatMessages with the chat ID
         this.$router.push({
@@ -939,29 +958,55 @@ export default {
           params: { chatId: chatRoomId }
         })
       } catch (error) {
-        console.error('Error opening chat:', error)
+        console.error('[v0] Error opening chat:', error)
         alert('Error opening chat. Please try again.')
       }
     },
 
-    // ====== OTHER ACTIONS ======
-    callDriver(phone) {
-      if (phone) window.open(`tel:${phone}`)
+    async fetchDriverInfo(order) {
+      if (!order.driverId || order.driver) return
+      
+      try {
+        const driverDoc = await getDoc(doc(db, 'users', order.driverId))
+        if (driverDoc.exists()) {
+          const driverData = driverDoc.data()
+          order.driver = {
+            uid: order.driverId,
+            name: `${driverData.firstName} ${driverData.lastName}`,
+            phone: driverData.contact,
+            vehicle: driverData.vehicleType || 'Vehicle',
+            avatar: driverData.photoURL || `https://ui-avatars.com/api/?name=${driverData.firstName}+${driverData.lastName}`
+          }
+        }
+      } catch (error) {
+        console.error('[v0] Error fetching driver info:', error)
+      }
     },
 
-    // ====== DATA LOAD / FILTERS ======
     async loadOrders() {
       try {
-        realtimeService.subscribeToUserOrders(this.authStore.user.uid, (orders) => {
+        realtimeService.subscribeToUserOrders(this.authStore.user.uid, async (orders) => {
           this.orders = orders
+          
+          // Fetch driver info for orders that have driverId but no driver object
+          for (const order of this.orders) {
+            if (order.driverId && !order.driver) {
+              await this.fetchDriverInfo(order)
+            }
+          }
+          
           this.filterOrders()
           this.loading = false
-          this.setupCancelTimers() // start/refresh timers whenever orders update
+          this.setupCancelTimers()
         })
       } catch (error) {
         console.error('Error loading orders:', error)
         this.loading = false
       }
+    },
+
+    callDriver(phone) {
+      if (phone) window.open(`tel:${phone}`)
     },
 
     filterOrders() {
@@ -991,6 +1036,7 @@ export default {
         pending: 'bg-orange-100 text-orange-800',
         confirmed: 'bg-blue-100 text-blue-800',
         in_transit: 'bg-purple-100 text-purple-800',
+        on_the_way: 'bg-indigo-100 text-indigo-800',
         delivered: 'bg-green-100 text-green-800',
         cancelled: 'bg-red-100 text-red-800'
       }
@@ -1001,6 +1047,7 @@ export default {
         pending: 'Pending',
         confirmed: 'Confirmed',
         in_transit: 'In Transit',
+        on_the_way: 'On The Way',
         delivered: 'Delivered',
         cancelled: 'Cancelled'
       }

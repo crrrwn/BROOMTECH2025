@@ -94,6 +94,8 @@ export class ChatService {
 
   // Subscribe to chat messages
   subscribeToMessages(chatId, callback) {
+    console.log("[v0] Setting up message subscription for chat:", chatId)
+
     const messagesQuery = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"))
 
     const unsubscribe = onSnapshot(
@@ -103,6 +105,9 @@ export class ChatService {
         snapshot.forEach((doc) => {
           messages.push({ id: doc.id, ...doc.data() })
         })
+
+        console.log("[v0] Messages updated in chat", chatId, "- Total messages:", messages.length)
+
         callback(messages)
       },
       (error) => {
