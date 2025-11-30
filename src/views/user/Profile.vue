@@ -1,110 +1,159 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Add profile completion notice for Google users -->
-      <div v-if="showCompletionNotice" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-            </svg>
-          </div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-yellow-800">Complete Your Profile</h3>
-            <p class="mt-1 text-sm text-yellow-700">
-              Please complete your profile information (phone number and address) before you can book services.
-            </p>
+      <!-- Profile Picture Section -->
+      <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-4 py-5 sm:p-6">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">Profile Picture</h3>
+          
+          <div class="flex items-center space-x-6">
+            <div class="flex-shrink-0">
+              <img
+                v-if="profile.profilePictureUrl"
+                :src="profile.profilePictureUrl"
+                alt="Profile Picture"
+                class="h-32 w-32 rounded-full object-cover border-4 border-gray-200"
+              />
+              <div
+                v-else
+                class="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-200"
+              >
+                <svg class="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div class="flex-1">
+              <label for="profilePicture" class="block text-sm font-medium text-gray-700 mb-2">
+                Upload Profile Picture
+              </label>
+              <input
+                id="profilePicture"
+                type="file"
+                accept="image/*"
+                @change="handleProfilePictureSelect"
+                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-green-700"
+              />
+              <p class="text-xs text-gray-500 mt-1">JPG, PNG or GIF (Max 5MB)</p>
+              <div v-if="uploadingProfilePicture" class="mt-2">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    class="bg-primary h-2 rounded-full transition-all duration-300"
+                    :style="{ width: profilePictureProgress + '%' }"
+                  ></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Uploading... {{ profilePictureProgress }}%</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white shadow rounded-lg">
+      <!-- Personal Information -->
+      <div class="bg-white shadow rounded-lg mb-6">
         <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">
-            User Profile
-          </h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">Personal Information</h3>
           
           <form @submit.prevent="updateProfile" class="space-y-6">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <label for="firstName" class="block text-sm font-medium text-gray-700">
-                  First Name
-                </label>
+                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                 <input
                   type="text"
                   id="firstName"
                   v-model="profile.firstName"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   required
+                  pattern="[A-Za-z\s\-]+"
+                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="Enter your first name"
                 />
               </div>
               
               <div>
-                <label for="lastName" class="block text-sm font-medium text-gray-700">
-                  Last Name
-                </label>
+                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
                 <input
                   type="text"
                   id="lastName"
                   v-model="profile.lastName"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   required
+                  pattern="[A-Za-z\s\-]+"
+                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="Enter your last name"
                 />
+              </div>
+              
+              <div>
+                <label for="middleName" class="block text-sm font-medium text-gray-700 mb-2">Middle Name (Optional)</label>
+                <input
+                  type="text"
+                  id="middleName"
+                  v-model="profile.middleName"
+                  pattern="[A-Za-z\s\-]*"
+                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="Enter your middle name"
+                />
+              </div>
+              
+              <div>
+                <label for="contact" class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                <input
+                  type="tel"
+                  id="contact"
+                  v-model="profile.contact"
+                  required
+                  pattern="^(09|\+639)\d{9}$"
+                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+                />
+                <p class="mt-1 text-xs text-gray-500">Format: 09XXXXXXXXX or +639XXXXXXXXX</p>
+              </div>
+              
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  v-model="profile.email"
+                  disabled
+                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-gray-50 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="barangay" class="block text-sm font-medium text-gray-700 mb-2">Barangay</label>
+                <select
+                  id="barangay"
+                  v-model="profile.barangay"
+                  required
+                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                >
+                  <option value="">Select Barangay</option>
+                  <option v-for="barangay in barangays" :key="barangay" :value="barangay">
+                    {{ barangay }}
+                  </option>
+                </select>
               </div>
             </div>
             
             <div>
-              <label for="email" class="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
+              <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Home Street Address</label>
               <input
-                type="email"
-                id="email"
-                v-model="profile.email"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                required
-              />
-            </div>
-            
-            <div>
-              <label for="phone" class="block text-sm font-medium text-gray-700">
-                Contact Number <span v-if="showCompletionNotice" class="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                v-model="profile.phone"
-                placeholder="Enter your contact number"
-                :class="[
-                  'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
-                  showCompletionNotice && !profile.phone ? 'border-red-300' : ''
-                ]"
-                :required="showCompletionNotice"
-              />
-            </div>
-            
-            <div>
-              <label for="address" class="block text-sm font-medium text-gray-700">
-                Address <span v-if="showCompletionNotice" class="text-red-500">*</span>
-              </label>
-              <textarea
+                type="text"
                 id="address"
                 v-model="profile.address"
-                rows="3"
+                required
+                minlength="10"
+                class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
                 placeholder="Enter your complete address"
-                :class="[
-                  'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
-                  showCompletionNotice && !profile.address ? 'border-red-300' : ''
-                ]"
-                :required="showCompletionNotice"
-              ></textarea>
+              />
             </div>
             
             <div class="flex justify-end">
               <button
                 type="submit"
                 :disabled="loading"
-                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-primary hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ loading ? 'Updating...' : 'Update Profile' }}
               </button>
@@ -114,57 +163,97 @@
       </div>
       
       <!-- Change Password Section -->
-      <div class="bg-white shadow rounded-lg mt-6">
+      <div class="bg-white shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">
-            Change Password
-          </h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">Change Password</h3>
           
           <form @submit.prevent="changePassword" class="space-y-6">
             <div>
-              <label for="currentPassword" class="block text-sm font-medium text-gray-700">
-                Current Password
-              </label>
-              <input
-                type="password"
-                id="currentPassword"
-                v-model="passwordForm.currentPassword"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                required
-              />
+              <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+              <div class="relative">
+                <input
+                  :type="showCurrentPassword ? 'text' : 'password'"
+                  id="currentPassword"
+                  v-model="passwordForm.currentPassword"
+                  required
+                  class="mt-1 block w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  @click="showCurrentPassword = !showCurrentPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg v-if="showCurrentPassword" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  <svg v-else class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div>
-              <label for="newPassword" class="block text-sm font-medium text-gray-700">
-                New Password
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                v-model="passwordForm.newPassword"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                required
-              />
+              <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <div class="relative">
+                <input
+                  :type="showNewPassword ? 'text' : 'password'"
+                  id="newPassword"
+                  v-model="passwordForm.newPassword"
+                  required
+                  class="mt-1 block w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  @click="showNewPassword = !showNewPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg v-if="showNewPassword" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  <svg v-else class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div>
-              <label for="confirmPassword" class="block text-sm font-medium text-gray-700">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                v-model="passwordForm.confirmPassword"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                required
-              />
+              <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+              <div class="relative">
+                <input
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  id="confirmPassword"
+                  v-model="passwordForm.confirmPassword"
+                  required
+                  class="mt-1 block w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  @click="showConfirmPassword = !showConfirmPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg v-if="showConfirmPassword" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  <svg v-else class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div class="flex justify-end">
               <button
                 type="submit"
                 :disabled="passwordLoading"
-                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ passwordLoading ? 'Changing...' : 'Change Password' }}
               </button>
@@ -173,39 +262,126 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+        <div class="flex items-center mb-4">
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
+            notificationType === 'success' ? 'bg-green-100' : 
+            notificationType === 'error' ? 'bg-red-100' : 
+            'bg-blue-100'
+          ]">
+            <svg 
+              v-if="notificationType === 'success'"
+              class="w-6 h-6 text-green-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'error'"
+              class="w-6 h-6 text-red-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg 
+              v-else
+              class="w-6 h-6 text-blue-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 :class="[
+            'text-lg font-semibold',
+            notificationType === 'success' ? 'text-green-900' : 
+            notificationType === 'error' ? 'text-red-900' : 
+            'text-blue-900'
+          ]">
+            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Information' }}
+          </h3>
+        </div>
+        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+        <div class="flex justify-end">
+          <button
+            @click="closeNotificationModal"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors',
+              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
+              'bg-blue-600 text-white hover:bg-blue-700'
+            ]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { useAuthStore } from '@/stores/auth'
-import { doc, updateDoc, getDoc } from 'firebase/firestore'
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
-import { db } from '@/firebase/config'
+import { db, storage } from '@/firebase/config'
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 
 export default {
-  name: 'Profile',
+  name: 'UserProfile',
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
   data() {
     return {
       loading: false,
       passwordLoading: false,
-      showCompletionNotice: false,
+      uploadingProfilePicture: false,
+      profilePictureProgress: 0,
+      profilePictureFile: null,
+      showCurrentPassword: false,
+      showNewPassword: false,
+      showConfirmPassword: false,
       profile: {
         firstName: '',
         lastName: '',
+        middleName: '',
+        contact: '',
+        address: '',
+        barangay: '',
         email: '',
-        phone: '',
-        address: ''
+        profilePictureUrl: ''
       },
       passwordForm: {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
-      }
-    }
-  },
-  computed: {
-    authStore() {
-      return useAuthStore()
+      },
+      barangays: [
+        'Balingayan', 'Balite', 'Baruyan', 'Batino', 'Bayanan I', 'Bayanan II', 'Biga', 'Bondoc', 'Bucayao', 'Buhuan', 'Bulusan',
+        'Calero', 'Camansihan', 'Camilmil', 'Canubing I', 'Canubing II', 'Comunal',
+        'Guinobatan', 'Gulod', 'Gutad',
+        'Ibaba East', 'Ibaba West', 'Ilaya',
+        'Lalud', 'Lazareto', 'Libis', 'Lumangbayan',
+        'Mahal na Pangalan', 'Maidlang', 'Malad', 'Malamig', 'Managpi', 'Masipit', 'Nag-iba I', 'Nag-iba II', 'Navotas',
+        'Pachoca', 'Palhi', 'Panggalaan', 'Parang', 'Patas', 'Personas', 'Puting Tubig',
+        'Salong', 'San Antonio', 'San Vicente Central', 'San Vicente East', 'San Vicente North', 'San Vicente South', 'San Vicente West', 'Sapul', 'Silonay', 'Sta. Cruz', 'Sta. Isabel', 'Sta. Maria Village', 'Sta. Rita', 'Sto. Niño', 'Suqui',
+        'Tawagan', 'Tawiran', 'Tibag',
+        'Wawa'
+      ],
+      showNotificationModal: false,
+      notificationType: 'success',
+      notificationMessage: ''
     }
   },
   async mounted() {
@@ -215,33 +391,106 @@ export default {
     async loadProfile() {
       try {
         if (this.authStore.user) {
-          console.log('[v0] Loading profile for user:', this.authStore.user.uid)
           const userDoc = await getDoc(doc(db, 'users', this.authStore.user.uid))
           if (userDoc.exists()) {
             const userData = userDoc.data()
-            console.log('[v0] User data from Firestore:', userData)
             
             this.profile = {
-              firstName: userData.firstName || userData.first_name || '',
-              lastName: userData.lastName || userData.last_name || '',
-              email: userData.email || this.authStore.user.email,
-              phone: userData.contact || userData.phone || userData.phoneNumber || userData.contactNumber || userData.contact_number || userData.mobile || '',
-              address: userData.address || userData.location || userData.barangay || ''
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
+              middleName: userData.middleName || '',
+              contact: userData.contact || userData.phone || '',
+              address: userData.address || '',
+              barangay: userData.barangay || '',
+              email: userData.email || this.authStore.user.email || '',
+              profilePictureUrl: userData.profilePictureUrl || userData.photoURL || ''
             }
-            
-            console.log('[v0] Mapped profile data:', this.profile)
-            
-            // Check if the user is a Google user and needs to complete their profile
-            if (this.authStore.user.providerData.some(provider => provider.providerId === 'google.com') && (!this.profile.phone || !this.profile.address)) {
-              this.showCompletionNotice = true
-            }
-          } else {
-            console.log('[v0] No user document found in Firestore')
           }
         }
       } catch (error) {
         console.error('Error loading profile:', error)
-        alert('Error loading profile data')
+        this.showNotification('error', 'Error loading profile data')
+      }
+    },
+    
+    handleProfilePictureSelect(event) {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        this.showNotification('error', 'Please select an image file')
+        return
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        this.showNotification('error', 'Image size must be less than 5MB')
+        return
+      }
+
+      this.profilePictureFile = file
+      this.uploadProfilePicture()
+    },
+
+    async uploadProfilePicture() {
+      if (!this.profilePictureFile || !this.authStore.user) return
+
+      try {
+        this.uploadingProfilePicture = true
+        this.profilePictureProgress = 0
+
+        const timestamp = Date.now()
+        const randomString = Math.random().toString(36).substring(2, 15)
+        const fileExtension = this.profilePictureFile.name.split('.').pop() || 'jpg'
+        const fileName = `profile_${timestamp}_${randomString}.${fileExtension}`
+        const fileRef = storageRef(storage, `profiles/${this.authStore.user.uid}/${fileName}`)
+
+        const uploadTask = uploadBytesResumable(fileRef, this.profilePictureFile)
+
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            this.profilePictureProgress = Math.round(progress)
+          },
+          (error) => {
+            console.error('Error uploading profile picture:', error)
+            this.uploadingProfilePicture = false
+            this.profilePictureProgress = 0
+            this.showNotification('error', 'Failed to upload profile picture. Please try again.')
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+              
+              // Update Firestore with profile picture URL
+              const userRef = doc(db, 'users', this.authStore.user.uid)
+              await updateDoc(userRef, {
+                profilePictureUrl: downloadURL,
+                photoURL: downloadURL,
+                updatedAt: new Date()
+              })
+
+              this.profile.profilePictureUrl = downloadURL
+              this.uploadingProfilePicture = false
+              this.profilePictureProgress = 0
+              this.profilePictureFile = null
+              
+              this.showNotification('success', 'Profile picture uploaded successfully!')
+            } catch (error) {
+              console.error('Error updating profile picture URL:', error)
+              this.uploadingProfilePicture = false
+              this.profilePictureProgress = 0
+              this.showNotification('error', 'Failed to update profile picture. Please try again.')
+            }
+          }
+        )
+      } catch (error) {
+        console.error('Error handling profile picture:', error)
+        this.uploadingProfilePicture = false
+        this.profilePictureProgress = 0
+        this.showNotification('error', 'Failed to process profile picture. Please try again.')
       }
     },
     
@@ -249,35 +498,36 @@ export default {
       this.loading = true
       try {
         if (this.authStore.user) {
-          console.log('[v0] Updating profile with data:', this.profile)
+          const userRef = doc(db, 'users', this.authStore.user.uid)
+          const userDoc = await getDoc(userRef)
           
           const updateData = {
             firstName: this.profile.firstName,
             lastName: this.profile.lastName,
-            email: this.profile.email,
-            contact: this.profile.phone, // Primary contact field
-            phone: this.profile.phone,
-            phoneNumber: this.profile.phone,
-            contactNumber: this.profile.phone,
-            mobile: this.profile.phone,
+            middleName: this.profile.middleName || '',
+            contact: this.profile.contact,
+            phone: this.profile.contact,
             address: this.profile.address,
-            location: this.profile.address,
+            barangay: this.profile.barangay,
+            email: this.profile.email,
             updatedAt: new Date()
           }
           
-          await updateDoc(doc(db, 'users', this.authStore.user.uid), updateData)
-          
-          console.log('[v0] Profile updated successfully in Firestore')
-          alert('Profile updated successfully!')
-          
-          // Hide the completion notice if the profile is now complete
-          if (this.profile.phone && this.profile.address) {
-            this.showCompletionNotice = false
+          if (userDoc.exists()) {
+            await updateDoc(userRef, updateData)
+          } else {
+            await setDoc(userRef, {
+              ...updateData,
+              uid: this.authStore.user.uid,
+              createdAt: new Date()
+            })
           }
+          
+          this.showNotification('success', 'Profile updated successfully!')
         }
       } catch (error) {
         console.error('Error updating profile:', error)
-        alert('Error updating profile: ' + error.message)
+        this.showNotification('error', 'Error updating profile: ' + (error.message || 'Unknown error'))
       } finally {
         this.loading = false
       }
@@ -285,20 +535,18 @@ export default {
     
     async changePassword() {
       if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-        alert('New passwords do not match')
+        this.showNotification('error', 'New passwords do not match')
         return
       }
       
       if (this.passwordForm.newPassword.length < 6) {
-        alert('New password must be at least 6 characters long')
+        this.showNotification('error', 'New password must be at least 6 characters long')
         return
       }
       
       this.passwordLoading = true
       try {
         if (this.authStore.user) {
-          console.log('[v0] Changing password for user')
-          
           // Reauthenticate user
           const credential = EmailAuthProvider.credential(
             this.authStore.user.email,
@@ -309,7 +557,9 @@ export default {
           // Update password through Firebase Auth
           await updatePassword(this.authStore.user, this.passwordForm.newPassword)
           
-          await updateDoc(doc(db, 'users', this.authStore.user.uid), {
+          // Update Firestore
+          const userRef = doc(db, 'users', this.authStore.user.uid)
+          await updateDoc(userRef, {
             passwordUpdatedAt: new Date()
           })
           
@@ -320,21 +570,31 @@ export default {
             confirmPassword: ''
           }
           
-          console.log('[v0] Password changed successfully')
-          alert('Password changed successfully!')
+          this.showNotification('success', 'Password changed successfully!')
         }
       } catch (error) {
         console.error('Error changing password:', error)
         if (error.code === 'auth/wrong-password') {
-          alert('Current password is incorrect')
+          this.showNotification('error', 'Current password is incorrect')
         } else if (error.code === 'auth/weak-password') {
-          alert('New password is too weak')
+          this.showNotification('error', 'New password is too weak')
         } else {
-          alert('Error changing password: ' + error.message)
+          this.showNotification('error', 'Error changing password: ' + (error.message || 'Unknown error'))
         }
       } finally {
         this.passwordLoading = false
       }
+    },
+
+    showNotification(type, message) {
+      this.notificationType = type
+      this.notificationMessage = message
+      this.showNotificationModal = true
+    },
+
+    closeNotificationModal() {
+      this.showNotificationModal = false
+      this.notificationMessage = ''
     }
   }
 }

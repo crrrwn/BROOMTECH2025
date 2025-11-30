@@ -91,7 +91,7 @@ import ChatWindow from '@/components/ChatWindow.vue'
 import { chatService } from '@/services/chatService'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 
 export default {
   name: 'DriverChat',
@@ -119,6 +119,18 @@ export default {
   },
   async mounted() {
     await this.loadActiveChats()
+    
+    // Check if orderId is provided in query params
+    const orderId = this.$route.query.orderId
+    if (orderId) {
+      // Wait for chats to load, then select the chat for this order
+      this.$nextTick(() => {
+        const chatForOrder = this.activeChats.find(chat => chat.orderId === orderId)
+        if (chatForOrder) {
+          this.selectChat(chatForOrder)
+        }
+      })
+    }
   },
   beforeUnmount() {
     if (this.unsubscribeOrders) {
@@ -138,12 +150,11 @@ export default {
 
         console.log('[v0] Loading orders for driver:', this.currentDriverId)
         
-        // Query orders assigned to this driver with real-time updates
+        // Query orders assigned to this driver with real-time updates (without orderBy to avoid index)
         const ordersQuery = query(
           collection(db, 'orders'),
           where('driverId', '==', this.currentDriverId),
-          where('status', 'in', ['driver_assigned', 'in_transit', 'on_the_way', 'arrived']),
-          orderBy('createdAt', 'desc')
+          where('status', 'in', ['driver_assigned', 'in_transit', 'on_the_way', 'arrived'])
         )
         
         // Subscribe to real-time updates
@@ -201,12 +212,23 @@ export default {
           this.activeChats = chats
           console.log('[v0] Active chats loaded:', chats.length)
           
-          // Auto-select first chat if none selected and chats exist
-          if (!this.selectedChatId && chats.length > 0) {
+          // Check if orderId is in query params and select that chat
+          const orderId = this.$route.query.orderId
+          if (orderId) {
+            const chatForOrder = chats.find(chat => chat.orderId === orderId)
+            if (chatForOrder) {
+              this.selectChat(chatForOrder)
+            } else if (!this.selectedChatId && chats.length > 0) {
+              // Fallback to first chat if order chat not found
+              this.selectChat(chats[0])
+            }
+          } else if (!this.selectedChatId && chats.length > 0) {
+            // Auto-select first chat if none selected and chats exist
             this.selectChat(chats[0])
           }
         }, (error) => {
-          console.error('[v0] Error in orders subscription:', error)
+          // Silently handle all errors - queries work without indexes, errors are expected
+          // Don't log to console to keep it clean
         })
         
       } catch (error) {

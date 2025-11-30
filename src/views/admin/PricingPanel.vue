@@ -562,6 +562,82 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="closeNotificationModal">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+        <div class="flex items-center mb-4">
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
+            notificationType === 'success' ? 'bg-green-100' : 
+            notificationType === 'error' ? 'bg-red-100' : 
+            notificationType === 'warning' ? 'bg-yellow-100' :
+            'bg-blue-100'
+          ]">
+            <svg 
+              v-if="notificationType === 'success'"
+              class="w-6 h-6 text-green-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'error'"
+              class="w-6 h-6 text-red-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'warning'"
+              class="w-6 h-6 text-yellow-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <svg 
+              v-else
+              class="w-6 h-6 text-blue-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 :class="[
+            'text-lg font-semibold',
+            notificationType === 'success' ? 'text-green-900' : 
+            notificationType === 'error' ? 'text-red-900' : 
+            notificationType === 'warning' ? 'text-yellow-900' :
+            'text-blue-900'
+          ]">
+            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : notificationType === 'warning' ? 'Warning' : 'Information' }}
+          </h3>
+        </div>
+        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+        <div class="flex justify-end">
+          <button
+            @click="closeNotificationModal"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors',
+              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
+              notificationType === 'warning' ? 'bg-yellow-600 text-white hover:bg-yellow-700' :
+              'bg-blue-600 text-white hover:bg-blue-700'
+            ]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -705,17 +781,33 @@ export default {
       
       // AI Suggestions fields
       loadingAISuggestions: false,
-      aiSuggestions: null
+      aiSuggestions: null,
+      
+      // Notification modal state
+      showNotificationModal: false,
+      notificationType: 'success', // 'success', 'error', 'warning', 'info'
+      notificationMessage: ''
     }
   },
   methods: {
+    showNotification(type, message) {
+      this.notificationType = type
+      this.notificationMessage = message
+      this.showNotificationModal = true
+    },
+
+    closeNotificationModal() {
+      this.showNotificationModal = false
+      this.notificationMessage = ''
+    },
+
     async saveFraudSettings() {
       try {
         await setDoc(doc(db, 'settings', 'fraudDetection'), this.fraudSettings)
-        this.toast.success('Fraud detection settings saved successfully')
+        this.showNotification('success', 'Fraud detection settings saved successfully')
       } catch (error) {
         console.error('[v0] Error saving fraud settings:', error)
-        this.toast.error('Failed to save fraud detection settings')
+        this.showNotification('error', 'Failed to save fraud detection settings')
       }
     },
     
@@ -743,10 +835,10 @@ export default {
           updatedAt: new Date().toISOString()
         })
         
-        this.toast.success('All settings saved successfully! Changes will be reflected in user bookings.')
+        this.showNotification('success', 'All settings saved successfully! Changes will be reflected in user bookings.')
       } catch (error) {
         console.error('[v0] Error saving settings:', error)
-        this.toast.error('Failed to save settings')
+        this.showNotification('error', 'Failed to save settings')
       }
     },
     
@@ -773,7 +865,7 @@ export default {
     async generateAISuggestions() {
       this.loadingAISuggestions = true;
       this.aiSuggestions = null; // Clear previous suggestions
-      this.toast.info("Analyzing booking data for AI fee suggestions...");
+      this.showNotification('info', "Analyzing booking data for AI fee suggestions...");
 
       // Simulate AI analysis (replace with actual API call or logic)
       setTimeout(() => {
@@ -788,7 +880,7 @@ export default {
           // Add reasons for distance rate if needed
         };
         this.loadingAISuggestions = false;
-        this.toast.success("AI suggestions generated!");
+        this.showNotification('success', "AI suggestions generated!");
       }, 3000); // Simulate 3 seconds of analysis
     },
 
@@ -798,10 +890,10 @@ export default {
         this.services.forEach(service => {
           service.distanceRate = parseFloat(value);
         });
-        this.toast.success(`Distance rate updated for all services to ₱${value}/km.`);
+        this.showNotification('success', `Distance rate updated for all services to ₱${value}/km.`);
       } else {
         this.pricingRules[field] = parseFloat(value);
-        this.toast.success(`${field.replace(/([A-Z])/g, ' $1').trim()} updated to ${field.includes('Multiplier') || field.includes('distanceRate') ? value + (field.includes('distanceRate') ? '/km' : 'x') : '₱' + value}.`);
+        this.showNotification('success', `${field.replace(/([A-Z])/g, ' $1').trim()} updated to ${field.includes('Multiplier') || field.includes('distanceRate') ? value + (field.includes('distanceRate') ? '/km' : 'x') : '₱' + value}.`);
       }
     },
     
@@ -828,11 +920,11 @@ export default {
           createdAt: new Date().toISOString()
         })
         
-        this.toast.success(`${user.name} has been banned`)
+        this.showNotification('success', `${user.name} has been banned`)
         this.loadFraudStats()
       } catch (error) {
         console.error('[v0] Error banning user:', error)
-        this.toast.error('Failed to ban user')
+        this.showNotification('error', 'Failed to ban user')
       }
     },
     
@@ -859,11 +951,11 @@ export default {
           createdAt: new Date().toISOString()
         })
         
-        this.toast.success(`${user.name} has been unbanned`)
+        this.showNotification('success', `${user.name} has been unbanned`)
         this.loadFraudStats()
       } catch (error) {
         console.error('[v0] Error unbanning user:', error)
-        this.toast.error('Failed to unban user')
+        this.showNotification('error', 'Failed to unban user')
       }
     },
     
@@ -891,11 +983,11 @@ export default {
           createdAt: new Date().toISOString()
         })
         
-        this.toast.success(`${user.name} has been unflagged`)
+        this.showNotification('success', `${user.name} has been unflagged`)
         this.loadFraudStats()
       } catch (error) {
         console.error('[v0] Error unflagging user:', error)
-        this.toast.error('Failed to unflag user')
+        this.showNotification('error', 'Failed to unflag user')
       }
     },
     
@@ -1012,7 +1104,7 @@ export default {
         this.flaggedUsers = flagged
       } catch (error) {
         console.error('[v0] Error loading fraud stats:', error)
-        this.toast.error('Failed to load fraud detection data')
+        this.showNotification('error', 'Failed to load fraud detection data')
       }
     },
     
@@ -1039,7 +1131,7 @@ export default {
     
     async confirmFlagUser() {
       if (!this.flagReason) {
-        this.toast.error('Please select a reason for flagging')
+        this.showNotification('error', 'Please select a reason for flagging')
         return
       }
       
@@ -1064,12 +1156,12 @@ export default {
           createdAt: new Date().toISOString()
         })
         
-        this.toast.success(`${user.name} has been flagged and notified`)
+        this.showNotification('success', `${user.name} has been flagged and notified`)
         this.closeFlagModal()
         this.loadFraudStats()
       } catch (error) {
         console.error('[v0] Error flagging user:', error)
-        this.toast.error('Failed to flag user')
+        this.showNotification('error', 'Failed to flag user')
       }
     },
 
@@ -1199,10 +1291,10 @@ export default {
         // Save all default settings to Firestore
         await this.saveAllSettings()
         
-        this.toast.success('All settings have been reset to default values!')
+        this.showNotification('success', 'All settings have been reset to default values!')
       } catch (error) {
         console.error('[v0] Error resetting to defaults:', error)
-        this.toast.error('Failed to reset settings to default')
+        this.showNotification('error', 'Failed to reset settings to default')
       }
     }
   },

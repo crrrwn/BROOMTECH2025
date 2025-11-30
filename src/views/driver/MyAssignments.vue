@@ -48,8 +48,38 @@
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg p-4 shadow-sm border">
+    <!-- Tabs: Active and History -->
+    <div class="bg-white rounded-lg shadow-sm border">
+      <div class="border-b border-gray-200">
+        <nav class="flex -mb-px">
+          <button
+            @click="activeTab = 'active'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'active' 
+                ? 'border-primary text-primary' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Active
+          </button>
+          <button
+            @click="activeTab = 'history'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'history' 
+                ? 'border-primary text-primary' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            History
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Filters (only show for Active tab) -->
+    <div v-if="activeTab === 'active'" class="bg-white rounded-lg p-4 shadow-sm border">
       <div class="flex flex-wrap gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -60,7 +90,6 @@
             <option value="picked_up">Picked Up</option>
             <option value="in_transit">In Transit</option>
             <option value="arrived">Arrived</option>
-            <option value="delivered">Delivered</option>
           </select>
         </div>
         <div>
@@ -89,9 +118,9 @@
       </div>
     </div>
 
-    <!-- Bookings List -->
-    <div class="space-y-4">
-      <div v-for="booking in filteredBookings"
+    <!-- Active Bookings List -->
+    <div v-if="activeTab === 'active'" class="space-y-4">
+      <div v-for="booking in activeBookings"
            :key="booking.id"
            class="bg-white rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow">
         <div class="flex items-start justify-between">
@@ -183,30 +212,18 @@
             </div>
             <div class="space-y-2">
               <button
+                v-if="booking.status !== 'delivered'"
                 @click="startDelivery(booking)"
                 class="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium"
               >
                 {{ booking.status === 'driver_assigned' ? 'Start Delivery' : 'In Progress' }}
               </button>
               <button
-                @click="viewDetails(booking)"
-                class="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                v-else
+                disabled
+                class="w-full bg-green-600 text-white px-4 py-2 rounded-lg cursor-not-allowed font-medium"
               >
-                View Details
-              </button>
-              <button
-                @click="showItemsTotalModal(booking)"
-                :disabled="booking.status === 'driver_assigned'"
-                class="w-full border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-              >
-                Set Items Total
-              </button>
-              <button
-                @click="showProofModal(booking)"
-                :disabled="booking.status !== 'in_transit' && booking.status !== 'arrived'"
-                class="w-full border border-purple-300 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors font-medium disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-              >
-                Upload Proof of Delivery
+                DELIVERED
               </button>
             </div>
           </div>
@@ -214,8 +231,8 @@
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-if="filteredBookings.length === 0"
+    <!-- Empty State for Active -->
+    <div v-if="activeTab === 'active' && activeBookings.length === 0"
          class="text-center py-12">
       <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none"
            stroke="currentColor"
@@ -225,10 +242,88 @@
               stroke-width="2"
               d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2m9 5a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 012-2z" />
       </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No Assignments</h3>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Assignments</h3>
       <p class="text-gray-600">
         {{ isOnline ? 'You will see your assignments here' : 'Go online to receive assignments' }}
       </p>
+    </div>
+
+    <!-- History Bookings List -->
+    <div v-if="activeTab === 'history'" class="space-y-4">
+      <div v-for="booking in historyBookings"
+           :key="booking.id"
+           class="bg-white rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center space-x-3 mb-3">
+              <div :class="[
+                'w-12 h-12 rounded-lg flex items-center justify-center',
+                getServiceColor(booking.serviceType)
+              ]">
+                <component :is="getServiceIcon(booking.serviceType)"
+                           class="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">
+                  {{ booking.serviceName || booking.serviceTitle }}
+                </h3>
+                <p class="text-sm text-gray-500">
+                  {{ booking.customerName }} • Delivered {{ formatDate(booking.deliveredAt || booking.createdAt) }}
+                </p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-sm font-medium text-gray-700">Pickup Location</p>
+                <p class="text-sm text-gray-600">
+                  {{ booking.pickupAddress || getPickupLocation(booking) }}
+                </p>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700">Drop-off Location</p>
+                <p class="text-sm text-gray-600">
+                  {{ booking.deliveryAddress || getDeliveryLocation(booking) }}
+                </p>
+              </div>
+            </div>
+            <div class="mb-4 flex items-center gap-2">
+              <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                Delivered
+              </span>
+              <span v-if="booking.paymentMethod && booking.paymentMethod.trim()"
+                    :class="getPaymentMethodBadge(booking.paymentMethod)"
+                    class="px-3 py-1 text-xs font-medium rounded-full">
+                {{ formatPaymentMethod(booking.paymentMethod) }}
+              </span>
+            </div>
+          </div>
+          <div class="ml-6 text-right">
+            <div class="mb-4">
+              <p class="text-2xl font-bold text-primary">
+                ₱{{ (booking.totalAmount || calculateFinalAmount(booking)).toFixed(2) }}
+              </p>
+              <p class="text-sm text-gray-500">Total Earnings</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State for History -->
+      <div v-if="historyBookings.length === 0"
+           class="text-center py-12">
+        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+          <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Delivery History</h3>
+        <p class="text-gray-600">
+          Completed deliveries will appear here
+        </p>
+      </div>
     </div>
 
     <!-- Start Delivery Modal -->
@@ -315,369 +410,8 @@
       </div>
     </div>
 
-    <!-- View Details Modal -->
-    <div v-if="showDetailsModal"
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
-          <h2 class="text-xl font-semibold text-gray-900">Booking Details</h2>
-          <button
-            @click="showDetailsModal = false"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <svg class="w-6 h-6" fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="p-6 space-y-6" v-if="selectedBooking">
-          <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Order Summary</h4>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p class="text-gray-600">Order ID</p>
-                <p class="font-medium">#{{ selectedBooking.id?.substring(0, 8) || 'N/A' }}</p>
-              </div>
-              <div>
-                <p class="text-gray-600">Status</p>
-                <span :class="getStatusBadgeClass(selectedBooking.status)"
-                      class="px-2 py-1 text-xs font-medium rounded-full">
-                  {{ formatStatus(selectedBooking.status) }}
-                </span>
-              </div>
-              <div>
-                <p class="text-gray-600">Total Amount</p>
-                <p class="font-medium text-green-600">
-                  ₱{{ calculateFinalAmount(selectedBooking) }}
-                </p>
-              </div>
-              <div>
-                <p class="text-gray-600">Created</p>
-                <p class="font-medium">{{ formatDate(selectedBooking.createdAt) }}</p>
-              </div>
-            </div>
-            <!-- Display payment method in details modal -->
-            <div v-if="selectedBooking.paymentMethod" class="mt-3 pt-3 border-t border-gray-200 text-xs">
-              <div class="flex justify-between text-gray-600">
-                <span>Payment Method:</span>
-                <span class="font-medium">{{ formatPaymentMethod(selectedBooking.paymentMethod) }}</span>
-              </div>
-            </div>
-            <!-- Only display GCash fee if payment method is GCash -->
-            <div v-if="selectedBooking.paymentMethod?.toUpperCase() !== 'COD'" class="mt-3 pt-3 border-t border-gray-200 text-xs">
-              <div class="flex justify-between text-gray-600">
-                <span>GCash Fee Included:</span>
-                <span class="font-medium">₱{{ calculateGCashFee(selectedBooking) }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Customer Information</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p class="text-gray-600">Name</p>
-                <p class="font-medium">{{ selectedBooking.customerName || 'Unknown' }}</p>
-              </div>
-              <div>
-                <p class="text-gray-600">Phone</p>
-                <p class="font-medium">{{ selectedBooking.customerPhone || 'N/A' }}</p>
-              </div>
-              <div>
-                <p class="text-gray-600">Email</p>
-                <p class="font-medium">{{ selectedBooking.customerEmail || 'N/A' }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Service Information</h4>
-            <div class="flex items-start gap-4">
-              <div
-                :class="['p-2 rounded', getServiceColor(selectedBooking.serviceType)]">
-                <svg class="w-6 h-6 text-white" fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24">
-                  <path stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <h5 class="font-medium text-gray-900">
-                  {{ selectedBooking.serviceName || selectedBooking.serviceTitle }}
-                </h5>
-                <p class="text-sm text-gray-600 mt-1">
-                  {{ getServiceDescription(selectedBooking.serviceType) }}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Location Information</h4>
-            <div class="space-y-3">
-              <div>
-                <p class="text-gray-600 text-sm">Pickup Location</p>
-                <p class="font-medium">
-                  {{ selectedBooking.pickupAddress || getPickupLocation(selectedBooking) }}
-                </p>
-              </div>
-              <div>
-                <p class="text-gray-600 text-sm">Delivery Location</p>
-                <p class="font-medium">
-                  {{ selectedBooking.deliveryAddress || getDeliveryLocation(selectedBooking) }}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedBooking.formData"
-               class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Booking Details</h4>
-            <div class="space-y-2 text-sm">
-              <div v-for="field in getFilteredBookingDetails(selectedBooking)"
-                   :key="field.key"
-                   class="flex justify-between">
-                <span class="text-gray-600">{{ field.label }}:</span>
-                <span class="font-medium">{{ field.value }}</span>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedBooking.formData?.billReceiptUrl || selectedBooking.proofOfDelivery?.url"
-               class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Receipt / Proof</h4>
-            <div class="space-y-3">
-              <div v-if="selectedBooking.formData?.billReceiptUrl">
-                <p class="text-sm text-gray-600 mb-2">User's Receipt/Reference</p>
-                <a :href="selectedBooking.formData.billReceiptUrl"
-                   target="_blank"
-                   rel="noopener"
-                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                  View Receipt
-                </a>
-                <div v-if="isImageUrl(selectedBooking.formData.billReceiptUrl)" class="mt-3">
-                  <img :src="selectedBooking.formData.billReceiptUrl"
-                       alt="Receipt"
-                       class="max-w-xs rounded-lg border shadow-sm"
-                       @click="openReceiptPreview(selectedBooking.formData.billReceiptUrl)"
-                       style="cursor: pointer; max-height: 200px; object-fit: contain;" />
-                </div>
-              </div>
-              <div v-if="selectedBooking.proofOfDelivery?.url" class="pt-3 border-t">
-                <p class="text-sm text-gray-600 mb-2">Proof of Delivery</p>
-                <a :href="selectedBooking.proofOfDelivery.url"
-                   target="_blank"
-                   rel="noopener"
-                   class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                  View Proof
-                </a>
-                <div class="mt-3">
-                  <img :src="selectedBooking.proofOfDelivery.url"
-                       alt="Proof of Delivery"
-                       class="max-w-xs rounded-lg border shadow-sm"
-                       @click="openReceiptPreview(selectedBooking.proofOfDelivery.url)"
-                       style="cursor: pointer; max-height: 200px; object-fit: contain;" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Receipt Preview Modal -->
 
-    <!-- Items Total Modal -->
-    <div v-if="showItemsModal"
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full">
-        <div class="border-b p-6 flex items-center justify-between">
-          <h2 class="text-xl font-semibold text-gray-900">Set Items Total</h2>
-          <button
-            @click="showItemsModal = false"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <svg class="w-6 h-6" fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="p-6 space-y-4" v-if="selectedBooking">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Items Total Amount (₱)
-            </label>
-            <input v-model.number="itemsTotal"
-                   type="number"
-                   step="0.01"
-                   min="0"
-                   placeholder="Enter total amount"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div class="bg-blue-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-600 mb-2">Current Total Breakdown:</p>
-            <div class="space-y-1 text-sm">
-              <div class="flex justify-between">
-                <span>Base Charge:</span>
-                <span class="font-medium">
-                  ₱{{ selectedBooking.pricing?.baseCharge || '0.00' }}
-                </span>
-              </div>
-              <div class="flex justify-between">
-                <span>Distance Fee:</span>
-                <span class="font-medium">
-                  ₱{{ selectedBooking.pricing?.distanceFee || '0.00' }}
-                </span>
-              </div>
-              <div v-if="selectedBooking.pricing?.badWeatherFee"
-                   class="flex justify-between">
-                <span>Bad Weather Surcharge:</span>
-                <span class="font-medium">
-                  ₱{{ selectedBooking.pricing?.badWeatherFee }}
-                </span>
-              </div>
-              <div v-if="itemsTotal > 0"
-                   class="flex justify-between border-t pt-1 mt-1">
-                <span>Items Total:</span>
-                <span class="font-medium text-blue-600">
-                  ₱{{ itemsTotal.toFixed(2) }}
-                </span>
-              </div>
-              <!-- Hide GCash Fee display when payment method is COD -->
-              <div v-if="selectedBooking.paymentMethod?.toUpperCase() !== 'COD'"
-                   class="flex justify-between">
-                <span>GCash Fee:</span>
-                <span class="font-medium">
-                  ₱{{ calculateGCashFeeFromNewTotal().toFixed(2) }}
-                </span>
-              </div>
-              <div class="flex justify-between border-t pt-1 mt-1 font-bold">
-                <span>New Total:</span>
-                <span class="text-green-600">
-                  ₱{{ calculateNewTotalWithGCash().toFixed(2) }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <button
-            @click="saveItemsTotal"
-            :disabled="itemsTotal < 0 || savingItems"
-            class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {{ savingItems ? 'Saving...' : 'Save Items Total' }}
-          </button>
-          <button
-            @click="showItemsModal = false"
-            class="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Proof of Delivery Modal -->
-    <div v-if="showProofOfDeliveryModal"
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full">
-        <div class="border-b p-6 flex items-center justify-between">
-          <h2 class="text-xl font-semibold text-gray-900">Proof of Delivery</h2>
-          <button
-            @click="showProofOfDeliveryModal = false"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <svg class="w-6 h-6" fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="p-6 space-y-4" v-if="selectedBooking">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Upload Photo
-            </label>
-            <div
-              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors cursor-pointer"
-              @click="$refs.proofFileInput.click()"
-              @dragover.prevent="dragOverProof = true"
-              @dragleave.prevent="dragOverProof = false"
-              @drop.prevent="handleProofDrop"
-              :class="dragOverProof ? 'border-purple-500 bg-purple-50' : ''"
-            >
-              <input
-                ref="proofFileInput"
-                type="file"
-                accept="image/*"
-                @change="handleProofFileSelect"
-                class="hidden"
-              />
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-2"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4" />
-              </svg>
-              <p class="text-gray-600">Click to upload or drag and drop</p>
-              <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
-            </div>
-          </div>
-          <div v-if="proofPreview" class="relative">
-            <img :src="proofPreview"
-                 alt="Proof preview"
-                 class="w-full rounded-lg border" />
-            <button
-              @click="proofPreview = null; proofFile = null"
-              class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-            >
-              <svg class="w-5 h-5" fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <button
-            @click="uploadProofOfDelivery"
-            :disabled="!proofFile || uploadingProof"
-            class="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {{ uploadingProof ? 'Uploading...' : 'Submit Proof & Complete Delivery' }}
-          </button>
-          <button
-            @click="showProofOfDeliveryModal = false"
-            class="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- Receipt Preview Modal -->
     <div v-if="showReceiptPreviewModal"
@@ -725,6 +459,7 @@ export default {
   name: 'MyAssignments',
   data() {
     return {
+      activeTab: 'active',
       isOnline: true,
       isBadWeather: false,
       currentWeather: '',
@@ -736,7 +471,6 @@ export default {
         paymentMethod: ''
       },
       bookings: [],
-      showDetailsModal: false,
       showStartDeliveryModal: false,
       showMapModal: false,
       selectedBooking: null,
@@ -750,26 +484,34 @@ export default {
       routeDetails: null,
       isTrackingLocation: false,
       locationWatchId: null,
-      itemsTotal: 0,
-      savingItems: false,
-      showProofOfDeliveryModal: false,
-      proofFile: null,
-      proofPreview: null,
-      uploadingProof: false,
-      dragOverProof: false,
-      showItemsModal: false,
       showReceiptPreviewModal: false,
       receiptPreviewUrl: null
     }
   },
   computed: {
-    filteredBookings() {
+    activeBookings() {
       return this.bookings.filter(booking => {
+        // Only show non-delivered orders in active tab
+        if (booking.status === 'delivered') return false
         if (this.filters.status && booking.status !== this.filters.status) return false
         if (this.filters.serviceType && booking.serviceType !== this.filters.serviceType) return false
         if (this.filters.distance && booking.distance > parseInt(this.filters.distance)) return false
         if (this.filters.paymentMethod && booking.paymentMethod?.toUpperCase() !== this.filters.paymentMethod.toUpperCase()) return false
         return true
+      })
+    },
+    historyBookings() {
+      return this.bookings.filter(booking => {
+        // Only show delivered orders in history tab
+        if (booking.status !== 'delivered') return false
+        if (this.filters.serviceType && booking.serviceType !== this.filters.serviceType) return false
+        if (this.filters.paymentMethod && booking.paymentMethod?.toUpperCase() !== this.filters.paymentMethod.toUpperCase()) return false
+        return true
+      }).sort((a, b) => {
+        // Sort by delivered date, most recent first
+        const dateA = a.deliveredAt?.toDate ? a.deliveredAt.toDate() : (a.deliveredAt ? new Date(a.deliveredAt) : new Date(0))
+        const dateB = b.deliveredAt?.toDate ? b.deliveredAt.toDate() : (b.deliveredAt ? new Date(b.deliveredAt) : new Date(0))
+        return dateB - dateA
       })
     }
   },
@@ -921,22 +663,19 @@ export default {
         try {
           const bookingRef = doc(db, 'orders', booking.id)
           await updateDoc(bookingRef, {
-            status: 'picked_up',
+            status: 'in_transit',
             driverLocation: this.currentLocation,
-            confirmedAt: serverTimestamp()
+            inTransitAt: serverTimestamp()
           })
-          this.$toast?.success?.('Booking confirmed automatically!')
+          this.$toast?.success?.('Delivery started!')
         } catch (error) {
-          console.error('[v0] Error auto-confirming delivery:', error)
+          console.error('[v0] Error starting delivery:', error)
+          this.$toast?.error?.('Failed to start delivery')
         }
       }
-      this.getCurrentLocation()
-      this.initializeGoogleMapsServices()
-      this.showStartDeliveryModal = true
-    },
-    viewDetails(booking) {
-      this.selectedBooking = booking
-      this.showDetailsModal = true
+      
+      // Navigate to delivery tracking page
+      this.$router.push(`/driver/tracking/${booking.id}`)
     },
     openChat() {
       this.$router.push('/driver/chat')
@@ -1066,7 +805,7 @@ export default {
           return
         }
         const script = document.createElement('script')
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry,directions`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry,directions&loading=async`
         script.async = true
         script.defer = true
         script.onerror = () => reject(new Error('Failed to load Google Maps API'))
@@ -1130,9 +869,9 @@ export default {
       try {
         const bookingRef = doc(db, 'orders', this.selectedBooking.id)
         await updateDoc(bookingRef, {
-          status: 'picked_up',
+          status: 'in_transit',
           driverLocation: this.currentLocation,
-          startedAt: serverTimestamp()
+          inTransitAt: serverTimestamp()
         })
         this.$toast?.success?.('Delivery started!')
         this.showStartDeliveryModal = false
@@ -1288,184 +1027,6 @@ export default {
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
       window.open(mapsUrl, '_blank')
       this.$toast?.success?.('Navigation started in Google Maps')
-    },
-    showItemsTotalModal(booking) {
-      this.selectedBooking = booking
-      this.itemsTotal = booking.pricing?.itemsTotal || 0
-      this.showItemsModal = true
-    },
-    showProofModal(booking) {
-      this.selectedBooking = booking
-      this.proofFile = null
-      this.proofPreview = null
-      this.showProofOfDeliveryModal = true
-    },
-    // Subtotal without GCash fee (includes items total)
-    calculateNewTotal() {
-      const baseCharge = this.selectedBooking?.pricing?.baseCharge || 0
-      const distanceFee = this.selectedBooking?.pricing?.distanceFee || 0
-      const badWeatherFee = this.selectedBooking?.pricing?.badWeatherFee || 0
-      const itemsTotal = this.itemsTotal || this.selectedBooking?.pricing?.itemsTotal || 0
-      return baseCharge + distanceFee + badWeatherFee + itemsTotal
-    },
-    calculateGCashFeeFromNewTotal() {
-      if (this.selectedBooking?.paymentMethod?.toUpperCase() === 'COD') {
-        return 0
-      }
-      const subtotal = this.calculateNewTotal()
-      return this.calculateGCashFeeForAmount(subtotal)
-    },
-    calculateNewTotalWithGCash() {
-      const subtotal = this.calculateNewTotal()
-      const gcashFee = this.calculateGCashFeeFromNewTotal()
-      return subtotal + gcashFee
-    },
-    async saveItemsTotal() {
-      if (!this.selectedBooking) return
-      if (this.itemsTotal < 0) {
-        this.$toast?.error?.('Items total cannot be negative.')
-        return
-      }
-
-      this.savingItems = true
-
-      // Optimistic UI update
-      const prevPricing = { ...(this.selectedBooking.pricing || {}) }
-      const newSubtotal = this.calculateNewTotal()
-      const gcashFee = this.calculateGCashFeeFromNewTotal()
-      const newTotal = newSubtotal + gcashFee
-
-      this.selectedBooking.pricing = {
-        ...prevPricing,
-        itemsTotal: this.itemsTotal,
-        total: newTotal,
-        gcashFee: gcashFee
-      }
-      this.showItemsModal = false
-
-      try {
-        const bookingRef = doc(db, 'orders', this.selectedBooking.id)
-        await updateDoc(bookingRef, {
-          'pricing.itemsTotal': this.itemsTotal,
-          'pricing.total': newTotal,
-          'pricing.gcashFee': gcashFee,
-          totalAmount: newTotal,
-          itemsAddedAt: serverTimestamp()
-        })
-        this.$toast?.success?.('✓ Items total saved')
-      } catch (error) {
-        this.selectedBooking.pricing = prevPricing
-        console.error('[v0] Error saving items total:', error)
-        this.$toast?.error?.('Failed to save items total')
-      } finally {
-        this.savingItems = false
-      }
-    },
-    handleProofFileSelect(event) {
-      const file = event.target.files?.[0]
-      if (file) {
-        if (file.size > 10 * 1024 * 1024) {
-          this.$toast?.error?.('File size exceeds 10MB limit.')
-          return
-        }
-        if (!file.type.startsWith('image/')) {
-          this.$toast?.error?.('Please upload an image file.')
-          return
-        }
-        this.proofFile = file
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          this.proofPreview = e.target?.result
-        }
-        reader.readAsDataURL(file)
-      }
-    },
-    handleProofDrop(event) {
-      this.dragOverProof = false
-      const file = event.dataTransfer?.files?.[0]
-      if (file) {
-        if (file.size > 10 * 1024 * 1024) {
-          this.$toast?.error?.('File size exceeds 10MB limit.')
-          return
-        }
-        if (!file.type.startsWith('image/')) {
-          this.$toast?.error?.('Please upload an image file.')
-          return
-        }
-        this.proofFile = file
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          this.proofPreview = e.target?.result
-        }
-        reader.readAsDataURL(file)
-      }
-    },
-    async uploadProofOfDelivery() {
-      if (!this.proofFile || !this.selectedBooking) {
-        this.$toast?.error?.('Please select a photo')
-        return
-      }
-      this.uploadingProof = true
-
-      try {
-        const storage = getStorage()
-        const authStore = useAuthStore()
-        const driverId = authStore.user?.uid
-        if (!driverId) {
-          this.$toast?.error?.('Missing driver ID')
-          this.uploadingProof = false
-          return
-        }
-
-        const timestamp = Date.now()
-        const ext = (this.proofFile.name.split('.').pop() || 'jpg').toLowerCase()
-        const filename = `proof_${this.selectedBooking.id}_${timestamp}.${ext}`
-
-        // ✅ ALIGN WITH RULES: proof-of-delivery/{userId}/{fileName}
-        const storageRef = ref(storage, `proof-of-delivery/${driverId}/${filename}`)
-
-        // Resumable upload + progress
-        const task = uploadBytesResumable(storageRef, this.proofFile)
-        task.on('state_changed',
-          (snap) => {
-            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
-            this.$toast?.info?.(`Uploading... ${pct}%`, { id: 'proof-progress', timeout: 900 })
-          },
-          (error) => {
-            console.error('[v0] Upload error:', error)
-            this.$toast?.dismiss?.('proof-progress')
-            this.$toast?.error?.('Failed to upload proof of delivery')
-            this.uploadingProof = false
-          },
-          async () => {
-            const downloadURL = await getDownloadURL(task.snapshot.ref)
-            const bookingRef = doc(db, 'orders', this.selectedBooking.id)
-            await updateDoc(bookingRef, {
-              status: 'delivered',
-              proofOfDelivery: {
-                url: downloadURL,
-                uploadedAt: serverTimestamp(),
-                fileName: filename,
-                path: `proof-of-delivery/${driverId}/${filename}`,
-                driverId
-              },
-              deliveredAt: serverTimestamp()
-            })
-
-            this.$toast?.dismiss?.('proof-progress')
-            this.$toast?.success?.('✓ Proof submitted. Order marked as delivered.')
-            this.showProofOfDeliveryModal = false
-            this.proofFile = null
-            this.proofPreview = null
-            this.uploadingProof = false
-          }
-        )
-      } catch (error) {
-        console.error('[v0] Error uploading proof:', error)
-        this.$toast?.dismiss?.('proof-progress')
-        this.$toast?.error?.('Failed to upload proof of delivery')
-        this.uploadingProof = false
-      }
     },
     async updateDeliveryStatus(booking, newStatus) {
       if (!booking) return

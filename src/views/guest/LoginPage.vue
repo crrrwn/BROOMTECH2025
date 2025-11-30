@@ -162,6 +162,82 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="closeNotificationModal">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+        <div class="flex items-center mb-4">
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
+            notificationType === 'success' ? 'bg-green-100' : 
+            notificationType === 'error' ? 'bg-red-100' : 
+            notificationType === 'warning' ? 'bg-yellow-100' :
+            'bg-blue-100'
+          ]">
+            <svg 
+              v-if="notificationType === 'success'"
+              class="w-6 h-6 text-green-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'error'"
+              class="w-6 h-6 text-red-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'warning'"
+              class="w-6 h-6 text-yellow-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <svg 
+              v-else
+              class="w-6 h-6 text-blue-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 :class="[
+            'text-lg font-semibold',
+            notificationType === 'success' ? 'text-green-900' : 
+            notificationType === 'error' ? 'text-red-900' : 
+            notificationType === 'warning' ? 'text-yellow-900' :
+            'text-blue-900'
+          ]">
+            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : notificationType === 'warning' ? 'Warning' : 'Information' }}
+          </h3>
+        </div>
+        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+        <div class="flex justify-end">
+          <button
+            @click="closeNotificationModal"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors',
+              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
+              notificationType === 'warning' ? 'bg-yellow-600 text-white hover:bg-yellow-700' :
+              'bg-blue-600 text-white hover:bg-blue-700'
+            ]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -169,11 +245,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const toast = useToast()
 
 const form = ref({
   email: '',
@@ -186,6 +260,22 @@ const showPassword = ref(false)
 const showForgotPassword = ref(false)
 const forgotPasswordEmail = ref('')
 
+// Notification modal state
+const showNotificationModal = ref(false)
+const notificationType = ref('success') // 'success', 'error', 'warning', 'info'
+const notificationMessage = ref('')
+
+const showNotification = (type, message) => {
+  notificationType.value = type
+  notificationMessage.value = message
+  showNotificationModal.value = true
+}
+
+const closeNotificationModal = () => {
+  showNotificationModal.value = false
+  notificationMessage.value = ''
+}
+
 const handleLogin = async () => {
   loading.value = true
   
@@ -193,24 +283,26 @@ const handleLogin = async () => {
     const result = await authStore.login(form.value.email, form.value.password)
     
     if (result.success) {
-      toast.success(result.message)
+      showNotification('success', result.message)
       
-      // Redirect based on user role
-      const userRole = authStore.userProfile?.role
-      if (userRole === 'user') {
-        router.push('/user')
-      } else if (userRole === 'driver') {
-        router.push('/driver')
-      } else if (userRole === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/')
-      }
+      // Redirect based on user role after a short delay
+      setTimeout(() => {
+        const userRole = authStore.userProfile?.role
+        if (userRole === 'user') {
+          router.push('/user')
+        } else if (userRole === 'driver') {
+          router.push('/driver')
+        } else if (userRole === 'admin') {
+          router.push('/admin')
+        } else {
+          router.push('/')
+        }
+      }, 1500)
     } else {
-      toast.error(result.message)
+      showNotification('error', result.message)
     }
   } catch (error) {
-    toast.error('An error occurred during login')
+    showNotification('error', 'An error occurred during login')
   } finally {
     loading.value = false
   }
@@ -223,24 +315,26 @@ const handleGoogleLogin = async () => {
     const result = await authStore.loginWithGoogle()
     
     if (result.success) {
-      toast.success(result.message)
+      showNotification('success', result.message)
       
-      // Redirect based on user role
-      const userRole = authStore.userProfile?.role
-      if (userRole === 'user') {
-        router.push('/user')
-      } else if (userRole === 'driver') {
-        router.push('/driver')
-      } else if (userRole === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/')
-      }
+      // Redirect based on user role after a short delay
+      setTimeout(() => {
+        const userRole = authStore.userProfile?.role
+        if (userRole === 'user') {
+          router.push('/user')
+        } else if (userRole === 'driver') {
+          router.push('/driver')
+        } else if (userRole === 'admin') {
+          router.push('/admin')
+        } else {
+          router.push('/')
+        }
+      }, 1500)
     } else {
-      toast.error(result.message)
+      showNotification('error', result.message)
     }
   } catch (error) {
-    toast.error('An error occurred during Google login')
+    showNotification('error', 'An error occurred during Google login')
   } finally {
     loading.value = false
   }
@@ -255,14 +349,14 @@ const handleForgotPassword = async () => {
     const result = await authStore.resetPassword(forgotPasswordEmail.value)
     
     if (result.success) {
-      toast.success(result.message)
+      showNotification('success', result.message)
       showForgotPassword.value = false
       forgotPasswordEmail.value = ''
     } else {
-      toast.error(result.message)
+      showNotification('error', result.message)
     }
   } catch (error) {
-    toast.error('An error occurred while sending reset email')
+    showNotification('error', 'An error occurred while sending reset email')
   } finally {
     loading.value = false
   }

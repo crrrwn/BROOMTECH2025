@@ -62,9 +62,9 @@
               />
               <label for="remember" class="ml-2 block text-sm text-gray-700">Remember me</label>
             </div>
-            <router-link to="/forgot-password" class="text-sm text-blue-600 hover:text-blue-500">
-              Forgot password?
-            </router-link>
+            <span class="text-sm text-gray-500">
+              Forgot password? Contact admin
+            </span>
           </div>
 
           <button

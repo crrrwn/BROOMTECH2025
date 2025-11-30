@@ -1233,7 +1233,7 @@ export default {
 
         const script = document.createElement('script')
         // Replace with your actual Google Maps API key
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry&loading=async`
         script.async = true
         script.defer = true
         script.onload = () => resolve()

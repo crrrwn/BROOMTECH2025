@@ -257,7 +257,7 @@
                 <div class="flex items-center gap-2">
                   <button @click="viewOrder(order)" class="text-blue-600 hover:text-blue-900 text-xs">View</button>
                   <!-- CHANGE: Removed Track button from actions column -->
-                  <button v-if="order.driverName" @click="openAssignDriverModal(order)" class="text-purple-600 hover:text-purple-900 text-xs">
+                  <button v-if="order.driverName && order.status !== 'delivered' && order.status !== 'picked_up' && order.status !== 'in_transit'" @click="openAssignDriverModal(order)" class="text-purple-600 hover:text-purple-900 text-xs">
                     Reassign
                   </button>
                   <button v-if="order.status !== 'cancelled' && order.status !== 'delivered'" @click="cancelOrder(order)" class="text-red-600 hover:text-red-900 text-xs">Cancel</button>
@@ -326,9 +326,9 @@
 
             <!-- Available Drivers -->
             <div>
-              <h4 class="text-sm font-medium text-gray-700 mb-3">Available Drivers ({{ availableDrivers.length }})</h4>
+              <h4 class="text-sm font-medium text-gray-700 mb-3">Available Drivers ({{ filteredAvailableDrivers.length }})</h4>
               <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-                <div v-for="driver in availableDrivers" :key="driver.id" class="p-3 border-b border-gray-100">
+                <div v-for="driver in filteredAvailableDrivers" :key="driver.id" class="p-3 border-b border-gray-100">
                   <div class="flex items-center">
                     <img
                       class="h-8 w-8 rounded-full object-cover border border-gray-200"
@@ -356,10 +356,10 @@
             </button>
             <button
               @click="performBulkAssignment"
-              :disabled="unassignedOrders.length === 0 || availableDrivers.length === 0 || bulkAssigning"
+              :disabled="unassignedOrders.length === 0 || filteredAvailableDrivers.length === 0 || bulkAssigning"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ bulkAssigning ? 'Assigning...' : `Auto-Assign ${Math.min(unassignedOrders.length, availableDrivers.length)} Orders` }}
+              {{ bulkAssigning ? 'Assigning...' : `Auto-Assign ${Math.min(unassignedOrders.length, filteredAvailableDrivers.length)} Orders` }}
             </button>
           </div>
         </div>
@@ -498,15 +498,13 @@
                           <p class="text-sm font-medium text-gray-900">
                             {{ getDriverDisplayName(driver) }}
                           </p>
-                          <span v-if="driver.isOnline" class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Online</span>
                         </div>
                         <p class="text-sm text-gray-500">{{ driver.phone }}</p>
-                        <p class="text-xs text-gray-400">{{ driver.vehicleType || 'No vehicle' }} • Rating: {{ Number(driver.rating || 0).toFixed(1) }}⭐ • {{ driver.deliveries || 0 }} deliveries</p>
                       </div>
                     </div>
                     <div class="text-right">
-                      <span :class="getDriverStatusClass(driver.status)" class="px-2 py-1 text-xs font-medium rounded-full">
-                        {{ driver.status || 'active' }}
+                      <span :class="driver.isOnline ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" class="px-2 py-1 text-xs font-medium rounded-full">
+                        {{ driver.isOnline ? 'Online' : 'Offline' }}
                       </span>
                     </div>
                   </div>
@@ -863,6 +861,16 @@
                     <span class="text-gray-600">Current Location:</span>
                     <span class="font-medium">{{ currentDriverLocation }}</span>
                   </div>
+                  <div v-if="trackedOrder || selectedOrder" class="space-y-2">
+                    <div v-if="(trackedOrder || selectedOrder)?.pickupAddress || getPickupLocation(trackedOrder || selectedOrder)">
+                      <span class="text-gray-600">Pickup:</span>
+                      <span class="font-medium text-green-600 ml-2">{{ (trackedOrder || selectedOrder)?.pickupAddress || getPickupLocation(trackedOrder || selectedOrder) }}</span>
+                    </div>
+                    <div v-if="(trackedOrder || selectedOrder)?.deliveryAddress || getDeliveryLocation(trackedOrder || selectedOrder)">
+                      <span class="text-gray-600">Drop-off:</span>
+                      <span class="font-medium text-red-600 ml-2">{{ (trackedOrder || selectedOrder)?.deliveryAddress || getDeliveryLocation(trackedOrder || selectedOrder) }}</span>
+                    </div>
+                  </div>
                   <div class="flex justify-between">
                     <span class="text-gray-600">ETA:</span>
                     <span class="font-medium text-blue-600">{{ estimatedArrival }}</span>
@@ -917,6 +925,82 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+        <div class="flex items-center mb-4">
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
+            notificationType === 'success' ? 'bg-green-100' : 
+            notificationType === 'error' ? 'bg-red-100' : 
+            notificationType === 'warning' ? 'bg-yellow-100' :
+            'bg-blue-100'
+          ]">
+            <svg 
+              v-if="notificationType === 'success'"
+              class="w-6 h-6 text-green-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'error'"
+              class="w-6 h-6 text-red-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'warning'"
+              class="w-6 h-6 text-yellow-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <svg 
+              v-else
+              class="w-6 h-6 text-blue-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 :class="[
+            'text-lg font-semibold',
+            notificationType === 'success' ? 'text-green-900' : 
+            notificationType === 'error' ? 'text-red-900' : 
+            notificationType === 'warning' ? 'text-yellow-900' :
+            'text-blue-900'
+          ]">
+            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : notificationType === 'warning' ? 'Warning' : 'Information' }}
+          </h3>
+        </div>
+        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+        <div class="flex justify-end">
+          <button
+            @click="closeNotificationModal"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors',
+              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
+              notificationType === 'warning' ? 'bg-yellow-600 text-white hover:bg-yellow-700' :
+              'bg-blue-600 text-white hover:bg-blue-700'
+            ]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -964,6 +1048,11 @@ export default {
 
     const exportingOrders = ref(false)
 
+    // Notification modal state
+    const showNotificationModal = ref(false)
+    const notificationType = ref('success') // 'success', 'error', 'warning', 'info'
+    const notificationMessage = ref('')
+
     // CHANGE: Added AI recommendation system
     const aiRecommendations = ref([])
     const loadingRecommendations = ref(false)
@@ -987,6 +1076,11 @@ export default {
     const estimatedArrival = ref('Calculating...')
     const remainingDistance = ref('Calculating...')
     const locationUpdateInterval = ref(null)
+    const driverLocationUnsubscribe = ref(null)
+    const pickupMarker = ref(null)
+    const dropoffMarker = ref(null)
+    const directionsService = ref(null)
+    const directionsRenderer = ref(null)
 
     const trackingSteps = ref([
       { status: 'confirmed', label: 'Confirmed' },
@@ -1008,10 +1102,13 @@ export default {
     const unassignedOrders = computed(() => orders.value.filter(order => !order.driverId && order.status !== 'cancelled'))
 
     const filteredAvailableDrivers = computed(() => {
-      if (!driverSearchQuery.value) return availableDrivers.value
+      // Filter only online drivers
+      const onlineDrivers = availableDrivers.value.filter(driver => driver.isOnline)
+      
+      if (!driverSearchQuery.value) return onlineDrivers
 
       const query = driverSearchQuery.value.toLowerCase()
-      return availableDrivers.value.filter(driver =>
+      return onlineDrivers.filter(driver =>
         `${driver.firstName} ${driver.lastName}`.toLowerCase().includes(query) ||
         (driver.phone || '').toLowerCase().includes(query) ||
         (driver.vehicleType || '').toLowerCase().includes(query)
@@ -1130,7 +1227,10 @@ export default {
                 const serviceDoc = await getDoc(doc(db, 'services', serviceId))
                 return serviceDoc.exists() ? { id: serviceId, ...serviceDoc.data() } : null
               } catch (err) {
-                console.error('Error fetching service:', err)
+                // Suppress permission errors - services may not be accessible
+                if (!err.message.includes('permission') && !err.message.includes('insufficient')) {
+                  console.error('Error fetching service:', err)
+                }
                 return null
               }
             })).then(services => {
@@ -1290,7 +1390,7 @@ export default {
         }
 
         const script = document.createElement('script')
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=geometry`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=geometry&loading=async`
         script.async = true
         script.defer = true
         script.onload = () => {
@@ -1371,25 +1471,52 @@ export default {
         await initializeGoogleMaps()
         
         showTrackingModal.value = true
-        
-        await nextTick()
-        startRealTimeTracking()
+        // Map initialization will be handled by the watch function
       } catch (error) {
         console.error('Failed to load tracking:', error)
         toast.error('Failed to load tracking. Please try again.')
       }
     }
 
-    const initializeMap = () => {
+    const geocodeAddress = (address) => {
+      return new Promise((resolve, reject) => {
+        if (!window.google || !window.google.maps) {
+          reject(new Error('Google Maps API not loaded'))
+          return
+        }
+
+        const geocoder = new window.google.maps.Geocoder()
+        geocoder.geocode({ address: address }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            resolve({
+              lat: results[0].geometry.location.lat(),
+              lng: results[0].geometry.location.lng()
+            })
+          } else {
+            reject(new Error(`Geocoding failed: ${status}`))
+          }
+        })
+      })
+    }
+
+    const initializeMap = async () => {
+      // Wait a bit for the modal to be fully rendered
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       const mapContainer = document.getElementById('live-tracking-map')
-      if (!mapContainer || !window.google) return
+      if (!mapContainer || !window.google) {
+        console.warn('Map container or Google Maps not available')
+        return
+      }
 
       // Clear existing content
       mapContainer.innerHTML = ''
 
+      // Initialize map with default center
+      const defaultCenter = { lat: 14.5995, lng: 120.9842 } // Manila default
       map = new window.google.maps.Map(mapContainer, {
-        center: { lat: 13.4119, lng: 121.1803 }, // Calapan City center
-        zoom: 14,
+        center: defaultCenter,
+        zoom: 13,
         mapTypeId: window.google.maps.MapTypeId.ROADMAP,
         styles: [
           {
@@ -1400,139 +1527,294 @@ export default {
         ]
       })
 
-      // Add driver marker
-      driverMarker = new window.google.maps.Marker({
-        position: { lat: 13.4119, lng: 121.1803 },
+      // Initialize directions service and renderer
+      directionsService.value = new window.google.maps.DirectionsService()
+      directionsRenderer.value = new window.google.maps.DirectionsRenderer({
         map: map,
-        title: trackedDriverName.value,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
-              <path d="M20 8l6 12-6 12-6-12 6-12z" fill="#ffffff"/>
-            </svg>
-          `),
-          scaledSize: new window.google.maps.Size(40, 40),
-          anchor: new window.google.maps.Point(20, 20)
-        }
+        suppressMarkers: true // We'll use custom markers
       })
 
-      // Add destination marker if order has location
-      if (selectedOrder.value?.pickupLocation || selectedOrder.value?.deliveryLocation) {
-        const destLat = 13.4119 + (Math.random() - 0.5) * 0.02 // Smaller area within Calapan
-        const destLng = 121.1803 + (Math.random() - 0.5) * 0.02
+      const order = trackedOrder.value || selectedOrder.value
+      if (!order) return
 
-        destinationMarker = new window.google.maps.Marker({
-          position: { lat: destLat, lng: destLng },
-          map: map,
-          title: 'Destination',
-          icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-              <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="18" fill="#EF4444" stroke="#ffffff" stroke-width="3"/>
-                <path d="M20 8l6 12-6 12-6-12 6-12z" fill="#ffffff"/>
-              </svg>
-            `),
-            scaledSize: new window.google.maps.Size(40, 40),
-            anchor: new window.google.maps.Point(20, 20)
+      // Get pickup and drop-off locations
+      const pickupAddress = order.pickupAddress || getPickupLocation(order)
+      const dropoffAddress = order.deliveryAddress || getDeliveryLocation(order)
+
+      const bounds = new window.google.maps.LatLngBounds()
+      let pickupCoords = null
+      let dropoffCoords = null
+
+      try {
+        // Geocode pickup location
+        if (pickupAddress) {
+          try {
+            pickupCoords = await geocodeAddress(pickupAddress)
+            bounds.extend(pickupCoords)
+
+            // Add pickup marker (green)
+            pickupMarker.value = new window.google.maps.Marker({
+              position: pickupCoords,
+              map: map,
+              title: 'Pickup Location',
+              label: {
+                text: 'P',
+                color: 'white',
+                fontWeight: 'bold'
+              },
+              icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+                    <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">P</text>
+                  </svg>
+                `),
+                scaledSize: new window.google.maps.Size(40, 40),
+                anchor: new window.google.maps.Point(20, 20)
+              }
+            })
+          } catch (error) {
+            console.error('Error geocoding pickup address:', error)
           }
-        })
+        }
 
-        // Fit map to show both markers
-        const bounds = new window.google.maps.LatLngBounds()
-        bounds.extend(driverMarker.getPosition())
-        bounds.extend(destinationMarker.getPosition())
-        map.fitBounds(bounds)
+        // Geocode drop-off location
+        if (dropoffAddress) {
+          try {
+            dropoffCoords = await geocodeAddress(dropoffAddress)
+            bounds.extend(dropoffCoords)
+
+            // Add drop-off marker (red)
+            dropoffMarker.value = new window.google.maps.Marker({
+              position: dropoffCoords,
+              map: map,
+              title: 'Drop-off Location',
+              label: {
+                text: 'D',
+                color: 'white',
+                fontWeight: 'bold'
+              },
+              icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" fill="#EF4444" stroke="#ffffff" stroke-width="3"/>
+                    <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">D</text>
+                  </svg>
+                `),
+                scaledSize: new window.google.maps.Size(40, 40),
+                anchor: new window.google.maps.Point(20, 20)
+              }
+            })
+          } catch (error) {
+            console.error('Error geocoding drop-off address:', error)
+          }
+        }
+
+        // Show route between pickup and drop-off if both exist
+        if (pickupCoords && dropoffCoords && directionsService.value && directionsRenderer.value) {
+          directionsService.value.route({
+            origin: pickupCoords,
+            destination: dropoffCoords,
+            travelMode: window.google.maps.TravelMode.DRIVING
+          }, (result, status) => {
+            if (status === 'OK') {
+              directionsRenderer.value.setDirections(result)
+            } else {
+              console.error('Directions request failed:', status)
+            }
+          })
+        }
+
+        // Fit map to show all markers
+        if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+          // If bounds are the same, just center on the location
+          if (pickupCoords) {
+            map.setCenter(pickupCoords)
+            map.setZoom(15)
+          } else if (dropoffCoords) {
+            map.setCenter(dropoffCoords)
+            map.setZoom(15)
+          }
+        } else {
+          map.fitBounds(bounds)
+          // Add padding
+          const padding = 50
+          map.fitBounds(bounds, { padding })
+        }
+      } catch (error) {
+        console.error('Error initializing map:', error)
       }
+    }
+
+    const calculateDistance = (lat1, lng1, lat2, lng2) => {
+      const R = 6371 // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180
+      const dLng = (lng2 - lng1) * Math.PI / 180
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      return R * c
+    }
+
+    const formatDistance = (km) => {
+      if (km < 1) {
+        return `${Math.round(km * 1000)}m`
+      }
+      return `${km.toFixed(1)}km`
+    }
+
+    const formatTime = (km) => {
+      // Assuming average speed of 30 km/h
+      const hours = km / 30
+      const minutes = Math.round(hours * 60)
+      if (minutes < 60) {
+        return `${minutes} min${minutes !== 1 ? 's' : ''}`
+      }
+      const hrs = Math.floor(minutes / 60)
+      const mins = minutes % 60
+      return `${hrs}h ${mins}m`
     }
 
     const startRealTimeTracking = () => {
-      if (mapUpdateInterval) {
-        clearInterval(mapUpdateInterval)
+      // Clean up existing listener
+      if (driverLocationUnsubscribe.value) {
+        driverLocationUnsubscribe.value()
+        driverLocationUnsubscribe.value = null
       }
 
-      const locations = [
-        { lat: 13.4119, lng: 121.1803, name: 'Calapan City Hall, Calapan City' },
-        { lat: 13.4089, lng: 121.1823, name: 'Calapan Public Market, Calapan City' },
-        { lat: 13.4145, lng: 121.1785, name: 'Calapan Port Area, Calapan City' },
-        { lat: 13.4098, lng: 121.1798, name: 'Calapan Cathedral, Calapan City' },
-        { lat: 13.4132, lng: 121.1812, name: 'Calapan Plaza, Calapan City' },
-        { lat: 13.4156, lng: 121.1789, name: 'Calapan Hospital, Calapan City' },
-        { lat: 13.4078, lng: 121.1834, name: 'Calapan Bus Terminal, Calapan City' },
-        { lat: 13.4167, lng: 121.1776, name: 'Calapan Beach Resort Area, Calapan City' }
-      ]
+      if (mapUpdateInterval) {
+        clearInterval(mapUpdateInterval)
+        mapUpdateInterval = null
+      }
 
-      const distances = ['2.8 km', '2.3 km', '1.9 km', '1.4 km', '1.0 km', '0.7 km', '0.4 km', '0.1 km']
-      const times = ['12 mins', '10 mins', '8 mins', '6 mins', '4 mins', '3 mins', '2 mins', '1 min']
+      const order = trackedOrder.value || selectedOrder.value
+      if (!order || !order.driverId) {
+        currentDriverLocation.value = 'No driver assigned'
+        return
+      }
 
-      let locationIndex = 0
+      // Get drop-off address for distance calculation
+      const dropoffAddress = order.deliveryAddress || getDeliveryLocation(order)
 
-      // Initial location
-      currentDriverLocation.value = locations[locationIndex].name
-      remainingDistance.value = distances[locationIndex]
-      estimatedArrival.value = times[locationIndex]
-
-      // Update location every 8 seconds with smooth animation
-      mapUpdateInterval = setInterval(() => {
-        locationIndex = (locationIndex + 1) % locations.length
-        const newLocation = locations[locationIndex]
-
-        // Update text info
-        currentDriverLocation.value = newLocation.name
-        remainingDistance.value = distances[locationIndex]
-        estimatedArrival.value = times[locationIndex]
-
-        // Animate marker to new position
-        if (driverMarker && map) {
-          const newPosition = new window.google.maps.LatLng(newLocation.lat, newLocation.lng)
-
-          // Smooth marker animation
-          const startPosition = driverMarker.getPosition()
-          const endPosition = newPosition
-          let step = 0
-          const steps = 20
-
-          const animateMarker = () => {
-            step++
-            const progress = step / steps
-
-            const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * progress
-            const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * progress
-
-            driverMarker.setPosition(new window.google.maps.LatLng(lat, lng))
-
-            if (step < steps) {
-              setTimeout(animateMarker, 50)
-            }
-          }
-
-          animateMarker()
-
-          // Center map on driver
-          setTimeout(() => {
-            map.panTo(newPosition)
-          }, 1000)
+      // Listen to driver's real-time location from Firestore
+      const driverRef = doc(db, 'drivers', order.driverId)
+      
+      driverLocationUnsubscribe.value = onSnapshot(driverRef, async (driverSnap) => {
+        if (!driverSnap.exists()) {
+          currentDriverLocation.value = 'Driver not found'
+          return
         }
 
-        console.log('[v0] Driver location updated:', currentDriverLocation.value)
-      }, 8000)
+        const driverData = driverSnap.data()
+        const driverLocation = driverData.currentLocation
+
+        if (!driverLocation || !driverLocation.lat || !driverLocation.lng) {
+          currentDriverLocation.value = 'Driver location not available'
+          return
+        }
+
+        // Update driver marker position
+        const driverPosition = {
+          lat: driverLocation.lat,
+          lng: driverLocation.lng
+        }
+
+        if (!driverMarker) {
+          // Create driver marker if it doesn't exist
+          driverMarker = new window.google.maps.Marker({
+            position: driverPosition,
+            map: map,
+            title: trackedDriverName.value,
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="#3B82F6" stroke="#ffffff" stroke-width="3"/>
+                  <path d="M20 8l6 12-6 12-6-12 6-12z" fill="#ffffff"/>
+                </svg>
+              `),
+              scaledSize: new window.google.maps.Size(40, 40),
+              anchor: new window.google.maps.Point(20, 20)
+            }
+          })
+        } else {
+          // Smoothly animate marker to new position
+          const startPosition = driverMarker.getPosition()
+          if (!startPosition) {
+            // If no position, just set it directly
+            driverMarker.setPosition(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+          } else {
+            const endPosition = new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng)
+            
+            let step = 0
+            const steps = 10
+            const animateMarker = () => {
+              step++
+              const progress = step / steps
+
+              const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * progress
+              const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * progress
+
+              driverMarker.setPosition(new window.google.maps.LatLng(lat, lng))
+
+              if (step < steps) {
+                setTimeout(animateMarker, 50)
+              }
+            }
+            animateMarker()
+          }
+        }
+
+        // Update location text (try to reverse geocode)
+        if (window.google && window.google.maps) {
+          const geocoder = new window.google.maps.Geocoder()
+          geocoder.geocode({ location: driverPosition }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              currentDriverLocation.value = results[0].formatted_address
+            } else {
+              currentDriverLocation.value = `${driverPosition.lat.toFixed(6)}, ${driverPosition.lng.toFixed(6)}`
+            }
+          })
+        } else {
+          currentDriverLocation.value = `${driverPosition.lat.toFixed(6)}, ${driverPosition.lng.toFixed(6)}`
+        }
+
+        // Calculate distance and ETA to drop-off location
+        if (dropoffMarker.value) {
+          const dropoffPos = dropoffMarker.value.getPosition()
+          const distance = calculateDistance(
+            driverPosition.lat,
+            driverPosition.lng,
+            dropoffPos.lat(),
+            dropoffPos.lng()
+          )
+          remainingDistance.value = formatDistance(distance)
+          estimatedArrival.value = formatTime(distance)
+        }
+
+        // Center map on driver (with slight delay for smooth animation)
+        setTimeout(() => {
+          if (map) {
+            map.panTo(driverPosition)
+          }
+        }, 500)
+      }, (error) => {
+        console.error('Error listening to driver location:', error)
+        currentDriverLocation.value = 'Error loading driver location'
+      })
     }
 
     const refreshDriverLocation = () => {
-      if (mapUpdateInterval) {
-        clearInterval(mapUpdateInterval)
-      }
-      if (map && driverMarker) {
-        startRealTimeTracking()
-      }
-      toast.success('Driver location refreshed')
+      // Restart tracking to get latest location
+      startRealTimeTracking()
+      showNotification('success', 'Driver location refreshed')
     }
 
     const closeTrackingModal = () => {
       showTrackingModal.value = false
       selectedOrder.value = null
 
-      // Clean up intervals and map
+      // Clean up intervals and listeners
       if (mapUpdateInterval) {
         clearInterval(mapUpdateInterval)
         mapUpdateInterval = null
@@ -1541,11 +1823,19 @@ export default {
         clearInterval(locationUpdateInterval.value)
         locationUpdateInterval.value = null
       }
+      if (driverLocationUnsubscribe.value) {
+        driverLocationUnsubscribe.value()
+        driverLocationUnsubscribe.value = null
+      }
 
       // Reset map variables
       map = null
       driverMarker = null
       destinationMarker = null
+      pickupMarker.value = null
+      dropoffMarker.value = null
+      directionsService.value = null
+      directionsRenderer.value = null
     }
 
     // CHANGE: Added AI-powered driver recommendation system
@@ -1710,7 +2000,7 @@ export default {
         }
 
         if (!selectedDriver) {
-          toast.error('Selected driver not found')
+          showNotification('error', 'Selected driver not found')
           return
         }
 
@@ -1773,12 +2063,12 @@ export default {
           })
         }
 
-        toast.success(`Driver ${driverName} assigned successfully!`)
+        showNotification('success', `Driver ${driverName} assigned successfully!`)
         closeAssignModal()
 
       } catch (err) {
         console.error('Error assigning driver:', err)
-        toast.error('Failed to assign driver. Please try again.')
+        showNotification('error', 'Failed to assign driver. Please try again.')
       } finally {
         assigningDriver.value = false
       }
@@ -1797,10 +2087,11 @@ export default {
         }
 
         await fetchAvailableDrivers()
-        const availableDriversForBulk = availableDrivers.value; // Use a separate variable to avoid modifying the reactive ref directly
+        // Filter only online drivers for bulk assignment
+        const availableDriversForBulk = availableDrivers.value.filter(driver => driver.isOnline)
 
         if (!availableDriversForBulk.length) {
-          toast.warning('No drivers available for bulk assignment')
+          toast.warning('No online drivers available for bulk assignment')
           return
         }
 
@@ -1840,12 +2131,12 @@ export default {
           }
         }));
 
-        toast.success(`Successfully assigned ${assignedCount} orders to drivers!`);
-        closeBulkAssignModal();
+        showNotification('success', `Successfully assigned ${assignedCount} orders to drivers!`)
+        closeBulkAssignModal()
 
       } catch (err) {
-        console.error('Error performing bulk assignment:', err);
-        toast.error('Failed to perform bulk assignment. Please try again.');
+        console.error('Error performing bulk assignment:', err)
+        showNotification('error', 'Failed to perform bulk assignment. Please try again.')
       } finally {
         bulkAssigning.value = false;
       }
@@ -1858,7 +2149,7 @@ export default {
         autoAssigning.value = true
 
         if (!unassignedOrders.value.length) {
-          toast.warning('No unassigned orders to process')
+          showNotification('warning', 'No unassigned orders to process')
           return
         }
 
@@ -1866,18 +2157,19 @@ export default {
         const onlineDrivers = availableDrivers.value.filter(driver => driver.isOnline)
 
         if (!onlineDrivers.length) {
-          toast.warning('No online drivers available for auto-assignment')
+          showNotification('warning', 'No online drivers available for auto-assignment')
           return
         }
 
         let assignedCount = 0
+        let driverIndex = 0 // Round-robin index for rotating assignment
 
         for (const order of unassignedOrders.value) {
           if (onlineDrivers.length === 0) break
 
-          // Get a random driver from available online drivers
-          const randomIndex = Math.floor(Math.random() * onlineDrivers.length)
-          const selectedDriver = onlineDrivers[randomIndex]
+          // Round-robin assignment: cycle through online drivers evenly
+          const selectedDriver = onlineDrivers[driverIndex % onlineDrivers.length]
+          driverIndex++
 
           try {
             await updateDoc(doc(db, 'orders', order.id), {
@@ -1900,23 +2192,20 @@ export default {
 
             assignedCount++
 
-            // Remove assigned driver from available list to prevent double assignment
-            onlineDrivers.splice(randomIndex, 1)
-
           } catch (err) {
             console.error(`Error auto-assigning order ${order.id}:`, err)
           }
         }
 
         if (assignedCount > 0) {
-          toast.success(`Successfully auto-assigned ${assignedCount} orders to drivers!`)
+          showNotification('success', `Successfully auto-assigned ${assignedCount} orders to drivers!`)
         } else {
-          toast.warning('No orders could be auto-assigned')
+          showNotification('warning', 'No orders could be auto-assigned')
         }
 
       } catch (err) {
         console.error('Error during auto-assignment:', err)
-        toast.error('Error during auto-assignment. Please try again.')
+        showNotification('error', 'Error during auto-assignment. Please try again.')
       } finally {
         autoAssigning.value = false
       }
@@ -2425,13 +2714,21 @@ export default {
     // CHANGE: Add watcher to initialize map when tracking modal opens
     watch(showTrackingModal, async (newValue) => {
       if (newValue) {
+        // Wait for modal to be fully rendered
         await nextTick()
-        initializeMap()
+        await new Promise(resolve => setTimeout(resolve, 200))
+        await initializeMap()
+        // Start real-time tracking after map is initialized
+        startRealTimeTracking()
       } else {
         // Clean up when modal closes
         if (mapUpdateInterval) {
           clearInterval(mapUpdateInterval)
           mapUpdateInterval = null
+        }
+        if (driverLocationUnsubscribe.value) {
+          driverLocationUnsubscribe.value()
+          driverLocationUnsubscribe.value = null
         }
       }
     })
@@ -2601,7 +2898,7 @@ export default {
         }
 
         if (filtered.length === 0) {
-          toast.error('No orders to export')
+          showNotification('error', 'No orders to export')
           return
         }
 
@@ -2671,13 +2968,24 @@ export default {
         link.click()
         document.body.removeChild(link)
 
-        toast.success(`Successfully exported ${filtered.length} orders to Downloads folder`)
+        showNotification('success', `Successfully exported ${filtered.length} orders to Downloads folder`)
       } catch (err) {
         console.error('Error exporting orders:', err)
-        toast.error('Failed to export orders. Please try again.')
+        showNotification('error', 'Failed to export orders. Please try again.')
       } finally {
         exportingOrders.value = false
       }
+    }
+
+    const showNotification = (type, message) => {
+      notificationType.value = type
+      notificationMessage.value = message
+      showNotificationModal.value = true
+    }
+
+    const closeNotificationModal = () => {
+      showNotificationModal.value = false
+      notificationMessage.value = ''
     }
 
     // ** END OF SETUP FUNCTION **
@@ -2727,6 +3035,9 @@ export default {
       showOrderProgressModal,
       selectedOrderForProgress,
       exportingOrders,
+      showNotificationModal,
+      notificationType,
+      notificationMessage,
 
       // Methods
       getStatusClass,
@@ -2760,6 +3071,8 @@ export default {
       formatAssignmentTime,
       fetchAllDriversForLookup,
       getDriverDisplayName,
+      showNotification,
+      closeNotificationModal,
       trackDriver, // Keep trackDriver for map tracking functionality
       closeOrderDetailsModal,
       formatOrderDate,

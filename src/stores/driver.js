@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { doc, updateDoc, getDoc, onSnapshot, setDoc } from "firebase/firestore"
+import { doc, updateDoc, getDoc, onSnapshot, setDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/firebase/config"
 import { useAuthStore } from "./auth"
 
@@ -13,8 +13,14 @@ export const useDriverStore = defineStore("driver", {
       driverShare: "0.00",
       adminShare: "0.00",
     },
+    weeklyEarnings: {
+      total: 0,
+      driverShare: "0.00",
+      adminShare: "0.00",
+    },
     totalEarningsToday: 0,
     unsubscribeStatus: null, // Firebase listener unsubscribe function
+    unsubscribeTodayEarnings: null, // Listener for today's approved remittances
   }),
 
   actions: {
@@ -50,30 +56,22 @@ export const useDriverStore = defineStore("driver", {
               })
             }
 
-            // Update earnings data
-            const today = new Date().toDateString()
-            const lastRemitDate = driverData.lastRemitDate
-
-            this.hasRemitted = lastRemitDate === today
-
-            if (this.hasRemitted) {
-              const totalEarned = driverData.totalEarningsToday || 0
-              const driverShare = totalEarned * 0.8
-              const adminShare = totalEarned * 0.2
-
-              this.todayEarnings = {
-                total: totalEarned.toFixed(2),
-                driverShare: driverShare.toFixed(2),
-                adminShare: adminShare.toFixed(2),
-              }
-              this.totalEarningsToday = totalEarned
-            }
+            // Note: Today's earnings are calculated from approved remittances
+            // This is handled by setupTodayEarningsListener()
+            
+            // Calculate weekly earnings when driver data updates
+            this.calculateWeeklyEarnings(userId).catch(err => {
+              console.error("[v0] Error calculating weekly earnings in listener:", err)
+            })
           }
         },
         (error) => {
           console.error("[v0] Error listening to driver status:", error)
         },
       )
+      
+      // Setup listener for today's earnings from approved remittances
+      this.setupTodayEarningsListener(userId)
     },
 
     async toggleOnlineStatus() {
@@ -132,12 +130,42 @@ export const useDriverStore = defineStore("driver", {
           const driverData = driverSnap.data()
 
           const today = new Date().toDateString()
-          const lastRemitDate = driverData.lastRemitDate
+          let lastRemitDate = driverData.lastRemitDate
+          
+          // Normalize lastRemitDate - handle both string and Timestamp/Date formats
+          if (lastRemitDate) {
+            if (lastRemitDate.toDate) {
+              // Firestore Timestamp
+              lastRemitDate = lastRemitDate.toDate().toDateString()
+            } else if (lastRemitDate instanceof Date) {
+              // Date object
+              lastRemitDate = lastRemitDate.toDateString()
+            } else if (typeof lastRemitDate === 'string') {
+              // Already a string, trim and use as is
+              lastRemitDate = lastRemitDate.trim()
+            }
+          }
 
-          this.hasRemitted = lastRemitDate === today
+          // Check hasRemitted from Firestore first, then fallback to date comparison
+          const normalizedToday = today.trim()
+          const normalizedLastRemit = lastRemitDate ? lastRemitDate.trim() : ''
+          const dateMatches = normalizedLastRemit === normalizedToday
+          
+          // Use Firestore hasRemitted if available, otherwise use date comparison
+          this.hasRemitted = driverData.hasRemitted === true || (driverData.hasRemitted !== false && dateMatches)
 
-          if (this.hasRemitted) {
-            const totalEarned = driverData.totalEarningsToday || 0
+          console.log("[v0] Earnings data loaded:", {
+            today: normalizedToday,
+            lastRemitDate: normalizedLastRemit,
+            dateMatches,
+            firestoreHasRemitted: driverData.hasRemitted,
+            hasRemitted: this.hasRemitted,
+            totalEarningsToday: driverData.totalEarningsToday,
+            totalEarningsTodayType: typeof driverData.totalEarningsToday
+          })
+
+          if (this.hasRemitted && driverData.totalEarningsToday) {
+            const totalEarned = parseFloat(driverData.totalEarningsToday) || 0
             const driverShare = totalEarned * 0.8
             const adminShare = totalEarned * 0.2
 
@@ -147,12 +175,28 @@ export const useDriverStore = defineStore("driver", {
               adminShare: adminShare.toFixed(2),
             }
             this.totalEarningsToday = totalEarned
+            
+            console.log("[v0] Earnings calculated:", this.todayEarnings)
+          } else {
+            // Reset earnings if not remitted today or no earnings
+            this.todayEarnings = {
+              total: "0.00",
+              driverShare: "0.00",
+              adminShare: "0.00",
+            }
+            this.totalEarningsToday = 0
+            
+            console.log("[v0] No remittance today or no earnings, earnings reset", {
+              hasRemitted: this.hasRemitted,
+              totalEarningsToday: driverData.totalEarningsToday
+            })
           }
-
-          console.log("[v0] Earnings data loaded:", {
-            hasRemitted: this.hasRemitted,
-            todayEarnings: this.todayEarnings,
-          })
+          
+          // Calculate weekly earnings
+          await this.calculateWeeklyEarnings(user.uid)
+          
+          // Setup listener for today's earnings from approved remittances
+          this.setupTodayEarningsListener(user.uid)
         }
       } catch (error) {
         console.error("[v0] Error loading earnings data:", error)
@@ -201,11 +245,168 @@ export const useDriverStore = defineStore("driver", {
       }
     },
 
+    setupTodayEarningsListener(driverId) {
+      if (!driverId) return
+
+      // Unsubscribe from previous listener if exists
+      if (this.unsubscribeTodayEarnings) {
+        this.unsubscribeTodayEarnings()
+      }
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayString = today.toDateString()
+
+      // Query for delivered orders by this driver today
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('driverId', '==', driverId),
+        where('status', '==', 'delivered')
+      )
+
+      this.unsubscribeTodayEarnings = onSnapshot(
+        ordersQuery,
+        (snapshot) => {
+          let totalEarnedToday = 0
+
+          snapshot.forEach(doc => {
+            const order = doc.data()
+            
+            // Check if order was delivered today
+            let deliveryDate
+            if (order.deliveredAt) {
+              deliveryDate = order.deliveredAt.toDate ? order.deliveredAt.toDate() : 
+                            new Date(order.deliveredAt)
+            } else if (order.createdAt) {
+              // Fallback to createdAt if deliveredAt doesn't exist
+              deliveryDate = order.createdAt.toDate ? order.createdAt.toDate() : 
+                            new Date(order.createdAt)
+            } else {
+              // Skip if no date available
+              return
+            }
+            
+            // Compare date strings to ensure same day
+            const deliveryDateString = deliveryDate.toDateString()
+            
+            // Only count orders delivered today (exact same day)
+            if (deliveryDateString === todayString) {
+              const amount = parseFloat(order.totalAmount) || parseFloat(order.amount) || 0
+              totalEarnedToday += amount
+              
+              console.log("[v0] Found delivered order today:", {
+                orderId: doc.id,
+                amount,
+                deliveredAt: deliveryDateString,
+                today: todayString
+              })
+            }
+          })
+
+          // Calculate 80/20 split
+          const driverShare = totalEarnedToday * 0.8
+          const adminShare = totalEarnedToday * 0.2
+
+          this.todayEarnings = {
+            total: totalEarnedToday.toFixed(2),
+            driverShare: driverShare.toFixed(2),
+            adminShare: adminShare.toFixed(2),
+          }
+          this.totalEarningsToday = totalEarnedToday
+          
+          // Update hasRemitted flag based on whether there are delivered orders today
+          this.hasRemitted = totalEarnedToday > 0
+
+          console.log("[v0] Today's earnings from delivered orders:", {
+            totalEarnedToday,
+            driverShare,
+            adminShare,
+            todayEarnings: this.todayEarnings,
+            today: todayString,
+            ordersCount: snapshot.size,
+            hasRemitted: this.hasRemitted
+          })
+        },
+        (error) => {
+          console.error("[v0] Error listening to today's earnings:", error)
+          // Reset on error
+          this.todayEarnings = {
+            total: "0.00",
+            driverShare: "0.00",
+            adminShare: "0.00",
+          }
+          this.totalEarningsToday = 0
+          this.hasRemitted = false
+        }
+      )
+    },
+
+    async calculateWeeklyEarnings(driverId) {
+      try {
+        const today = new Date()
+        const weekAgo = new Date(today)
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        weekAgo.setHours(0, 0, 0, 0)
+        
+        // Get all approved remittances from the last 7 days
+        const remittancesQuery = query(
+          collection(db, 'remittances'),
+          where('driverId', '==', driverId),
+          where('status', '==', 'approved')
+        )
+        
+        const snapshot = await getDocs(remittancesQuery)
+        let weeklyTotal = 0
+        
+        snapshot.forEach(doc => {
+          const data = doc.data()
+          // Check if remittance was approved in the last 7 days
+          let approvalDate
+          if (data.approvedAt) {
+            approvalDate = data.approvedAt.toDate ? data.approvedAt.toDate() : new Date(data.approvedAt)
+          } else if (data.date) {
+            approvalDate = data.date.toDate ? data.date.toDate() : new Date(data.date)
+          } else if (data.createdAt) {
+            approvalDate = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+          } else {
+            return // Skip if no date
+          }
+          
+          if (approvalDate >= weekAgo) {
+            weeklyTotal += parseFloat(data.amount) || 0
+          }
+        })
+        
+        const driverShare = weeklyTotal * 0.8
+        const adminShare = weeklyTotal * 0.2
+        
+        this.weeklyEarnings = {
+          total: weeklyTotal.toFixed(2),
+          driverShare: driverShare.toFixed(2),
+          adminShare: adminShare.toFixed(2),
+        }
+        
+        console.log("[v0] Weekly earnings calculated:", this.weeklyEarnings)
+      } catch (error) {
+        console.error("[v0] Error calculating weekly earnings:", error)
+        this.weeklyEarnings = {
+          total: "0.00",
+          driverShare: "0.00",
+          adminShare: "0.00",
+        }
+      }
+    },
+
     cleanup() {
       if (this.unsubscribeStatus) {
         console.log("[v0] Cleaning up driver status listener")
         this.unsubscribeStatus()
         this.unsubscribeStatus = null
+      }
+      if (this.unsubscribeTodayEarnings) {
+        console.log("[v0] Cleaning up today's earnings listener")
+        this.unsubscribeTodayEarnings()
+        this.unsubscribeTodayEarnings = null
       }
     },
   },

@@ -14,6 +14,8 @@ import AdminLayout from "@/layouts/AdminLayout.vue"
 import HomePage from "@/views/guest/HomePage.vue"
 import LoginPage from "@/views/guest/LoginPage.vue"
 import RegisterPage from "@/views/guest/RegisterPage.vue"
+import VerifyEmail from "@/views/guest/VerifyEmail.vue"
+import VerifyEmailSuccess from "@/views/guest/VerifyEmailSuccess.vue"
 
 // User Pages
 import UserDashboard from "@/views/user/Dashboard.vue"
@@ -32,6 +34,7 @@ import DriverProfile from "@/views/driver/Profile.vue"
 import DriverLogin from "@/views/driver/DriverLogin.vue"
 import DriverRegister from "@/views/driver/DriverRegister.vue"
 import DriverChat from "@/views/driver/Chat.vue"
+import DeliveryTracking from "@/views/driver/DeliveryTracking.vue"
 
 // Admin Pages
 import AdminDashboard from "@/views/admin/Dashboard.vue"
@@ -56,6 +59,8 @@ const routes = [
       { path: "", name: "home", component: HomePage },
       { path: "login", name: "login", component: LoginPage },
       { path: "register", name: "register", component: RegisterPage },
+      { path: "verify-email", name: "verify-email", component: VerifyEmail },
+      { path: "verify-email-success", name: "verify-email-success", component: VerifyEmailSuccess },
     ],
   },
 
@@ -93,6 +98,13 @@ const routes = [
       { path: "profile", name: "driver-profile", component: DriverProfile },
       { path: "chat", name: "driver-chat", component: DriverChat },
     ],
+  },
+  // Delivery Tracking - Full screen view without layout
+  {
+    path: "/driver/tracking/:orderId",
+    name: "delivery-tracking",
+    component: DeliveryTracking,
+    meta: { requiresAuth: true, role: "driver" },
   },
 
   // Admin

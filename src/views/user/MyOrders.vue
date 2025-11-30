@@ -6,7 +6,7 @@
         <h1 class="text-2xl font-bold text-gray-900">My Orders</h1>
         <p class="text-gray-600">Track and manage your delivery orders</p>
       </div>
-      <router-link to="/user/book-service"
+      <router-link :to="{ name: 'book-service' }"
                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
         New Order
       </router-link>
@@ -59,7 +59,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002-2h2a2 2 0 002 2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
         </svg>
         <p class="text-gray-600">No orders found</p>
-        <router-link to="/user/book-service"
+        <router-link :to="{ name: 'book-service' }"
                      class="inline-block mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
           Create Your First Order
         </router-link>
@@ -113,7 +113,6 @@
                 </div>
                 <div class="flex-1">
                   <p class="font-medium text-gray-900">{{ order.driver?.name || 'Driver Assigned' }}</p>
-                  <p class="text-sm text-gray-600">{{ order.driver?.vehicle || 'Loading driver info...' }}</p>
                 </div>
                 <div class="flex space-x-2">
                   <!-- Removed phone button, keeping only message button -->
@@ -431,17 +430,6 @@
               <div class="flex items-center justify-between text-sm text-gray-600">
                 <span>{{ formatDate(order.createdAt) }}</span>
                 <div class="flex items-center space-x-3">
-                  <!-- Chat button in actions row - shows when driverId exists -->
-                  <button @click="openChatWithDriver(order)"
-                          v-if="order.driverId || order.driver"
-                          class="text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-1"
-                          title="Message driver">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                    </svg>
-                    <span>Message</span>
-                  </button>
-
                   <button @click="viewOrder(order.id)"
                           class="text-blue-600 hover:text-blue-800 font-medium">
                     {{ expandedOrderId === order.id ? 'Hide Details' : 'View Details' }}
@@ -636,6 +624,108 @@
         </div>
       </div>
     </div>
+
+    <!-- Chat Modal -->
+    <div v-if="showChatModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-medium">D</span>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Chat with Driver</h2>
+              <p class="text-sm text-gray-600">{{ chatPartner?.name || 'Driver' }}</p>
+            </div>
+          </div>
+          <button @click="showChatModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-hidden">
+          <ChatWindow
+            v-if="chatId && chatOrderId"
+            :chat-id="chatId"
+            :order-id="chatOrderId"
+            :chat-partner="chatPartner"
+            :is-driver="false"
+            @notification="handleChatNotification"
+          />
+          <div v-else class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p class="text-gray-600">Loading chat...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+        <div class="flex items-center mb-4">
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
+            notificationType === 'success' ? 'bg-green-100' : 
+            notificationType === 'error' ? 'bg-red-100' : 
+            'bg-blue-100'
+          ]">
+            <svg 
+              v-if="notificationType === 'success'"
+              class="w-6 h-6 text-green-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'error'"
+              class="w-6 h-6 text-red-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg 
+              v-else
+              class="w-6 h-6 text-blue-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 :class="[
+            'text-lg font-semibold',
+            notificationType === 'success' ? 'text-green-900' : 
+            notificationType === 'error' ? 'text-red-900' : 
+            'text-blue-900'
+          ]">
+            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Information' }}
+          </h3>
+        </div>
+        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+        <div class="flex justify-end">
+          <button
+            @click="closeNotificationModal"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors',
+              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
+              'bg-blue-600 text-white hover:bg-blue-700'
+            ]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -645,11 +735,14 @@ import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
 import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore'
 import LiveTracking from '@/components/LiveTracking.vue'
+import ChatWindow from '@/components/ChatWindow.vue'
+import { chatService } from '@/services/chatService'
 
 export default {
   name: 'MyOrders',
   components: {
-    LiveTracking
+    LiveTracking,
+    ChatWindow
   },
   setup() {
     const authStore = useAuthStore()
@@ -696,6 +789,17 @@ export default {
       feedbackAspects: {},
       selectedTags: [],
       submittingFeedback: false,
+
+      // chat modal state
+      showChatModal: false,
+      chatOrderId: null,
+      chatId: null,
+      chatPartner: null,
+
+      // notification modal state
+      showNotificationModal: false,
+      notificationType: 'success',
+      notificationMessage: '',
       serviceAspects: [
         { key: 'timeliness', label: 'Timeliness' },
         { key: 'communication', label: 'Communication' },
@@ -930,7 +1034,7 @@ export default {
       console.log('[v0] Opening chat for order:', order.id, 'driverId:', order.driverId)
       
       if (!order.driverId && !order.driver) {
-        alert('No driver assigned to this order yet')
+        this.$toast?.error?.('No driver assigned to this order yet')
         return
       }
 
@@ -938,12 +1042,11 @@ export default {
         const driverId = order.driverId || order.driver?.uid
         
         if (!driverId) {
-          alert('Driver information not available')
+          this.$toast?.error?.('Driver information not available')
           return
         }
 
         // Create or get chat room with driver
-        const { chatService } = await import('@/services/chatService')
         const chatRoomId = await chatService.createChatRoom(
           this.authStore.user.uid,
           driverId,
@@ -952,14 +1055,23 @@ export default {
 
         console.log('[v0] Chat room created/retrieved:', chatRoomId)
 
-        // Navigate to ChatMessages with the chat ID
-        this.$router.push({
-          name: 'user-chat-messages',
-          params: { chatId: chatRoomId }
-        })
+        // Set chat modal state
+        this.chatOrderId = order.id
+        this.chatId = chatRoomId
+        
+        // Set chat partner info
+        this.chatPartner = {
+          id: driverId,
+          name: order.driver?.name || 'Driver',
+          role: 'driver',
+          phone: order.driver?.phone || ''
+        }
+
+        // Show chat modal
+        this.showChatModal = true
       } catch (error) {
         console.error('[v0] Error opening chat:', error)
-        alert('Error opening chat. Please try again.')
+        this.$toast?.error?.('Error opening chat. Please try again.')
       }
     },
 
@@ -1063,6 +1175,21 @@ export default {
     },
     viewOrder(id) {
       this.expandedOrderId = this.expandedOrderId === id ? null : id
+    },
+
+    handleChatNotification(notification) {
+      this.showNotification(notification.type, notification.message)
+    },
+
+    showNotification(type, message) {
+      this.notificationType = type
+      this.notificationMessage = message
+      this.showNotificationModal = true
+    },
+
+    closeNotificationModal() {
+      this.showNotificationModal = false
+      this.notificationMessage = ''
     }
   }
 }

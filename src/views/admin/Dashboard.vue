@@ -487,8 +487,6 @@ export default {
         const ordersQuery = query(collection(db, 'orders'))
 
         const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-          console.log('[v0] Orders snapshot size:', snapshot.size)
-          
           stats.value.totalOrders = snapshot.size
 
           const orders = []
@@ -539,24 +537,18 @@ export default {
             }
 
             const serviceId = order.service || order.serviceType || 'unknown'
-            console.log('[v0] Order service:', serviceId)
             
             const serviceName = serviceNameMap[serviceId] || serviceId
             
             if (serviceCounts.hasOwnProperty(serviceName)) {
               serviceCounts[serviceName]++
-            } else {
-              console.log('[v0] Unknown service type:', serviceId, '- mapped to:', serviceName)
             }
           })
-
-          console.log('[v0] Service counts:', serviceCounts)
 
           stats.value.revenueToday = todayRevenue
           stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20)
 
           const totalServices = Object.values(serviceCounts).reduce((a, b) => a + b, 0)
-          console.log('[v0] Total services:', totalServices)
           
           const serviceColors = {
             'Food Delivery': 'bg-blue-500',
@@ -575,7 +567,6 @@ export default {
               color: serviceColors[name] || 'bg-gray-500'
             }))
 
-          console.log('[v0] Service distribution:', serviceDistribution.value)
 
           updateRevenueChart()
 
@@ -734,8 +725,7 @@ export default {
       try {
         const recentOrdersQuery = query(
           collection(db, 'orders'),
-          orderBy('createdAt', 'desc'),
-          limit(4)
+          limit(100)
         )
 
         const unsubscribe = onSnapshot(recentOrdersQuery, (snapshot) => {
@@ -758,9 +748,18 @@ export default {
               time: formatTimeAgo(order.createdAt?.toDate())
             })
           })
-          recentActivity.value = activities
+          // Sort manually by createdAt descending
+          activities.sort((a, b) => {
+            const aTime = snapshot.docs.find(d => d.id === a.id)?.data()?.createdAt?.toDate()?.getTime() || 0
+            const bTime = snapshot.docs.find(d => d.id === b.id)?.data()?.createdAt?.toDate()?.getTime() || 0
+            return bTime - aTime
+          })
+          recentActivity.value = activities.slice(0, 4)
         }, (error) => {
-          console.log('[v0] Recent activity listener error:', error.message)
+          // Suppress index errors
+          if (!error.message.includes('index') && !error.message.includes('requires an index')) {
+            console.log('[v0] Recent activity listener error:', error.message)
+          }
           recentActivity.value = []
         })
 
@@ -775,8 +774,7 @@ export default {
         const liveOrdersQuery = query(
           collection(db, 'orders'),
           where('status', 'in', ['pending', 'confirmed', 'in-transit']),
-          orderBy('createdAt', 'desc'),
-          limit(10)
+          limit(100)
         )
 
         const unsubscribe = onSnapshot(liveOrdersQuery, (snapshot) => {
@@ -805,9 +803,18 @@ export default {
               totalAmount: order.totalAmount || 0
             })
           })
-          liveOrders.value = orders
+          // Sort manually by createdAt descending
+          orders.sort((a, b) => {
+            const aTime = snapshot.docs.find(d => d.id === a.id)?.data()?.createdAt?.toDate()?.getTime() || 0
+            const bTime = snapshot.docs.find(d => d.id === b.id)?.data()?.createdAt?.toDate()?.getTime() || 0
+            return bTime - aTime
+          })
+          liveOrders.value = orders.slice(0, 10)
         }, (error) => {
-          console.log('[v0] Live orders listener error:', error.message)
+          // Suppress index errors
+          if (!error.message.includes('index') && !error.message.includes('requires an index')) {
+            console.log('[v0] Live orders listener error:', error.message)
+          }
           liveOrders.value = []
         })
 

@@ -192,8 +192,14 @@
             <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50" :class="{ 'bg-red-50': user.fraudFlags && user.fraudFlags.length > 0 }">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
-                  <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">{{ user.initials }}</span>
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" :class="user.profilePictureUrl ? '' : 'bg-primary'">
+                    <img
+                      v-if="user.profilePictureUrl"
+                      :src="user.profilePictureUrl"
+                      :alt="user.name"
+                      class="w-full h-full object-cover"
+                    />
+                    <span v-else class="text-white text-sm font-medium">{{ user.initials }}</span>
                   </div>
                   <div class="ml-4">
                     <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
@@ -309,6 +315,21 @@
 
           <!-- User Information -->
           <div class="bg-gray-50 rounded-lg p-6">
+            <div class="flex items-center space-x-4 mb-6">
+              <div class="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" :class="selectedUser.profilePictureUrl ? '' : 'bg-primary'">
+                <img
+                  v-if="selectedUser.profilePictureUrl"
+                  :src="selectedUser.profilePictureUrl"
+                  :alt="selectedUser.name"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else class="text-white text-2xl font-medium">{{ selectedUser.initials }}</span>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900">{{ selectedUser.name }}</h4>
+                <p class="text-sm text-gray-500">{{ selectedUser.email }}</p>
+              </div>
+            </div>
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -518,6 +539,7 @@ export default {
           ...userData,
           name: `${userData.firstName} ${userData.lastName}`.trim(),
           initials: `${userData.firstName?.[0] || ""}${userData.lastName?.[0] || ""}`.toUpperCase(),
+          profilePictureUrl: userData.profilePictureUrl || userData.photoURL || '',
           registeredDate: new Date(userData.createdAt).toLocaleDateString(),
           status: userData.status === 'banned' || userData.banned ? 'flagged' : 
                   userData.status === 'flagged' ? 'flagged' :
@@ -568,6 +590,9 @@ export default {
         const fetchedUsers = await authStore.getAllUsers()
         users.value = fetchedUsers.map(userData => ({
           ...userData,
+          name: `${userData.firstName} ${userData.lastName}`.trim(),
+          initials: `${userData.firstName?.[0] || ""}${userData.lastName?.[0] || ""}`.toUpperCase(),
+          profilePictureUrl: userData.profilePictureUrl || userData.photoURL || '',
           status: userData.status === 'banned' || userData.banned ? 'flagged' : 
                   userData.status === 'flagged' ? 'flagged' :
                   userData.approved ? 'approved' : 'pending',

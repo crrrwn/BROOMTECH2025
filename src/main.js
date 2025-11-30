@@ -7,6 +7,18 @@ import "./style.css"
 import App from "./App.vue"
 import i18n from "./i18n"
 
+// Suppress Google Maps Marker deprecation warning
+const originalWarn = console.warn
+console.warn = (...args) => {
+  const message = args[0]?.toString() || ''
+  // Suppress Google Maps Marker deprecation warning
+  if (message.includes('google.maps.Marker is deprecated') || 
+      message.includes('AdvancedMarkerElement')) {
+    return // Suppress this warning
+  }
+  originalWarn.apply(console, args)
+}
+
 const app = createApp(App)
 const pinia = createPinia()
 

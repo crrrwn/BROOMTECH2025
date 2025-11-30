@@ -70,6 +70,7 @@
             <div class="flex-1">
               <h3 class="font-medium text-gray-900">{{ service.name }}</h3>
               <p class="text-sm text-gray-600">{{ service.description }}</p>
+              <p class="text-sm font-semibold text-green-600 mt-1">Starting at ₱{{ baseFee.toFixed(2) }}</p>
             </div>
           </div>
         </div>
@@ -585,7 +586,7 @@
 
 <script>
 import { db } from '@/firebase/config'
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/auth'
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { weatherService } from '@/services/weatherService'
@@ -612,9 +613,10 @@ export default {
 
       pricingSettings: {
         services: [],
-        pricingRules: { peakHours: 1.3, badWeather: 5, highDemand: 1.8 },
+        pricingRules: { peakHours: 1.3, badWeather: 5, highDemand: 1.8, baseFee: 55 },
         gcashCharges: []
       },
+      pricingUnsubscribe: null,
       calculatedPrice: {
         baseCharge: 55,
         distanceFee: 0,
@@ -677,6 +679,10 @@ export default {
       const hasRequiredFields = this.checkRequiredFields()
       const noBlockingUpload = !(this.selectedService.id === 'bill-payments' && this.uploadingBillReceipt)
       return hasPaymentMethod && hasRequiredFields && noBlockingUpload
+    },
+    baseFee() {
+      // Get base fee from pricing settings, fallback to default
+      return this.pricingSettings?.pricingRules?.baseFee || 55
     }
   },
   async mounted() {
@@ -694,6 +700,11 @@ export default {
   beforeUnmount() {
     if (this.weatherCheckInterval) {
       clearInterval(this.weatherCheckInterval)
+    }
+    // Clean up pricing listener
+    if (this.pricingUnsubscribe) {
+      this.pricingUnsubscribe()
+      this.pricingUnsubscribe = null
     }
   },
   methods: {
@@ -904,7 +915,7 @@ export default {
       const script = document.createElement('script')
       script.id = 'gmaps-script'
       // ⚠️ Restrict your key in GCP
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=places,geometry&v=weekly`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=places,geometry&v=weekly&loading=async`
       script.async = true
       script.defer = true
       script.onload = () => {
@@ -1399,15 +1410,32 @@ export default {
     async loadPricingSettings() {
       try {
         const docRef = doc(db, 'settings', 'pricing')
-        const docSnap = await getDoc(docRef)
-        if (docSnap.exists()) {
-          this.pricingSettings = docSnap.data()
-          console.log('[v1] Pricing settings loaded:', this.pricingSettings)
-        } else {
-          console.warn('[v1] No pricing settings found, using defaults')
-        }
+        
+        // Set up real-time listener for pricing changes
+        this.pricingUnsubscribe = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            this.pricingSettings = docSnap.data()
+            console.log('[v1] Pricing settings updated:', this.pricingSettings)
+          } else {
+            console.warn('[v1] No pricing settings found, using defaults')
+            // Set default pricing
+            this.pricingSettings = {
+              pricingRules: { baseFee: 55 }
+            }
+          }
+        }, (error) => {
+          console.error('[v1] Error listening to pricing settings:', error)
+          // Set default pricing on error
+          this.pricingSettings = {
+            pricingRules: { baseFee: 55 }
+          }
+        })
       } catch (error) {
         console.error('[v1] Error loading pricing settings:', error)
+        // Set default pricing on error
+        this.pricingSettings = {
+          pricingRules: { baseFee: 55 }
+        }
       }
     },
 

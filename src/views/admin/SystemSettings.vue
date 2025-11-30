@@ -52,27 +52,6 @@
 
         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.autoAcceptUsers') }}</p>
-            <p class="text-xs text-gray-500">{{ t('systemSettings.autoAcceptUsersDesc') }}</p>
-          </div>
-          <button 
-            @click="toggleAutoAcceptUsers"
-            :class="[ 
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              systemStatus.autoAcceptUsers ? 'bg-primary' : 'bg-gray-300'
-            ]"
-          >
-            <span 
-              :class="[ 
-                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                systemStatus.autoAcceptUsers ? 'translate-x-6' : 'translate-x-1'
-              ]"
-            />
-          </button>
-        </div>
-
-        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div>
             <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.autoAcceptOrders') }}</p>
             <p class="text-xs text-gray-500">{{ t('systemSettings.autoAcceptOrdersDesc') }}</p>
           </div>
@@ -374,7 +353,6 @@ const { t, locale } = useI18n()
 
 const defaultSystemStatus = {
   badWeatherFee: false,
-  autoAcceptUsers: true,
   autoAcceptOrders: true
 }
 
@@ -404,7 +382,6 @@ const defaultSecuritySettings = {
 
 const systemStatus = ref({
   badWeatherFee: false,
-  autoAcceptUsers: true,
   autoAcceptOrders: true
 })
 
@@ -473,38 +450,6 @@ const toggleBadWeatherFee = async () => {
   }
 }
 
-const toggleAutoAcceptUsers = async () => {
-  try {
-    systemStatus.value.autoAcceptUsers = !systemStatus.value.autoAcceptUsers
-    
-    const settingsRef = doc(db, 'settings', 'system')
-    await updateDoc(settingsRef, {
-      autoAcceptUsers: systemStatus.value.autoAcceptUsers,
-      updatedAt: new Date()
-    })
-    
-    // Log the activity
-    await loggingService.logAutoAcceptToggle(
-      null,
-      systemStatus.value.autoAcceptUsers,
-      'users'
-    )
-    
-    toast.success(
-      systemStatus.value.autoAcceptUsers 
-        ? t('systemSettings.autoAcceptUsersEnabled') 
-        : t('systemSettings.autoAcceptUsersDisabled')
-    )
-    
-    // Refresh logs to show the new entry
-    await loadSystemLogs()
-  } catch (error) {
-    console.error('Error updating auto-accept users:', error)
-    toast.error(t('common.updateFailed'))
-    systemStatus.value.autoAcceptUsers = !systemStatus.value.autoAcceptUsers
-  }
-}
-
 const toggleAutoAcceptOrders = async () => {
   try {
     systemStatus.value.autoAcceptOrders = !systemStatus.value.autoAcceptOrders
@@ -542,7 +487,6 @@ const saveSettings = async () => {
     const systemSettingsRef = doc(db, 'settings', 'system')
     await setDoc(systemSettingsRef, {
       badWeatherFee: systemStatus.value.badWeatherFee,
-      autoAcceptUsers: systemStatus.value.autoAcceptUsers,
       autoAcceptOrders: systemStatus.value.autoAcceptOrders,
       updatedAt: new Date()
     }, { merge: true })
@@ -686,7 +630,6 @@ const loadSystemSettings = async () => {
     if (settingsDoc.exists()) {
       const settings = settingsDoc.data()
       systemStatus.value.badWeatherFee = settings.badWeatherFee || false
-      systemStatus.value.autoAcceptUsers = settings.autoAcceptUsers !== false
       systemStatus.value.autoAcceptOrders = settings.autoAcceptOrders !== false
     }
     

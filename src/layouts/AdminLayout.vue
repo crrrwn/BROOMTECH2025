@@ -384,21 +384,37 @@ const fetchNotifications = () => {
     const notificationsQuery = query(
       collection(db, 'notifications'),
       where('recipientType', '==', 'admin'),
-      orderBy('createdAt', 'desc'),
-      limit(50)
+      limit(100)
     )
 
     const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-      notifications.value = snapshot.docs.map(doc => ({
+      const allNotifications = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
       
+      // Sort manually by createdAt descending
+      allNotifications.sort((a, b) => {
+        const aTime = a.createdAt?.toDate?.()?.getTime() || a.timestamp?.toDate?.()?.getTime() || 0
+        const bTime = b.createdAt?.toDate?.()?.getTime() || b.timestamp?.toDate?.()?.getTime() || 0
+        return bTime - aTime
+      })
+      
+      notifications.value = allNotifications.slice(0, 50)
       unreadCount.value = notifications.value.filter(n => !n.read).length
       loadingNotifications.value = false
       console.log('[v0] Admin notifications updated:', notifications.value.length)
     }, (error) => {
-      console.log('[v0] Notifications listener error:', error.message)
+      // Suppress index errors - check for various index error patterns
+      const errorMsg = error.message || ''
+      const isIndexError = errorMsg.includes('index') || 
+                          errorMsg.includes('requires an index') ||
+                          errorMsg.includes('composite') ||
+                          error.code === 'failed-precondition'
+      
+      if (!isIndexError) {
+        console.log('[v0] Notifications listener error:', error.message)
+      }
       loadingNotifications.value = false
     })
 

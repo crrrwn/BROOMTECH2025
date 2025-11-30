@@ -159,7 +159,7 @@
             </div>
 
             <!-- Messages Display -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 h-80">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 h-80" style="scroll-behavior: smooth;">
               <div v-for="message in selectedChatMessages" :key="message.id" class="flex" :class="getMessageAlignment(message)">
                 <div class="max-w-xs lg:max-w-md">
                   <div :class="getMessageBubbleClass(message)" class="px-4 py-2 rounded-lg">
@@ -173,10 +173,33 @@
                       </span>
                     </div>
                     
-                    <p class="text-sm">{{ message.message }}</p>
+                    <!-- Deleted Message Indicator -->
+                    <div v-if="message.deleted" class="mb-2 flex items-center space-x-2">
+                      <span class="text-xs text-red-600 font-medium">[DELETED]</span>
+                      <span class="text-xs text-gray-500">
+                        Deleted at: {{ formatTime(message.deletedAt) }}
+                      </span>
+                    </div>
+                    
+                    <!-- Image Message -->
+                    <div v-if="message.messageType === 'image' && message.imageUrl && !message.deleted" class="mb-2">
+                      <img
+                        :src="message.imageUrl"
+                        alt="Chat image"
+                        class="max-w-full h-auto rounded-lg cursor-pointer"
+                        @click="openImagePreview(message.imageUrl)"
+                      />
+                    </div>
+                    
+                    <!-- Text Message (show original even if deleted) -->
+                    <p v-if="message.message" :class="message.deleted ? 'text-sm line-through opacity-50' : 'text-sm'">
+                      {{ message.message }}
+                    </p>
                     
                     <div class="flex items-center justify-end mt-1">
-                      <span class="text-xs text-gray-500">{{ formatTime(message.timestamp) }}</span>
+                      <span class="text-xs" :class="message.senderRole === 'driver' ? 'text-white opacity-80' : 'text-gray-500'">
+                        {{ formatTime(message.timestamp) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -198,6 +221,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Image Preview Modal -->
+    <div
+      v-if="showImagePreview"
+      class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+      @click="closeImagePreview"
+    >
+      <div class="max-w-4xl max-h-[90vh] relative" @click.stop>
+        <button
+          @click="closeImagePreview"
+          class="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors z-10"
+        >
+          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <img
+          :src="previewImageUrl"
+          alt="Preview"
+          class="max-w-full max-h-[90vh] rounded-lg"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -216,7 +262,9 @@ export default {
       selectedChatId: null,
       selectedChatMessages: [],
       filterStatus: 'all',
-      loading: true
+      loading: true,
+      showImagePreview: false,
+      previewImageUrl: ''
     }
   },
   computed: {
@@ -422,6 +470,16 @@ export default {
       if (!timestamp) return ''
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    },
+
+    openImagePreview(imageUrl) {
+      this.previewImageUrl = imageUrl
+      this.showImagePreview = true
+    },
+
+    closeImagePreview() {
+      this.showImagePreview = false
+      this.previewImageUrl = ''
     }
   }
 }

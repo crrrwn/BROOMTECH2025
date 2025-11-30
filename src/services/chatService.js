@@ -78,8 +78,10 @@ export class ChatService {
         const chatData = chatDoc.data()
         const otherParticipant = chatData.participants.find((p) => p !== senderId)
 
+        const lastMessageText = messageType === 'image' ? '📷 Image' : message
+
         await updateDoc(chatRef, {
-          lastMessage: message,
+          lastMessage: lastMessageText,
           lastMessageAt: serverTimestamp(),
           [`unreadCount.${otherParticipant}`]: (chatData.unreadCount?.[otherParticipant] || 0) + 1,
         })
@@ -88,6 +90,45 @@ export class ChatService {
       return true
     } catch (error) {
       console.error("Error sending message:", error)
+      throw error
+    }
+  }
+
+  // Send image message in chat room
+  async sendImageMessage(chatId, senderId, senderRole, imageUrl) {
+    try {
+      const messageData = {
+        chatId,
+        senderId,
+        senderRole, // 'user', 'driver', or 'bot'
+        message: '', // Empty for image messages
+        messageType: 'image',
+        imageUrl,
+        timestamp: serverTimestamp(),
+        read: false,
+      }
+
+      // Add message to messages subcollection
+      await addDoc(collection(db, "chats", chatId, "messages"), messageData)
+
+      // Update chat room with last message info
+      const chatRef = doc(db, "chats", chatId)
+      const chatDoc = await getDoc(chatRef)
+
+      if (chatDoc.exists()) {
+        const chatData = chatDoc.data()
+        const otherParticipant = chatData.participants.find((p) => p !== senderId)
+
+        await updateDoc(chatRef, {
+          lastMessage: '📷 Image',
+          lastMessageAt: serverTimestamp(),
+          [`unreadCount.${otherParticipant}`]: (chatData.unreadCount?.[otherParticipant] || 0) + 1,
+        })
+      }
+
+      return true
+    } catch (error) {
+      console.error("Error sending image message:", error)
       throw error
     }
   }
@@ -215,6 +256,37 @@ export class ChatService {
     if (unsubscribe) {
       unsubscribe()
       this.listeners.delete(key)
+    }
+  }
+
+  // Delete message (mark as deleted, don't actually delete from Firestore)
+  async deleteMessage(chatId, messageId, userId) {
+    try {
+      const messageRef = doc(db, "chats", chatId, "messages", messageId)
+      const messageDoc = await getDoc(messageRef)
+      
+      if (!messageDoc.exists()) {
+        throw new Error("Message not found")
+      }
+      
+      const messageData = messageDoc.data()
+      
+      // Only allow deletion if user is the sender
+      if (messageData.senderId !== userId) {
+        throw new Error("You can only delete your own messages")
+      }
+      
+      // Mark message as deleted instead of actually deleting it
+      await updateDoc(messageRef, {
+        deleted: true,
+        deletedAt: serverTimestamp(),
+        deletedBy: userId
+      })
+      
+      return true
+    } catch (error) {
+      console.error("Error deleting message:", error)
+      throw error
     }
   }
 

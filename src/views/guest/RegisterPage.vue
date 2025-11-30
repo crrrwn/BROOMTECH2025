@@ -21,28 +21,38 @@
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+              <label for="firstName" class="block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
               <input
                 id="firstName"
                 v-model="form.firstName"
                 type="text"
                 required
                 pattern="[A-Za-z\s\-]+"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                @blur="validateField('firstName')"
+                :class="[
+                  'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                  errors.firstName ? 'border-red-500' : 'border-gray-300'
+                ]"
                 placeholder="First name"
               />
+              <p v-if="errors.firstName" class="mt-1 text-xs text-red-600">{{ errors.firstName }}</p>
             </div>
             <div>
-              <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+              <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label>
               <input
                 id="lastName"
                 v-model="form.lastName"
                 type="text"
                 required
                 pattern="[A-Za-z\s\-]+"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                @blur="validateField('lastName')"
+                :class="[
+                  'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                  errors.lastName ? 'border-red-500' : 'border-gray-300'
+                ]"
                 placeholder="Last name"
               />
+              <p v-if="errors.lastName" class="mt-1 text-xs text-red-600">{{ errors.lastName }}</p>
             </div>
           </div>
           
@@ -60,65 +70,85 @@
 
           <!-- Contact -->
           <div>
-            <label for="contact" class="block text-sm font-medium text-gray-700">Contact Number</label>
+            <label for="contact" class="block text-sm font-medium text-gray-700">Contact Number <span class="text-red-500">*</span></label>
             <input
               id="contact"
               v-model="form.contact"
               type="tel"
               required
               pattern="^(09|\+639)\d{9}$"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              @blur="validateField('contact')"
+              :class="[
+                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                errors.contact ? 'border-red-500' : 'border-gray-300'
+              ]"
               placeholder="09XXXXXXXXX or +639XXXXXXXXX"
             />
-            <p class="mt-1 text-xs text-gray-500">Format: 09XXXXXXXXX or +639XXXXXXXXX</p>
+            <p v-if="errors.contact" class="mt-1 text-xs text-red-600">{{ errors.contact }}</p>
+            <p v-else class="mt-1 text-xs text-gray-500">Format: 09XXXXXXXXX or +639XXXXXXXXX</p>
           </div>
 
           <!-- Address -->
           <div>
-            <label for="address" class="block text-sm font-medium text-gray-700">Home Street Address</label>
+            <label for="address" class="block text-sm font-medium text-gray-700">Home Street Address <span class="text-red-500">*</span></label>
             <input
               id="address"
               v-model="form.address"
               type="text"
               required
               minlength="10"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              @blur="validateField('address')"
+              :class="[
+                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                errors.address ? 'border-red-500' : 'border-gray-300'
+              ]"
               placeholder="Enter your complete address"
             />
+            <p v-if="errors.address" class="mt-1 text-xs text-red-600">{{ errors.address }}</p>
           </div>
 
           <!-- Barangay -->
           <div>
-            <label for="barangay" class="block text-sm font-medium text-gray-700">Barangay</label>
+            <label for="barangay" class="block text-sm font-medium text-gray-700">Barangay <span class="text-red-500">*</span></label>
             <select
               id="barangay"
               v-model="form.barangay"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              @blur="validateField('barangay')"
+              :class="[
+                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                errors.barangay ? 'border-red-500' : 'border-gray-300'
+              ]"
             >
               <option value="">Select Barangay</option>
               <option v-for="barangay in barangays" :key="barangay" :value="barangay">
                 {{ barangay }}
               </option>
             </select>
+            <p v-if="errors.barangay" class="mt-1 text-xs text-red-600">{{ errors.barangay }}</p>
           </div>
 
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email address <span class="text-red-500">*</span></label>
             <input
               id="email"
               v-model="form.email"
               type="email"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              @blur="validateField('email')"
+              :class="[
+                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              ]"
               placeholder="Enter your email"
             />
+            <p v-if="errors.email" class="mt-1 text-xs text-red-600">{{ errors.email }}</p>
           </div>
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <label for="password" class="block text-sm font-medium text-gray-700">Password <span class="text-red-500">*</span></label>
             <div class="mt-1 relative">
               <input
                 id="password"
@@ -126,7 +156,11 @@
                 :type="showPassword ? 'text' : 'password'"
                 required
                 @input="checkPasswordStrength"
-                class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                @blur="validateField('password')"
+                :class="[
+                  'block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                  errors.password ? 'border-red-500' : 'border-gray-300'
+                ]"
                 placeholder="Create a strong password"
               />
               <button
@@ -143,6 +177,7 @@
                 </svg>
               </button>
             </div>
+            <p v-if="errors.password" class="mt-1 text-xs text-red-600">{{ errors.password }}</p>
             
             <!-- Password Strength Meter -->
             <div class="mt-2">
@@ -171,14 +206,18 @@
 
           <!-- Confirm Password -->
           <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password <span class="text-red-500">*</span></label>
             <div class="mt-1 relative">
               <input
                 id="confirmPassword"
                 v-model="form.confirmPassword"
                 :type="showConfirmPassword ? 'text' : 'password'"
                 required
-                class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                @blur="validateField('confirmPassword')"
+                :class="[
+                  'block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+                  errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                ]"
                 placeholder="Confirm your password"
               />
               <button
@@ -195,10 +234,35 @@
                 </svg>
               </button>
             </div>
-            <p v-if="form.confirmPassword && form.password !== form.confirmPassword" class="mt-1 text-xs text-red-600">
+            <p v-if="errors.confirmPassword" class="mt-1 text-xs text-red-600">{{ errors.confirmPassword }}</p>
+            <p v-else-if="form.confirmPassword && form.password !== form.confirmPassword" class="mt-1 text-xs text-red-600">
               Passwords do not match
             </p>
           </div>
+
+          <!-- Terms and Conditions Checkbox -->
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <input
+                id="acceptTerms"
+                v-model="form.acceptTerms"
+                type="checkbox"
+                required
+                class="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
+              />
+            </div>
+            <div class="ml-3 text-sm">
+              <label for="acceptTerms" class="font-medium text-gray-700">
+                I agree to the 
+                <a href="#" class="text-primary hover:text-green-600 underline" @click.prevent>Terms of Service</a>
+                and 
+                <a href="#" class="text-primary hover:text-green-600 underline" @click.prevent>Privacy Policy</a>
+              </label>
+            </div>
+          </div>
+          <p v-if="form.acceptTerms === false && form.confirmPassword" class="text-xs text-red-600">
+            You must agree to the terms and conditions
+          </p>
         </div>
 
         <div>
@@ -271,7 +335,8 @@ export default {
       barangay: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      acceptTerms: false
     })
 
     const loading = ref(false)
@@ -284,6 +349,16 @@ export default {
       lowercase: false,
       number: false,
       special: false
+    })
+    const errors = ref({
+      firstName: '',
+      lastName: '',
+      contact: '',
+      address: '',
+      barangay: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
     })
 
     const barangays = ref([
@@ -309,7 +384,8 @@ export default {
              form.value.password &&
              form.value.confirmPassword &&
              form.value.password === form.value.confirmPassword &&
-             passwordStrength.value >= 3
+             passwordStrength.value >= 3 &&
+             form.value.acceptTerms === true
     })
 
     const checkPasswordStrength = () => {
@@ -348,8 +424,87 @@ export default {
       return 'Strong password'
     }
 
+    const validateField = (fieldName) => {
+      const field = form.value[fieldName]
+      errors.value[fieldName] = ''
+
+      switch (fieldName) {
+        case 'firstName':
+          if (!field) {
+            errors.value.firstName = 'First name is required'
+          } else if (!/^[A-Za-z\s\-]+$/.test(field)) {
+            errors.value.firstName = 'First name should only contain letters, spaces, and hyphens'
+          }
+          break
+        case 'lastName':
+          if (!field) {
+            errors.value.lastName = 'Last name is required'
+          } else if (!/^[A-Za-z\s\-]+$/.test(field)) {
+            errors.value.lastName = 'Last name should only contain letters, spaces, and hyphens'
+          }
+          break
+        case 'contact':
+          if (!field) {
+            errors.value.contact = 'Contact number is required'
+          } else if (!/^(09|\+639)\d{9}$/.test(field)) {
+            errors.value.contact = 'Please enter a valid contact number (09XXXXXXXXX or +639XXXXXXXXX)'
+          }
+          break
+        case 'address':
+          if (!field) {
+            errors.value.address = 'Home street address is required'
+          } else if (field.length < 10) {
+            errors.value.address = 'Address must be at least 10 characters long'
+          }
+          break
+        case 'barangay':
+          if (!field) {
+            errors.value.barangay = 'Please select a barangay'
+          }
+          break
+        case 'email':
+          if (!field) {
+            errors.value.email = 'Email address is required'
+          } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field)) {
+            errors.value.email = 'Please enter a valid email address'
+          }
+          break
+        case 'password':
+          if (!field) {
+            errors.value.password = 'Password is required'
+          } else if (passwordStrength.value < 3) {
+            errors.value.password = 'Password must meet all requirements'
+          }
+          break
+        case 'confirmPassword':
+          if (!field) {
+            errors.value.confirmPassword = 'Please confirm your password'
+          } else if (form.value.password !== field) {
+            errors.value.confirmPassword = 'Passwords do not match'
+          }
+          break
+      }
+    }
+
     const handleRegister = async () => {
-      if (!isFormValid.value) return
+      // Validate all fields
+      validateField('firstName')
+      validateField('lastName')
+      validateField('contact')
+      validateField('address')
+      validateField('barangay')
+      validateField('email')
+      validateField('password')
+      validateField('confirmPassword')
+
+      if (!isFormValid.value) {
+        if (!form.value.acceptTerms) {
+          toast.error('Please accept the Terms of Service and Privacy Policy')
+        } else {
+          toast.error('Please fill in all required fields correctly')
+        }
+        return
+      }
       
       loading.value = true
       
@@ -357,8 +512,11 @@ export default {
         const result = await authStore.register(form.value)
         
         if (result.success) {
-          toast.success(result.message)
-          router.push('/login')
+          // Redirect to verify email page with email
+          router.push({
+            path: '/verify-email',
+            query: { email: form.value.email }
+          })
         } else {
           toast.error(result.message)
         }
@@ -397,11 +555,13 @@ export default {
       passwordStrength,
       passwordChecks,
       barangays,
+      errors,
       isFormValid,
       checkPasswordStrength,
       getStrengthColor,
       getStrengthTextColor,
       getStrengthText,
+      validateField,
       handleRegister,
       handleGoogleRegister
     }

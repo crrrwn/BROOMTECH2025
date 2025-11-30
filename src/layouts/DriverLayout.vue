@@ -77,13 +77,6 @@
               </span>
             </router-link>
             
-            <router-link to="/driver/chat" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-              Chat with Customers
-            </router-link>
-            
             <!-- Updated menu item from "Upload Proof & Payment" to "Remit Payment" -->
             <router-link to="/driver/remit" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
               <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,10 +122,91 @@
               </div>
               
               <div class="flex items-center space-x-4">
-                <div class="text-right">
-                  <p class="text-sm text-gray-500">Today's Earnings</p>
-                  <p class="text-lg font-semibold text-primary">₱{{ driverStore.hasRemitted ? driverStore.todayEarnings.driverShare : '0.00' }}</p>
-                  <p v-if="!driverStore.hasRemitted" class="text-xs text-gray-400">Pending remittance</p>
+                <!-- Notifications Icon -->
+                <div class="relative">
+                  <button
+                    @click="showNotifications = !showNotifications"
+                    class="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span
+                      v-if="unreadCount > 0"
+                      class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                    >
+                      {{ unreadCount > 9 ? '9+' : unreadCount }}
+                    </span>
+                  </button>
+                  
+                  <!-- Notifications Modal -->
+                  <div
+                    v-if="showNotifications"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    @click.self="showNotifications = false"
+                  >
+                    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col shadow-xl">
+                      <div class="p-4 border-b bg-gray-50 flex items-center justify-between sticky top-0 bg-white z-10">
+                        <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                        <div class="flex items-center gap-3">
+                          <button
+                            v-if="notifications.length > 0 && unreadCount > 0"
+                            @click="markAllAsRead"
+                            class="text-sm text-primary hover:text-primary-dark font-medium"
+                          >
+                            Mark all as read
+                          </button>
+                          <button
+                            @click="showNotifications = false"
+                            class="text-gray-500 hover:text-gray-700"
+                          >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div class="overflow-y-auto flex-1 p-4">
+                        <div v-if="loadingNotifications" class="text-center py-8 text-gray-500">
+                          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                          <p>Loading notifications...</p>
+                        </div>
+                        <div v-else-if="notifications.length === 0" class="text-center py-8 text-gray-500">
+                          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                          </svg>
+                          <p class="text-lg font-medium">No notifications</p>
+                          <p class="text-sm mt-2">You're all caught up!</p>
+                        </div>
+                        <div v-else class="space-y-2">
+                          <div
+                            v-for="notification in notifications"
+                            :key="notification.id"
+                            @click="markAsRead(notification)"
+                            :class="[
+                              'p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors',
+                              !notification.read ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
+                            ]"
+                          >
+                            <div class="flex items-start space-x-3">
+                              <div class="flex-shrink-0">
+                                <div :class="[
+                                  'w-3 h-3 rounded-full mt-2',
+                                  !notification.read ? 'bg-primary' : 'bg-gray-300'
+                                ]"></div>
+                              </div>
+                              <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">{{ notification.title || 'Notification' }}</p>
+                                <p class="text-sm text-gray-600 mt-1">{{ notification.message || notification.body || '' }}</p>
+                                <p class="text-xs text-gray-400 mt-2">{{ formatDate(notification.createdAt) }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div class="flex items-center space-x-2">
@@ -158,6 +232,8 @@
 <script>
 import { useAuthStore } from '@/stores/auth'
 import { useDriverStore } from '@/stores/driver'
+import { db } from '@/firebase/config'
+import { doc, updateDoc, collection, query, where, onSnapshot, orderBy, limit, serverTimestamp } from 'firebase/firestore'
 
 export default {
   name: 'DriverLayout',
@@ -173,7 +249,12 @@ export default {
       activeAssignmentsCount: 1,
       isTrackingLocation: false,
       locationWatchId: null,
-      currentLocation: null
+      currentLocation: null,
+      showNotifications: false,
+      notifications: [],
+      loadingNotifications: false,
+      unreadCount: 0,
+      notificationsUnsubscribe: null
     }
   },
   computed: {
@@ -210,6 +291,10 @@ export default {
   async mounted() {
     console.log('[v0] DriverLayout mounted')
     await this.loadDriverStatus()
+    this.fetchNotifications()
+    
+    // Close notifications when clicking outside
+    document.addEventListener('click', this.handleClickOutside)
   },
   beforeUnmount() {
     console.log('[v0] DriverLayout unmounting, cleaning up listeners')
@@ -217,6 +302,10 @@ export default {
     if (this.locationWatchId) {
       navigator.geolocation.clearWatch(this.locationWatchId)
     }
+    if (this.notificationsUnsubscribe) {
+      this.notificationsUnsubscribe()
+    }
+    document.removeEventListener('click', this.handleClickOutside)
   },
   methods: {
     async loadDriverStatus() {
@@ -295,8 +384,14 @@ export default {
         if (!this.isTrackingLocation) {
           // Start tracking location using Geolocation API
           if (navigator.geolocation) {
+            const userId = this.authStore.user?.uid
+            if (!userId) {
+              this.$toast.error('User not authenticated')
+              return
+            }
+
             this.locationWatchId = navigator.geolocation.watchPosition(
-              (position) => {
+              async (position) => {
                 this.currentLocation = {
                   lat: position.coords.latitude,
                   lng: position.coords.longitude,
@@ -304,6 +399,24 @@ export default {
                   timestamp: new Date()
                 }
                 console.log('[v0] Location updated:', this.currentLocation)
+                
+                // Save location to Firestore for accurate tracking
+                try {
+                  const driverRef = doc(db, 'drivers', userId)
+                  await updateDoc(driverRef, {
+                    currentLocation: {
+                      lat: this.currentLocation.lat,
+                      lng: this.currentLocation.lng,
+                      accuracy: this.currentLocation.accuracy,
+                      timestamp: serverTimestamp(),
+                      updatedAt: new Date()
+                    },
+                    lastLocationUpdate: serverTimestamp()
+                  })
+                  console.log('[v0] Driver location saved to Firestore')
+                } catch (error) {
+                  console.error('[v0] Error saving location to Firestore:', error)
+                }
               },
               (error) => {
                 console.error('[v0] Location tracking error:', error)
@@ -311,12 +424,12 @@ export default {
               },
               {
                 enableHighAccuracy: true,
-                timeout: 5000,
+                timeout: 10000,
                 maximumAge: 0
               }
             )
             this.isTrackingLocation = true
-            this.$toast.success('Location tracking enabled')
+            this.$toast.success('Location tracking enabled - Your location will be shared accurately')
           } else {
             this.$toast.error('Geolocation not supported on this device')
           }
@@ -332,6 +445,104 @@ export default {
       } catch (error) {
         console.error('[v0] Error toggling location tracking:', error)
         this.$toast.error('Failed to toggle location tracking')
+      }
+    },
+
+    fetchNotifications() {
+      try {
+        const userId = this.authStore.user?.uid
+        if (!userId) return
+
+        this.loadingNotifications = true
+        // Use query without orderBy to avoid index requirement
+        const notificationsQuery = query(
+          collection(db, 'notifications'),
+          where('recipientId', '==', userId),
+          where('recipientType', '==', 'driver'),
+          limit(50)
+        )
+
+        this.notificationsUnsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+          let notifications = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          
+          // Sort manually by createdAt (descending)
+          notifications.sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0))
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0))
+            return dateB - dateA
+          })
+          
+          this.notifications = notifications
+          this.unreadCount = this.notifications.filter(n => !n.read).length
+          this.loadingNotifications = false
+          console.log('[v0] Driver notifications updated:', this.notifications.length)
+        }, (error) => {
+          // Silently handle all errors - queries work without indexes, errors are expected
+          // Don't log to console to keep it clean
+          this.loadingNotifications = false
+        })
+      } catch (error) {
+        console.error('[v0] Error setting up notifications listener:', error)
+        this.loadingNotifications = false
+      }
+    },
+
+    async markAsRead(notification) {
+      if (notification.read) return
+      
+      try {
+        await updateDoc(doc(db, 'notifications', notification.id), {
+          read: true,
+          readAt: serverTimestamp()
+        })
+      } catch (error) {
+        console.error('[v0] Error marking notification as read:', error)
+      }
+    },
+
+    async markAllAsRead() {
+      try {
+        const unreadNotifications = this.notifications.filter(n => !n.read)
+        const updatePromises = unreadNotifications.map(notification =>
+          updateDoc(doc(db, 'notifications', notification.id), {
+            read: true,
+            readAt: serverTimestamp()
+          })
+        )
+        
+        await Promise.all(updatePromises)
+        this.$toast.success('All notifications marked as read')
+      } catch (error) {
+        console.error('[v0] Error marking all as read:', error)
+        this.$toast.error('Failed to mark notifications as read')
+      }
+    },
+
+    formatDate(timestamp) {
+      if (!timestamp) return ''
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+      const now = new Date()
+      const diff = now - date
+      const minutes = Math.floor(diff / 60000)
+      const hours = Math.floor(diff / 3600000)
+      const days = Math.floor(diff / 86400000)
+      
+      if (minutes < 1) return 'Just now'
+      if (minutes < 60) return `${minutes}m ago`
+      if (hours < 24) return `${hours}h ago`
+      if (days < 7) return `${days}d ago`
+      return date.toLocaleDateString()
+    },
+
+    handleClickOutside(event) {
+      const notificationButton = event.target.closest('.relative')
+      const notificationDropdown = event.target.closest('.absolute.right-0')
+      
+      if (!notificationButton && !notificationDropdown) {
+        this.showNotifications = false
       }
     }
   }

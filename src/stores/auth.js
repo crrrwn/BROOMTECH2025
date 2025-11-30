@@ -5,6 +5,7 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
   deleteUser,
@@ -162,13 +163,34 @@ export const useAuthStore = defineStore("auth", {
           return { success: true, message: "Admin login successful!" }
         }
 
+        // Check email verification for users (not admins)
+        if (profile.role === "user" && !this.user.emailVerified) {
+          await signOut(auth)
+          return { 
+            success: false, 
+            message: "Please verify your email address before logging in. Check your inbox for the verification link." 
+          }
+        }
+
+        // Auto-approve users if email is verified (email verification = approval)
+        if (profile.role === "user" && this.user.emailVerified && profile.approved === false) {
+          await updateDoc(doc(db, "users", cred.user.uid), {
+            approved: true,
+            approvedAt: new Date().toISOString(),
+            emailVerified: true
+          })
+          // Refresh profile after update
+          profile.approved = true
+          this.userProfile = { ...profile, approved: true }
+        }
+
         // users & drivers must be approved
         if (profile.banned === true) {
           await signOut(auth)
           return { success: false, message: "Your account is banned." }
         }
 
-        if (profile.approved !== true) {
+        if (profile.approved !== true && profile.role !== "admin") {
           await signOut(auth)
           return { success: false, message: "Your account is pending admin approval." }
         }
@@ -195,13 +217,19 @@ export const useAuthStore = defineStore("auth", {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user
 
-        const autoAcceptEnabled = await this.getAutoAcceptSetting()
+        // Send email verification
+        const actionCodeSettings = {
+          url: `${window.location.origin}/verify-email-success`,
+          handleCodeInApp: true,
+        }
+        await sendEmailVerification(user, actionCodeSettings)
+
         const userProfileData = {
           ...profileData,
           email,
           role,
-          approved: role === "driver" ? false : autoAcceptEnabled,
-          emailVerified: true,
+          approved: role === "driver" ? false : false, // Users need email verification first, then admin approval
+          emailVerified: false, // Set to false until user verifies
           banned: false,
           createdAt: new Date().toISOString(),
         }
@@ -216,17 +244,21 @@ export const useAuthStore = defineStore("auth", {
           }
         }
 
-        await setDoc(doc(db, "users", user.uid), userProfileData)
+        await setDoc(doc(db, "users", user.uid), {
+          ...userProfileData,
+          verificationSentAt: new Date().toISOString() // Store when verification was sent
+        })
 
         const userName = `${profileData.firstName} ${profileData.lastName}`.trim()
         await loggingService.logUserRegistration(user.uid, userName)
 
+        // Sign out the user after registration
+        await signOut(auth)
+
         const message =
           role === "driver"
-            ? "Driver application submitted successfully! Please wait for admin approval."
-            : autoAcceptEnabled
-              ? "Registration successful! You can now access your account."
-              : "Registration successful! Please wait for admin approval."
+            ? "Driver application submitted successfully! Please check your email to verify your account."
+            : "Registration successful! Please check your email to verify your account. Once verified, you can log in."
 
         return { success: true, message }
       } catch (error) {
@@ -242,14 +274,13 @@ export const useAuthStore = defineStore("auth", {
 
         const userDocSnap = await getDoc(doc(db, "users", user.uid))
         if (!userDocSnap.exists()) {
-          const autoAcceptEnabled = await this.getAutoAcceptSetting()
           await setDoc(doc(db, "users", user.uid), {
             firstName: user.displayName?.split(" ")[0] || "",
             lastName: user.displayName?.split(" ").slice(1).join(" ") || "",
             email: user.email,
             role: "user",
-            approved: autoAcceptEnabled,
-            emailVerified: true,
+            approved: false, // Google users also need admin approval
+            emailVerified: true, // Google accounts are pre-verified
             banned: false,
             isGoogleUser: true,
             profileComplete: false,
@@ -336,18 +367,6 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    async getAutoAcceptSetting() {
-      try {
-        const settingsDoc = await getDoc(doc(db, "settings", "system"))
-        if (settingsDoc.exists()) {
-          return settingsDoc.data().autoAcceptUsers || false
-        }
-        return false
-      } catch (error) {
-        console.error("Error fetching auto-accept setting:", error)
-        return false
-      }
-    },
 
     // ---------- Admin utilities ----------
     async getAllUsers() {
