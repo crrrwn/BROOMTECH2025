@@ -131,7 +131,18 @@ export default {
 
       loading.value = true
       try {
-        const result = await authStore.login(email.value, password.value)
+        // Check if a different role is already logged in
+        if (authStore.isAuthenticated && authStore.userProfile) {
+          const currentRole = authStore.userProfile.role
+          if (currentRole !== 'driver') {
+            // Force logout if different role is logged in
+            await authStore.logout()
+            toast.info('Please log in with your driver account.')
+          }
+        }
+
+        // Try to login - we'll check the role after
+        const result = await authStore.login(email.value, password.value, 'driver')
 
         if (!result.success) {
           toast.error(result.message || result.error || 'Login failed')
@@ -152,7 +163,7 @@ export default {
           const drvSnap = await getDoc(doc(db, 'drivers', uid))
           if (drvSnap.exists()) {
             const drv = drvSnap.data()
-            if (drv?.approved === true && drv?.banned !== true) {
+            if (drv?.role === 'driver' && drv?.approved === true && drv?.banned !== true) {
               // i-refresh locally ang profile para sa session na ito
               authStore.userProfile = { id: drvSnap.id, ...drv }
               toast.success('Welcome back, driver!')
@@ -163,7 +174,7 @@ export default {
         }
 
         // ✋ Kung umabot dito, hindi siya driver account
-        toast.error('This account is not registered as a driver')
+        toast.error('This account is not registered as a driver. Please use the user login page.')
         await authStore.logout()
       } catch (err) {
         console.error('Driver login error:', err)

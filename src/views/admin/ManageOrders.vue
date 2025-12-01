@@ -1610,15 +1610,28 @@ export default {
           }
         }
 
-        // Show route between pickup and drop-off if both exist
+        // Show route between pickup and drop-off (same route as BookService)
         if (pickupCoords && dropoffCoords && directionsService.value && directionsRenderer.value) {
           directionsService.value.route({
             origin: pickupCoords,
             destination: dropoffCoords,
-            travelMode: window.google.maps.TravelMode.DRIVING
+            travelMode: window.google.maps.TravelMode.DRIVING,
+            unitSystem: window.google.maps.UnitSystem.METRIC,
+            avoidHighways: false,
+            avoidTolls: false
           }, (result, status) => {
             if (status === 'OK') {
+              // Display the route (same as BookService)
+              directionsRenderer.value.setOptions({ suppressMarkers: true })
               directionsRenderer.value.setDirections(result)
+              
+              // Update bounds to include route points
+              if (result.routes && result.routes[0] && result.routes[0].legs) {
+                result.routes[0].legs.forEach(leg => {
+                  bounds.extend(leg.start_location)
+                  bounds.extend(leg.end_location)
+                })
+              }
             } else {
               console.error('Directions request failed:', status)
             }
@@ -1792,12 +1805,31 @@ export default {
           estimatedArrival.value = formatTime(distance)
         }
 
-        // Center map on driver (with slight delay for smooth animation)
-        setTimeout(() => {
-          if (map) {
-            map.panTo(driverPosition)
-          }
-        }, 500)
+        // Update map bounds to include driver, pickup, and drop-off locations
+        if (map && pickupMarker.value && dropoffMarker.value) {
+          const bounds = new window.google.maps.LatLngBounds()
+          
+          // Add pickup location
+          const pickupPos = pickupMarker.value.getPosition()
+          if (pickupPos) bounds.extend(pickupPos)
+          
+          // Add drop-off location
+          const dropoffPos = dropoffMarker.value.getPosition()
+          if (dropoffPos) bounds.extend(dropoffPos)
+          
+          // Add driver location
+          bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+          
+          // Fit bounds to show all locations (with padding)
+          map.fitBounds(bounds, { padding: 100 })
+        } else {
+          // If markers not available, just pan to driver
+          setTimeout(() => {
+            if (map) {
+              map.panTo(driverPosition)
+            }
+          }, 500)
+        }
       }, (error) => {
         console.error('Error listening to driver location:', error)
         currentDriverLocation.value = 'Error loading driver location'
@@ -2043,7 +2075,7 @@ export default {
         // Send notification to driver
         await realtimeService.sendNotification(selectedDriverId.value, {
           title: 'New Order Assignment',
-          message: `You have been assigned to order #${selectedOrder.value.id}`,
+          message: `You have a new order/booking assigned. Please check your My Assignment page. Order #${selectedOrder.value.id}`,
           type: 'order_assignment',
           orderId: selectedOrder.value.id,
           customerName: selectedOrder.value.customerName,
@@ -2122,7 +2154,7 @@ export default {
 
             await realtimeService.sendNotification(driver.id, {
               title: 'New Order Assignment',
-              message: `You have been assigned to order #${order.id}`,
+              message: `You have a new order/booking assigned. Please check your My Assignment page. Order #${order.id}`,
               type: 'order_assignment',
               orderId: order.id
             });
@@ -2185,7 +2217,7 @@ export default {
             // Send notification to driver
             await realtimeService.sendNotification(selectedDriver.id, {
               title: 'New Order Assignment',
-              message: `You have been auto-assigned to order #${order.id}`,
+              message: `You have a new order/booking assigned. Please check your My Assignment page. Order #${order.id}`,
               type: 'order_assignment',
               orderId: order.id
             })

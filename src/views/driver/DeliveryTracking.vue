@@ -343,7 +343,7 @@
                 <span class="font-medium">₱{{ calculateNewTotal().toFixed(2) }}</span>
               </div>
               <div v-if="order.paymentMethod?.toUpperCase() !== 'COD'" class="flex justify-between text-sm mt-1">
-                <span class="text-gray-600">GCash Fee (3%):</span>
+                <span class="text-gray-600">GCash Fee:</span>
                 <span class="font-medium">₱{{ calculateGCashFee().toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
@@ -504,12 +504,13 @@
 
 <script>
 import { db, storage } from '@/firebase/config'
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
 import ChatWindow from '@/components/ChatWindow.vue'
 import { chatService } from '@/services/chatService'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { realtimeService } from '@/services/realtime'
 
 export default {
   name: 'DeliveryTracking',
@@ -912,34 +913,40 @@ export default {
           this.markers.push(deliveryMarker)
         }
 
-        // Calculate and display route - focus on pickup to delivery (user locations)
+        // Calculate and display route - same as BookService (pickup to delivery)
         if (pickupCoords && deliveryCoords) {
-          // Show route from pickup -> delivery (user's locations)
+          // Show route from pickup -> delivery (same route as shown in BookService)
           const request = {
             origin: pickupCoords,
             destination: deliveryCoords,
             travelMode: window.google.maps.TravelMode.DRIVING,
-            unitSystem: window.google.maps.UnitSystem.METRIC
+            unitSystem: window.google.maps.UnitSystem.METRIC,
+            avoidHighways: false,
+            avoidTolls: false
           }
 
           directionsService.route(request, (result, status) => {
             if (status === window.google.maps.DirectionsStatus.OK) {
+              // Display the route (same as BookService)
+              this.directionsRenderer.setOptions({ suppressMarkers: true })
               this.directionsRenderer.setDirections(result)
               
-              // Fit map to show pickup and delivery locations (user's locations)
+              // Fit map to show pickup and delivery locations with route
               const bounds = new window.google.maps.LatLngBounds()
               
-              // Add pickup and delivery locations (user locations)
+              // Add pickup and delivery locations
               bounds.extend(pickupCoords)
               bounds.extend(deliveryCoords)
               
-              // Add route points
-              result.routes[0].legs.forEach(leg => {
-                bounds.extend(leg.start_location)
-                bounds.extend(leg.end_location)
-              })
+              // Add route points to bounds
+              if (result.routes && result.routes[0] && result.routes[0].legs) {
+                result.routes[0].legs.forEach(leg => {
+                  bounds.extend(leg.start_location)
+                  bounds.extend(leg.end_location)
+                })
+              }
               
-              // Fit bounds with padding to show both user locations clearly
+              // Fit bounds with padding to show both locations and route clearly
               this.map.fitBounds(bounds, { padding: 80 })
             } else {
               console.error('[v0] Directions request failed:', status)
@@ -1209,13 +1216,13 @@ export default {
       if (!this.order || this.order.paymentMethod?.toUpperCase() === 'COD') {
         return 0
       }
-      const subtotal = this.calculateNewTotal()
-      return this.calculateGCashFeeForAmount(subtotal)
+      // Fixed ₱5 GCash fee (not 3%)
+      return 5
     },
 
     calculateGCashFeeForAmount(amount) {
-      // 3% GCash fee
-      return amount * 0.03
+      // Fixed ₱5 GCash fee (not 3%)
+      return 5
     },
 
     calculateNewTotalWithGCash() {
@@ -1283,6 +1290,21 @@ export default {
             )
             
             console.log('[v0] Total amount message sent to chat:', message)
+            
+            // Send notification to user to check chat message
+            try {
+              await realtimeService.sendNotification(userId, {
+                title: 'Payment Amount Updated',
+                message: `Please check your chat message for the updated payment amount (₱${newTotal.toFixed(2)})`,
+                type: 'payment_update',
+                orderId: this.order.id,
+                totalAmount: newTotal
+              })
+              console.log('[v0] Notification sent to user about payment amount')
+            } catch (notifError) {
+              console.error('[v0] Error sending notification to user:', notifError)
+              // Don't show error to driver, just log it
+            }
           }
         } catch (chatError) {
           console.error('[v0] Error sending total amount to chat:', chatError)
@@ -1409,6 +1431,26 @@ export default {
 
                 // Update local order status
                 this.order.status = 'delivered'
+
+                // Send notification to all admins
+                try {
+                  // Use recipientType: 'admin' to send to all admins (as used in AdminLayout)
+                  await addDoc(collection(db, 'notifications'), {
+                    recipientType: 'admin',
+                    title: 'Order Completed',
+                    message: `Order #${this.order.id.substring(0, 8)} has been completed. Proof of delivery uploaded.`,
+                    type: 'order_completed',
+                    orderId: this.order.id,
+                    driverId: driverId,
+                    driverName: this.driverName,
+                    read: false,
+                    createdAt: serverTimestamp()
+                  })
+                  console.log('[v0] Notification sent to all admins about order completion')
+                } catch (notifError) {
+                  console.error('[v0] Error sending notifications to admins:', notifError)
+                  // Don't block the upload process if notification fails
+                }
 
                 this.showProofOfDeliveryModal = false
                 this.proofFile = null

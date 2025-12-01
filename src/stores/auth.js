@@ -36,44 +36,51 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     // ---------- auth lifecycle ----------
     async initAuth() {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          this.user = user
-          await this.fetchUserProfile()
-          this.isAuthenticated = true
-        } else {
-          this.user = null
-          this.userProfile = null
-          this.isAuthenticated = false
-        }
-        this.loading = false
-        unsubscribe() // one-shot init
+      // Return a promise that resolves when auth state is determined
+      return new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            this.user = user
+            await this.fetchUserProfile()
+            this.isAuthenticated = true
+          } else {
+            this.user = null
+            this.userProfile = null
+            this.isAuthenticated = false
+          }
+          this.loading = false
+          unsubscribe() // one-shot init
+          resolve() // Resolve promise when auth state is determined
+        })
       })
     },
 
-    // Fetch the profile from admins → users → drivers
+    // Fetch the profile from admins → drivers → users
+    // Priority: admins first, then drivers (to avoid conflicts), then users
     async fetchUserProfile() {
       if (!this.user) return
       try {
         // 1) admins
         let snap = await getDoc(doc(db, "admins", this.user.uid))
         if (snap.exists()) {
-          this.userProfile = { id: snap.id, ...snap.data() }
+          const data = snap.data()
+          this.userProfile = { id: snap.id, ...data, role: data.role || "admin" }
           return
         }
 
-        // 2) users
-        snap = await getDoc(doc(db, "users", this.user.uid))
-        if (snap.exists()) {
-          this.userProfile = { id: snap.id, ...snap.data() }
-          return
-        }
-
-        // 3) drivers
+        // 2) drivers (check before users to avoid conflicts)
         snap = await getDoc(doc(db, "drivers", this.user.uid))
         if (snap.exists()) {
-          // normalize to same shape (role already "driver" in your data)
-          this.userProfile = { id: snap.id, ...snap.data() }
+          const data = snap.data()
+          this.userProfile = { id: snap.id, ...data, role: data.role || "driver" }
+          return
+        }
+
+        // 3) users
+        snap = await getDoc(doc(db, "users", this.user.uid))
+        if (snap.exists()) {
+          const data = snap.data()
+          this.userProfile = { id: snap.id, ...data, role: data.role || "user" }
           return
         }
 
@@ -101,10 +108,17 @@ export const useAuthStore = defineStore("auth", {
         const adminDoc = await getDoc(adminDocRef)
         if (!adminDoc.exists()) {
           await signOut(auth)
-          return { success: false, message: "This account is not an administrator." }
+          return { success: false, message: "This account is not an administrator. Please use the user or driver login page." }
         }
 
         const admin = adminDoc.data()
+        
+        // ROLE CHECK: Ensure this is actually an admin account
+        if (admin.role !== "admin") {
+          await signOut(auth)
+          return { success: false, message: "This account is not an administrator. Please use the appropriate login page." }
+        }
+        
         if (admin?.banned) {
           await signOut(auth)
           return { success: false, message: "Administrator account is banned." }
@@ -122,8 +136,8 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    // ---------- Regular login (users + drivers + admins via users route) ----------
-    async login(email, password) {
+    // ---------- Regular login (users only - for /login route) ----------
+    async login(email, password, expectedRole = "user") {
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password)
         this.user = cred.user
@@ -151,10 +165,17 @@ export const useAuthStore = defineStore("auth", {
 
         // if no profile found at all
         if (!profile) {
-          // optional: you can auto-create a basic user profile here if you want
-          // but for safety, just sign out and show error
           await signOut(auth)
           return { success: false, message: "Profile not found. Please contact support." }
+        }
+
+        // ROLE CHECK: Only allow login if role matches expected role
+        if (expectedRole === "user" && profile.role !== "user") {
+          await signOut(auth)
+          return { 
+            success: false, 
+            message: `This account is registered as a ${profile.role}. Please use the ${profile.role} login page.` 
+          }
         }
 
         // route logic & approval check

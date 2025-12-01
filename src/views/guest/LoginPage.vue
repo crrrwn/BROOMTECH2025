@@ -280,23 +280,25 @@ const handleLogin = async () => {
   loading.value = true
   
   try {
-    const result = await authStore.login(form.value.email, form.value.password)
+    // Check if a different role is already logged in
+    if (authStore.isAuthenticated && authStore.userProfile) {
+      const currentRole = authStore.userProfile.role
+      if (currentRole !== 'user') {
+        // Force logout if different role is logged in
+        await authStore.logout()
+        showNotification('info', 'Please log in with your user account.')
+      }
+    }
+    
+    // Login with expected role = 'user'
+    const result = await authStore.login(form.value.email, form.value.password, 'user')
     
     if (result.success) {
       showNotification('success', result.message)
       
-      // Redirect based on user role after a short delay
+      // Redirect to user dashboard (should always be user role)
       setTimeout(() => {
-        const userRole = authStore.userProfile?.role
-        if (userRole === 'user') {
-          router.push('/user')
-        } else if (userRole === 'driver') {
-          router.push('/driver')
-        } else if (userRole === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push('/')
-        }
+        router.push('/user')
       }, 1500)
     } else {
       showNotification('error', result.message)
@@ -312,23 +314,32 @@ const handleGoogleLogin = async () => {
   loading.value = true
   
   try {
+    // Check if a different role is already logged in
+    if (authStore.isAuthenticated && authStore.userProfile) {
+      const currentRole = authStore.userProfile.role
+      if (currentRole !== 'user') {
+        // Force logout if different role is logged in
+        await authStore.logout()
+        showNotification('info', 'Please log in with your user account.')
+      }
+    }
+    
     const result = await authStore.loginWithGoogle()
     
     if (result.success) {
+      // Check role after Google login
+      const userRole = authStore.userProfile?.role
+      if (userRole !== 'user') {
+        await authStore.logout()
+        showNotification('error', 'This account is not registered as a user. Please use the appropriate login page.')
+        return
+      }
+      
       showNotification('success', result.message)
       
-      // Redirect based on user role after a short delay
+      // Redirect to user dashboard
       setTimeout(() => {
-        const userRole = authStore.userProfile?.role
-        if (userRole === 'user') {
-          router.push('/user')
-        } else if (userRole === 'driver') {
-          router.push('/driver')
-        } else if (userRole === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push('/')
-        }
+        router.push('/user')
       }, 1500)
     } else {
       showNotification('error', result.message)

@@ -130,8 +130,26 @@ const forgotPasswordEmail = ref('')
 const handleAdminLogin = async () => {
   loading.value = true
   try {
+    // Check if a different role is already logged in
+    if (authStore.isAuthenticated && authStore.userProfile) {
+      const currentRole = authStore.userProfile.role
+      if (currentRole !== 'admin') {
+        // Force logout if different role is logged in
+        await authStore.logout()
+        toast.info('Please log in with your admin account.')
+      }
+    }
+    
     const result = await authStore.loginAdmin(form.value.email, form.value.password)
     if (result.success) {
+      // Double check role after login
+      const role = authStore.userProfile?.role
+      if (role !== 'admin') {
+        await authStore.logout()
+        toast.error('This account is not an administrator. Please use the appropriate login page.')
+        return
+      }
+      
       toast.success('Welcome to Admin Portal')
       router.push('/admin')
     } else {

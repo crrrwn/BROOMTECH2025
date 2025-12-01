@@ -125,6 +125,8 @@
 import { realtimeService } from '@/services/realtime'
 import { chatService } from '@/services/chatService'
 import { useAuthStore } from '@/stores/auth'
+import { db } from '@/firebase/config'
+import { doc, onSnapshot } from 'firebase/firestore'
 
 export default {
   name: 'LiveTracking',
@@ -156,133 +158,447 @@ export default {
       map: null,
       driverMarker: null,
       destinationMarker: null,
+      pickupMarker: null,
+      directionsService: null,
+      directionsRenderer: null,
       showPhoneModal: false,
-      locationUpdateInterval: null
+      locationUpdateInterval: null,
+      driverLocationUnsubscribe: null,
+      mapsReady: false
     }
   },
   async mounted() {
-    await this.initializeTracking()
+    await this.loadGoogleMapsAPI()
     this.subscribeToOrderUpdates()
   },
   beforeUnmount() {
     if (this.locationUpdateInterval) {
       clearInterval(this.locationUpdateInterval)
     }
+    if (this.driverLocationUnsubscribe) {
+      this.driverLocationUnsubscribe()
+      this.driverLocationUnsubscribe = null
+    }
     realtimeService.unsubscribe(`order_${this.orderId}`)
-    if (this.order?.driverId) {
-      realtimeService.unsubscribe(`driver_location_${this.order.driverId}`)
+  },
+  watch: {
+    order(newOrder) {
+      if (newOrder) {
+        this.$nextTick(() => {
+          this.initializeMap()
+        })
+      }
+    },
+    mapsReady(ready) {
+      if (ready && this.order) {
+        this.$nextTick(() => {
+          this.initializeMap()
+        })
+      }
     }
   },
   methods: {
-    async initializeTracking() {
-      try {
-        this.loading = true
-        
-        // Initialize map
-        await this.initializeMap()
-        
-        // Fetch initial order data
-        await new Promise(resolve => setTimeout(resolve, 500))
-        this.updateStatusSteps()
-        this.startLocationUpdates()
+    loadGoogleMapsAPI() {
+      return new Promise((resolve) => {
+        if (window.google && window.google.maps) {
+          this.mapsReady = true
+          resolve()
+          return
+        }
+        if (document.getElementById('live-tracking-gmaps-script')) {
+          // Wait for script to load
+          const checkInterval = setInterval(() => {
+            if (window.google && window.google.maps) {
+              clearInterval(checkInterval)
+              this.mapsReady = true
+              resolve()
+            }
+          }, 100)
+          return
+        }
 
-        this.loading = false
-      } catch (error) {
-        console.error('Error initializing tracking:', error)
-        this.loading = false
+        const script = document.createElement('script')
+        script.id = 'live-tracking-gmaps-script'
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=places,geometry&loading=async`
+        script.async = true
+        script.defer = true
+        script.onload = () => {
+          this.mapsReady = true
+          resolve()
+        }
+        script.onerror = () => {
+          console.error('Failed to load Google Maps API')
+          resolve()
+        }
+        document.head.appendChild(script)
+      })
+    },
+
+    getPickupLocation(order) {
+      if (!order) return ''
+      const formData = order.formData || {}
+      const serviceType = order.serviceType || order.serviceId || ''
+      
+      switch (serviceType) {
+        case 'food-delivery':
+        case 'food':
+          return formData.restaurantAddress || order.pickupAddress || ''
+        case 'bill-payments':
+        case 'pickup-drop':
+          return formData.pickupAddress || order.pickupAddress || ''
+        case 'gift-delivery':
+          return formData.storeAddress || order.pickupAddress || ''
+        default:
+          return order.pickupAddress || ''
+      }
+    },
+
+    getDeliveryLocation(order) {
+      if (!order) return ''
+      const formData = order.formData || {}
+      const serviceType = order.serviceType || order.serviceId || ''
+      
+      switch (serviceType) {
+        case 'food-delivery':
+        case 'food':
+        case 'grocery-shopping':
+        case 'grocery':
+        case 'medicine-delivery':
+        case 'medicine':
+        case 'gift-delivery':
+          return formData.deliveryAddress || order.deliveryAddress || ''
+        case 'bill-payments':
+          return formData.returnAddress || order.deliveryAddress || ''
+        case 'pickup-drop':
+          return formData.dropoffAddress || order.deliveryAddress || ''
+        default:
+          return order.deliveryAddress || ''
       }
     },
 
     async initializeMap() {
+      if (!this.mapsReady || !window.google || !this.order) return
+      
       try {
-        // Wait for Google Maps API to load
-        if (!window.google) {
-          console.warn('Google Maps API not loaded yet')
-          return
-        }
-
         const mapContainer = this.$refs.mapContainer
         if (!mapContainer) return
 
+        // Clear existing map if any
+        if (this.map) {
+          // Clean up existing markers and renderers
+          if (this.pickupMarker) this.pickupMarker.setMap(null)
+          if (this.destinationMarker) this.destinationMarker.setMap(null)
+          if (this.driverMarker) this.driverMarker.setMap(null)
+        }
+
         // Default center (Calapan City)
-        const defaultCenter = { lat: 13.2088, lng: 121.1857 }
+        const defaultCenter = { lat: 13.4119, lng: 121.1803 }
 
         this.map = new window.google.maps.Map(mapContainer, {
-          zoom: 15,
+          zoom: 13,
           center: defaultCenter,
           mapTypeControl: false,
           fullscreenControl: false,
           streetViewControl: false
         })
 
-        // Add destination marker
-        if (this.order?.deliveryAddress) {
-          this.destinationMarker = new window.google.maps.Marker({
-            position: this.order.deliveryAddress.coordinates || defaultCenter,
-            map: this.map,
-            title: 'Delivery Location',
-            icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-          })
-        }
-
-        // Add driver marker (will update with real location)
-        this.driverMarker = new window.google.maps.Marker({
-          position: defaultCenter,
+        // Initialize directions service and renderer
+        this.directionsService = new window.google.maps.DirectionsService()
+        this.directionsRenderer = new window.google.maps.DirectionsRenderer({
           map: this.map,
-          title: 'Driver Location',
-          icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+          suppressMarkers: true // We'll use custom markers
         })
+
+        // Get pickup and delivery addresses
+        const pickupAddress = this.getPickupLocation(this.order)
+        const deliveryAddress = this.getDeliveryLocation(this.order)
+
+        // Add markers and route
+        await this.addMarkersAndRoute(pickupAddress, deliveryAddress)
+        
+        // Start tracking driver location
+        this.startDriverLocationTracking()
       } catch (error) {
         console.error('Error initializing map:', error)
       }
     },
 
-    startLocationUpdates() {
-      if (this.order?.driverId) {
-        realtimeService.subscribeToDriverLocation(this.order.driverId, (location) => {
-          if (location && location.latitude && location.longitude) {
-            const driverPos = {
-              lat: location.latitude,
-              lng: location.longitude
-            }
-            
-            // Update marker position
-            if (this.driverMarker) {
-              this.driverMarker.setPosition(driverPos)
-            }
+    async addMarkersAndRoute(pickupAddress, deliveryAddress) {
+      if (!this.map || !pickupAddress || !deliveryAddress) return
 
-            // Center map on driver
-            if (this.map) {
-              this.map.setCenter(driverPos)
-            }
+      try {
+        const geocoder = new window.google.maps.Geocoder()
+        
+        // Geocode pickup address
+        const pickupCoords = await this.geocodeAddress(geocoder, pickupAddress)
+        // Geocode delivery address
+        const deliveryCoords = await this.geocodeAddress(geocoder, deliveryAddress)
 
-            // Update location text
-            this.driverLocation = location.address || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
+        const bounds = new window.google.maps.LatLngBounds()
+
+        // Add pickup marker (green P)
+        if (pickupCoords) {
+          bounds.extend(pickupCoords)
+          this.pickupMarker = new window.google.maps.Marker({
+            position: pickupCoords,
+            map: this.map,
+            title: 'Pickup Location',
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+                  <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">P</text>
+                </svg>
+              `),
+              scaledSize: new window.google.maps.Size(40, 40),
+              anchor: new window.google.maps.Point(20, 20)
+            }
+          })
+        }
+
+        // Add delivery marker (red D)
+        if (deliveryCoords) {
+          bounds.extend(deliveryCoords)
+          this.destinationMarker = new window.google.maps.Marker({
+            position: deliveryCoords,
+            map: this.map,
+            title: 'Delivery Location',
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="#EF4444" stroke="#ffffff" stroke-width="3"/>
+                  <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">D</text>
+                </svg>
+              `),
+              scaledSize: new window.google.maps.Size(40, 40),
+              anchor: new window.google.maps.Point(20, 20)
+            }
+          })
+        }
+
+        // Show route between pickup and delivery (same as BookService)
+        if (pickupCoords && deliveryCoords && this.directionsService && this.directionsRenderer) {
+          this.directionsService.route({
+            origin: pickupCoords,
+            destination: deliveryCoords,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+            unitSystem: window.google.maps.UnitSystem.METRIC,
+            avoidHighways: false,
+            avoidTolls: false
+          }, (result, status) => {
+            if (status === 'OK') {
+              this.directionsRenderer.setDirections(result)
+              
+              // Update bounds to include route points
+              if (result.routes && result.routes[0] && result.routes[0].legs) {
+                result.routes[0].legs.forEach(leg => {
+                  bounds.extend(leg.start_location)
+                  bounds.extend(leg.end_location)
+                })
+              }
+              
+              // Fit bounds to show all locations
+              if (!bounds.isEmpty()) {
+                this.map.fitBounds(bounds, { padding: 80 })
+              }
+            } else {
+              console.error('Directions request failed:', status)
+              // If directions fail, at least show both markers
+              if (!bounds.isEmpty()) {
+                this.map.fitBounds(bounds, { padding: 80 })
+              }
+            }
+          })
+        } else if (!bounds.isEmpty()) {
+          // If no route, at least show markers
+          this.map.fitBounds(bounds, { padding: 80 })
+        }
+      } catch (error) {
+        console.error('Error adding markers and route:', error)
+      }
+    },
+
+    geocodeAddress(geocoder, address) {
+      return new Promise((resolve) => {
+        geocoder.geocode({ address: address }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            resolve(results[0].geometry.location)
+          } else {
+            console.error('Geocoding failed for:', address, status)
+            resolve(null)
           }
         })
+      })
+    },
+
+    startDriverLocationTracking() {
+      if (!this.order?.driverId || !this.map) return
+
+      // Clean up existing listener
+      if (this.driverLocationUnsubscribe) {
+        this.driverLocationUnsubscribe()
+        this.driverLocationUnsubscribe = null
       }
 
-      // Fallback: simulate location updates if real data not available
-      this.locationUpdateInterval = setInterval(() => {
-        const locations = [
-          'Quezon City, Metro Manila',
-          'EDSA Cubao, Quezon City',
-          'Ortigas Center, Pasig City',
-          'Makati CBD, Makati City'
-        ]
-        this.driverLocation = locations[Math.floor(Math.random() * locations.length)]
-        
-        const distances = ['2.3 km', '1.8 km', '1.2 km', '0.5 km']
-        const times = ['15 mins', '12 mins', '8 mins', '3 mins']
-        this.remainingDistance = distances[Math.floor(Math.random() * distances.length)]
-        this.estimatedArrival = times[Math.floor(Math.random() * times.length)]
-      }, 5000)
+      // Listen to driver's location from drivers collection (currentLocation field)
+      const driverRef = doc(db, 'drivers', this.order.driverId)
+      
+      this.driverLocationUnsubscribe = onSnapshot(driverRef, (driverSnap) => {
+        if (!driverSnap.exists()) {
+          return
+        }
+
+        const driverData = driverSnap.data()
+        const driverLocation = driverData.currentLocation
+
+        if (!driverLocation || !driverLocation.lat || !driverLocation.lng) {
+          return
+        }
+
+        const driverPosition = {
+          lat: driverLocation.lat,
+          lng: driverLocation.lng
+        }
+
+        // Create or update driver marker
+        if (!this.driverMarker) {
+          this.driverMarker = new window.google.maps.Marker({
+            position: driverPosition,
+            map: this.map,
+            title: 'Driver Location',
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="#3B82F6" stroke="#ffffff" stroke-width="3"/>
+                  <path d="M20 8l6 12-6 12-6-12 6-12z" fill="#ffffff"/>
+                </svg>
+              `),
+              scaledSize: new window.google.maps.Size(40, 40),
+              anchor: new window.google.maps.Point(20, 20)
+            }
+          })
+        } else {
+          // Smoothly animate marker to new position
+          const startPosition = this.driverMarker.getPosition()
+          if (startPosition) {
+            const endPosition = new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng)
+            
+            let step = 0
+            const steps = 10
+            const animateMarker = () => {
+              step++
+              const progress = step / steps
+
+              const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * progress
+              const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * progress
+
+              this.driverMarker.setPosition(new window.google.maps.LatLng(lat, lng))
+
+              if (step < steps) {
+                setTimeout(animateMarker, 50)
+              }
+            }
+            animateMarker()
+          } else {
+            this.driverMarker.setPosition(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+          }
+        }
+
+        // Update location text (reverse geocode)
+        if (window.google && window.google.maps) {
+          const geocoder = new window.google.maps.Geocoder()
+          geocoder.geocode({ location: driverPosition }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              this.driverLocation = results[0].formatted_address
+            } else {
+              this.driverLocation = `${driverPosition.lat.toFixed(6)}, ${driverPosition.lng.toFixed(6)}`
+            }
+          })
+        } else {
+          this.driverLocation = `${driverPosition.lat.toFixed(6)}, ${driverPosition.lng.toFixed(6)}`
+        }
+
+        // Calculate distance and ETA to delivery location
+        if (this.destinationMarker) {
+          const dropoffPos = this.destinationMarker.getPosition()
+          if (dropoffPos) {
+            const distance = this.calculateDistance(
+              driverPosition.lat,
+              driverPosition.lng,
+              dropoffPos.lat(),
+              dropoffPos.lng()
+            )
+            this.remainingDistance = this.formatDistance(distance)
+            this.estimatedArrival = this.formatTime(distance)
+          }
+        }
+
+        // Update map bounds to include driver, pickup, and delivery
+        if (this.pickupMarker && this.destinationMarker) {
+          const bounds = new window.google.maps.LatLngBounds()
+          
+          const pickupPos = this.pickupMarker.getPosition()
+          if (pickupPos) bounds.extend(pickupPos)
+          
+          const dropoffPos = this.destinationMarker.getPosition()
+          if (dropoffPos) bounds.extend(dropoffPos)
+          
+          bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+          
+          this.map.fitBounds(bounds, { padding: 100 })
+        } else {
+          // If markers not available, just pan to driver
+          setTimeout(() => {
+            if (this.map) {
+              this.map.panTo(driverPosition)
+            }
+          }, 500)
+        }
+      }, (error) => {
+        console.error('Error listening to driver location:', error)
+      })
+    },
+
+    calculateDistance(lat1, lng1, lat2, lng2) {
+      const R = 6371 // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180
+      const dLng = (lng2 - lng1) * Math.PI / 180
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      return R * c
+    },
+
+    formatDistance(km) {
+      if (km < 1) {
+        return `${Math.round(km * 1000)}m`
+      }
+      return `${km.toFixed(1)}km`
+    },
+
+    formatTime(km) {
+      // Assuming average speed of 30 km/h
+      const hours = km / 30
+      const minutes = Math.round(hours * 60)
+      if (minutes < 60) {
+        return `${minutes} min${minutes !== 1 ? 's' : ''}`
+      }
+      const hrs = Math.floor(minutes / 60)
+      const mins = minutes % 60
+      return `${hrs}h ${mins}m`
     },
 
     subscribeToOrderUpdates() {
       realtimeService.subscribeToOrder(this.orderId, (order) => {
         this.order = order
         this.updateStatusSteps()
+        // Re-initialize map when order data is available
+        if (this.mapsReady && this.order) {
+          this.$nextTick(() => {
+            this.initializeMap()
+          })
+        }
       })
     },
 

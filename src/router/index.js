@@ -294,15 +294,26 @@ const router = createRouter({
 })
 
 /**
- * Ultra-fast guard - ALL DELAYS REMOVED:
- * - No auth initialization during navigation
- * - No realtime setup during navigation
- * - Pure synchronous checks only
+ * Router guard with auth initialization check
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Auth initialization now happens only in background, never blocks navigation
+  // Wait for auth initialization to complete (prevents auto-logout on refresh)
+  if (authStore.loading) {
+    // Initialize auth if not already initialized
+    if (!authStore.isAuthenticated && !authStore.user) {
+      await authStore.initAuth()
+    } else {
+      // Wait for auth to finish loading (with timeout)
+      let attempts = 0
+      const maxAttempts = 60 // 3 seconds max (60 * 50ms)
+      while (authStore.loading && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 50))
+        attempts++
+      }
+    }
+  }
 
   // Setup listeners in nextTick to avoid blocking navigation
   if (authStore.isAuthenticated && authStore.userProfile) {
@@ -314,7 +325,7 @@ router.beforeEach((to, from, next) => {
     }, 0)
   }
 
-  // Guarded routes - pure synchronous checks only
+  // Guarded routes
   if (to.meta.requiresAuth) {
     if (!authStore.isAuthenticated) {
       if (to.path.startsWith("/admin")) return next("/admin/login")
@@ -344,16 +355,39 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // Authenticated users shouldn't see guest auth pages
+  // Role-specific login pages - force logout if wrong role is logged in
+  if (authStore.isAuthenticated && authStore.userProfile) {
+    const currentRole = authStore.userProfile.role
+    
+    // If accessing user login page but logged in as driver/admin, force logout
+    if (to.name === "login" && currentRole !== "user") {
+      await authStore.logout()
+      return next()
+    }
+    
+    // If accessing driver login page but logged in as user/admin, force logout
+    if (to.name === "driver-login" && currentRole !== "driver") {
+      await authStore.logout()
+      return next()
+    }
+    
+    // If accessing admin login page but logged in as user/driver, force logout
+    if (to.name === "admin-login" && currentRole !== "admin") {
+      await authStore.logout()
+      return next()
+    }
+  }
+
+  // Authenticated users shouldn't see guest auth pages (same role)
   if (
     authStore.isAuthenticated &&
     ["login", "register", "admin-login", "driver-login", "driver-register", "admin-register"].includes(to.name)
   ) {
     const role = authStore.userProfile?.role
-    if (role === "user") return next("/user")
-    if (role === "driver") return next("/driver")
-    if (role === "admin") return next("/admin")
-    return next("/")
+    if (role === "user" && to.name === "login") return next("/user")
+    if (role === "driver" && to.name === "driver-login") return next("/driver")
+    if (role === "admin" && to.name === "admin-login") return next("/admin")
+    // If different role, allow access (will be handled by role-specific check above)
   }
 
   return next()

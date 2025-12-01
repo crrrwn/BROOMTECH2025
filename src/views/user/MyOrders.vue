@@ -126,8 +126,8 @@
                 </div>
               </div>
 
-              <!-- Live Tracking for in-transit and on_the_way orders -->
-              <div v-if="order.status === 'in_transit' || order.status === 'on_the_way'" class="mb-4">
+              <!-- Live Tracking for orders with driver assigned -->
+              <div v-if="(order.status === 'in_transit' || order.status === 'on_the_way' || order.status === 'confirmed') && (order.driverId || order.driver)" class="mb-4">
                 <LiveTracking :order-id="order.id" />
               </div>
 
