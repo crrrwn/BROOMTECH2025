@@ -12,6 +12,7 @@
     "@googlemaps/js-api-loader": "^1.16.10",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
+    "face-api.js": "^0.22.2",
     "firebase": "^10.14.1",
     "leaflet": "^1.9.4",
     "pinia": "^2.3.1",

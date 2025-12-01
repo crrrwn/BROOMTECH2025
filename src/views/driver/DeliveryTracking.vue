@@ -1297,6 +1297,7 @@ export default {
                 title: 'Payment Amount Updated',
                 message: `Please check your chat message for the updated payment amount (₱${newTotal.toFixed(2)})`,
                 type: 'payment_update',
+                recipientType: 'user',
                 orderId: this.order.id,
                 totalAmount: newTotal
               })
@@ -1434,17 +1435,13 @@ export default {
 
                 // Send notification to all admins
                 try {
-                  // Use recipientType: 'admin' to send to all admins (as used in AdminLayout)
-                  await addDoc(collection(db, 'notifications'), {
-                    recipientType: 'admin',
+                  await realtimeService.sendNotificationToAdmins({
                     title: 'Order Completed',
                     message: `Order #${this.order.id.substring(0, 8)} has been completed. Proof of delivery uploaded.`,
                     type: 'order_completed',
                     orderId: this.order.id,
                     driverId: driverId,
-                    driverName: this.driverName,
-                    read: false,
-                    createdAt: serverTimestamp()
+                    driverName: this.driverName
                   })
                   console.log('[v0] Notification sent to all admins about order completion')
                 } catch (notifError) {

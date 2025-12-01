@@ -221,8 +221,6 @@
                   ₱{{ Number(driver.earnings || 0).toLocaleString() }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button @click="viewDriver(driver)" class="text-blue-600 hover:text-blue-900">View</button>
-                  <button @click="trackDriver(driver)" class="text-green-600 hover:text-green-900">Track</button>
                   <button @click="suspendDriver(driver)" class="text-red-600 hover:text-red-900">
                     {{ driver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
                   </button>
@@ -521,17 +519,32 @@
         <h3 class="text-lg font-semibold text-gray-900 mb-4">
           {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend Driver' : 'Suspend Driver' }}
         </h3>
-        <p class="text-gray-600 mb-6">
+        <p class="text-gray-600 mb-4">
           {{ driverToSuspend?.status === 'suspended' 
             ? `Are you sure you want to unsuspend ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}? They will be able to accept orders again.`
-            : `Are you sure you want to suspend ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}? They will not be able to accept new orders.`
+            : `Please provide a reason for suspending ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}.`
           }}
         </p>
+        <div v-if="driverToSuspend?.status !== 'suspended'" class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Suspension *</label>
+          <textarea
+            v-model="suspendReason"
+            rows="4"
+            required
+            placeholder="Enter the reason for suspending this driver..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+          ></textarea>
+        </div>
         <div class="flex justify-end space-x-3">
-          <button @click="showSuspendModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+          <button @click="closeSuspendModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
             Cancel
           </button>
-          <button @click="executeSuspend" :class="driverToSuspend?.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" class="px-4 py-2 text-white rounded-lg">
+          <button 
+            @click="executeSuspend" 
+            :disabled="driverToSuspend?.status !== 'suspended' && !suspendReason.trim()"
+            :class="driverToSuspend?.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" 
+            class="px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
           </button>
         </div>
@@ -706,6 +719,7 @@ export default {
     const lastLocationUpdate = ref('Just now')
     const showSuspendModal = ref(false)
     const driverToSuspend = ref(null)
+    const suspendReason = ref('')
     const locationUpdateInterval = ref(null)
     const driverMap = ref(null)
     const driverMarker = ref(null)
@@ -1406,7 +1420,14 @@ export default {
 
     const suspendDriver = (driver) => {
       driverToSuspend.value = driver
+      suspendReason.value = ''
       showSuspendModal.value = true
+    }
+
+    const closeSuspendModal = () => {
+      showSuspendModal.value = false
+      driverToSuspend.value = null
+      suspendReason.value = ''
     }
 
     const confirmSuspendDriver = () => {
@@ -1419,15 +1440,33 @@ export default {
     const executeSuspend = async () => {
       if (!driverToSuspend.value) return
 
+      // Validate reason is provided for suspension
+      if (driverToSuspend.value.status !== 'suspended' && !suspendReason.value.trim()) {
+        toast.error('Please provide a reason for suspension')
+        return
+      }
+
       try {
         const driver = driverToSuspend.value
         const newStatus = driver.status === 'suspended' ? 'active' : 'suspended'
         const col = driver.source === 'drivers' ? 'drivers' : 'users'
         
-        await updateDoc(doc(db, col, driver.id), { 
+        const updateData = { 
           status: newStatus,
           updatedAt: new Date().toISOString()
-        })
+        }
+
+        // Add suspension reason if suspending
+        if (newStatus === 'suspended') {
+          updateData.suspensionReason = suspendReason.value.trim()
+          updateData.suspendedAt = new Date().toISOString()
+        } else {
+          // Clear suspension reason when unsuspending
+          updateData.suspensionReason = null
+          updateData.suspendedAt = null
+        }
+        
+        await updateDoc(doc(db, col, driver.id), updateData)
 
         const idx = drivers.value.findIndex(d => d.id === driver.id)
         if (idx !== -1) {
@@ -1456,8 +1495,7 @@ export default {
         }
 
         toast.success(newStatus === 'suspended' ? 'Driver suspended successfully' : 'Driver unsuspended successfully')
-        showSuspendModal.value = false
-        driverToSuspend.value = null
+        closeSuspendModal()
       } catch (err) {
         console.error('Error updating driver status:', err)
         toast.error('Failed to update driver status')
@@ -1583,13 +1621,12 @@ export default {
       totalPages,
       loadDrivers,
       getStatusClass,
-      viewDriver,
       viewDocument,
-      trackDriver,
       trackDriverFromModal,
       suspendDriver,
       confirmSuspendDriver,
       executeSuspend,
+      closeSuspendModal,
       previousPage,
       nextPage,
       selectedDriver,

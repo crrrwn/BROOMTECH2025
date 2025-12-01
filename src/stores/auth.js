@@ -97,6 +97,206 @@ export const useAuthStore = defineStore("auth", {
       return this.userProfile
     },
 
+    // ---------- Face Recognition Methods ----------
+    async saveFaceDescriptor(userId, descriptor) {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return { success: false, message: 'User profile not found' }
+        }
+
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        await updateDoc(doc(db, collectionName, userId), {
+          faceDescriptor: descriptor,
+          faceRegisteredAt: new Date().toISOString()
+        })
+
+        // Update local profile
+        if (this.userProfile) {
+          this.userProfile.faceDescriptor = descriptor
+          this.userProfile.faceRegisteredAt = new Date().toISOString()
+        }
+
+        return { success: true, message: 'Face registered successfully' }
+      } catch (error) {
+        console.error('Error saving face descriptor:', error)
+        return { success: false, message: error.message }
+      }
+    },
+
+    async getFaceDescriptor(userId) {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return null
+        }
+
+        // Return face descriptor from profile if available
+        if (profile.faceDescriptor) {
+          return profile.faceDescriptor
+        }
+
+        // Otherwise fetch from database
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        const snap = await getDoc(doc(db, collectionName, userId))
+        
+        if (snap.exists()) {
+          const data = snap.data()
+          return data.faceDescriptor || null
+        }
+
+        return null
+      } catch (error) {
+        console.error('Error getting face descriptor:', error)
+        return null
+      }
+    },
+
+    hasFaceRegistered() {
+      return this.userProfile?.faceDescriptor && Array.isArray(this.userProfile.faceDescriptor) && this.userProfile.faceDescriptor.length > 0
+    },
+
+    // ---------- Face Recognition Attempt Tracking ----------
+    async incrementFaceAttempts(userId, type = 'verification') {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return { success: false, message: 'User profile not found' }
+        }
+
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        const userDoc = doc(db, collectionName, userId)
+        const userSnap = await getDoc(userDoc)
+        
+        if (!userSnap.exists()) {
+          return { success: false, message: 'User not found' }
+        }
+
+        const currentData = userSnap.data()
+        const attemptKey = type === 'registration' ? 'faceRegistrationAttempts' : 'faceVerificationAttempts'
+        const totalAttemptsKey = 'totalFaceAttempts'
+        const lastAttemptKey = type === 'registration' ? 'lastFaceRegistrationAttempt' : 'lastFaceVerificationAttempt'
+        
+        const currentAttempts = currentData[attemptKey] || 0
+        const totalAttempts = currentData[totalAttemptsKey] || 0
+        const newAttempts = currentAttempts + 1
+        const newTotalAttempts = totalAttempts + 1
+
+        const updateData = {
+          [attemptKey]: newAttempts,
+          [totalAttemptsKey]: newTotalAttempts,
+          [lastAttemptKey]: new Date().toISOString()
+        }
+
+        await updateDoc(userDoc, updateData)
+
+        // Update local profile
+        if (this.userProfile) {
+          this.userProfile[attemptKey] = newAttempts
+          this.userProfile[totalAttemptsKey] = newTotalAttempts
+        }
+
+        return { 
+          success: true, 
+          attempts: newAttempts,
+          totalAttempts: newTotalAttempts
+        }
+      } catch (error) {
+        console.error('Error incrementing face attempts:', error)
+        return { success: false, message: error.message }
+      }
+    },
+
+    async resetFaceAttempts(userId, type = 'verification') {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return { success: false, message: 'User profile not found' }
+        }
+
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        const userDoc = doc(db, collectionName, userId)
+        
+        const attemptKey = type === 'registration' ? 'faceRegistrationAttempts' : 'faceVerificationAttempts'
+        
+        await updateDoc(userDoc, {
+          [attemptKey]: 0
+        })
+
+        // Update local profile
+        if (this.userProfile) {
+          this.userProfile[attemptKey] = 0
+        }
+
+        return { success: true }
+      } catch (error) {
+        console.error('Error resetting face attempts:', error)
+        return { success: false, message: error.message }
+      }
+    },
+
+    async banUser(userId, reason = 'Multiple face recognition failures') {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return { success: false, message: 'User profile not found' }
+        }
+
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        const userDoc = doc(db, collectionName, userId)
+        
+        await updateDoc(userDoc, {
+          banned: true,
+          bannedAt: new Date().toISOString(),
+          banReason: reason
+        })
+
+        // Update local profile
+        if (this.userProfile) {
+          this.userProfile.banned = true
+          this.userProfile.bannedAt = new Date().toISOString()
+          this.userProfile.banReason = reason
+        }
+
+        // Logout user after ban
+        await signOut(auth)
+        this.user = null
+        this.userProfile = null
+        this.isAuthenticated = false
+
+        return { success: true, message: 'User has been banned due to multiple face recognition failures.' }
+      } catch (error) {
+        console.error('Error banning user:', error)
+        return { success: false, message: error.message }
+      }
+    },
+
+    async getFaceAttempts(userId) {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return null
+        }
+
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        const snap = await getDoc(doc(db, collectionName, userId))
+        
+        if (snap.exists()) {
+          const data = snap.data()
+          return {
+            registrationAttempts: data.faceRegistrationAttempts || 0,
+            verificationAttempts: data.faceVerificationAttempts || 0,
+            totalAttempts: data.totalFaceAttempts || 0
+          }
+        }
+
+        return null
+      } catch (error) {
+        console.error('Error getting face attempts:', error)
+        return null
+      }
+    },
+
     // ---------- Admin-only login (bypass approval gate for admins) ----------
     async loginAdmin(email, password) {
       try {

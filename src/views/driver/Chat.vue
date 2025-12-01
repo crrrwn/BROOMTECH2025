@@ -223,7 +223,7 @@ export default {
               this.selectChat(chats[0])
             }
           } else if (!this.selectedChatId && chats.length > 0) {
-            // Auto-select first chat if none selected and chats exist
+          // Auto-select first chat if none selected and chats exist
             this.selectChat(chats[0])
           }
         }, (error) => {

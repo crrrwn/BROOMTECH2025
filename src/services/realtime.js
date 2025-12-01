@@ -178,16 +178,37 @@ export class RealtimeService {
   }
 
   // Send real-time notification
+  // userId: specific user ID (for user/driver notifications) or null (for admin notifications)
+  // notification: { title, message, type, recipientType: 'user'|'driver'|'admin', ... }
   async sendNotification(userId, notification) {
     try {
+      const notificationData = {
+        userId: userId || null,
+        recipientType: notification.recipientType || (userId ? 'user' : 'admin'), // Auto-detect if not provided
+        ...notification,
+        read: false,
+        createdAt: serverTimestamp(),
+      }
+      
+      await addDoc(collection(db, "notifications"), notificationData)
+    } catch (error) {
+      console.error("Error sending notification:", error)
+      throw error
+    }
+  }
+  
+  // Send notification to all admins
+  async sendNotificationToAdmins(notification) {
+    try {
       await addDoc(collection(db, "notifications"), {
-        userId,
+        userId: null,
+        recipientType: 'admin',
         ...notification,
         read: false,
         createdAt: serverTimestamp(),
       })
     } catch (error) {
-      console.error("Error sending notification:", error)
+      console.error("Error sending notification to admins:", error)
       throw error
     }
   }

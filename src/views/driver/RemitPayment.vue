@@ -38,8 +38,8 @@
 
     <!-- Remit Tab Content -->
     <div v-if="activeTab === 'remit'">
-        <!-- Filter Buttons -->
-      <div class="flex gap-2">
+    <!-- Filter Buttons -->
+    <div class="flex gap-2">
       <button 
         @click="filterPeriod = 'today'"
         :class="filterPeriod === 'today' ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'"
@@ -54,15 +54,15 @@
       >
         All Time
       </button>
-      </div>
+    </div>
 
-      <!-- Group deliveries by date with remit button for each group -->
-      <div v-if="getFilteredDeliveries().length === 0" class="text-center py-12">
-        <p class="text-gray-500 text-lg">No completed deliveries found</p>
-      </div>
+    <!-- Group deliveries by date with remit button for each group -->
+    <div v-if="getFilteredDeliveries().length === 0" class="text-center py-12">
+      <p class="text-gray-500 text-lg">No completed deliveries found</p>
+    </div>
 
-      <!-- Grouped date cards with remit button -->
-      <div v-else class="space-y-4">
+    <!-- Grouped date cards with remit button -->
+    <div v-else class="space-y-4">
       <div v-for="dateGroup in groupedDeliveries" :key="dateGroup.date" class="bg-white rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow">
         <!-- Date header with order count -->
         <div class="flex items-start justify-between mb-6">
@@ -832,7 +832,7 @@ export default {
               // Ensure paymentMethod is extracted from formData if not directly available
               paymentMethod: data.paymentMethod || data.formData?.paymentMethod || data.method || null
             })
-          })
+            })
 
           // Sort manually by deliveredAt (descending)
           orders.sort((a, b) => {
@@ -968,7 +968,7 @@ export default {
           this.remittanceHistory = snapshot.docs.map(doc => {
             const data = doc.data()
             return {
-              id: doc.id,
+          id: doc.id,
               ...data,
               // Ensure paymentMethod is available (fallback to method if needed)
               paymentMethod: data.paymentMethod || data.method || 'Unknown'

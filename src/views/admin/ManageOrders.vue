@@ -2077,6 +2077,7 @@ export default {
           title: 'New Order Assignment',
           message: `You have a new order/booking assigned. Please check your My Assignment page. Order #${selectedOrder.value.id}`,
           type: 'order_assignment',
+          recipientType: 'driver',
           orderId: selectedOrder.value.id,
           customerName: selectedOrder.value.customerName,
           serviceType: selectedOrder.value.serviceType || selectedOrder.value.serviceId,
@@ -2089,6 +2090,7 @@ export default {
             title: 'Driver Assigned',
             message: `${driverName} has been assigned to your order #${selectedOrder.value.id}`,
             type: 'driver_assigned',
+            recipientType: 'user',
             orderId: selectedOrder.value.id,
             driverName: driverName,
             driverPhone: selectedDriver.phone
@@ -2156,6 +2158,7 @@ export default {
               title: 'New Order Assignment',
               message: `You have a new order/booking assigned. Please check your My Assignment page. Order #${order.id}`,
               type: 'order_assignment',
+              recipientType: 'driver',
               orderId: order.id
             });
           } catch (err) {
@@ -2219,6 +2222,7 @@ export default {
               title: 'New Order Assignment',
               message: `You have a new order/booking assigned. Please check your My Assignment page. Order #${order.id}`,
               type: 'order_assignment',
+              recipientType: 'driver',
               orderId: order.id
             })
 

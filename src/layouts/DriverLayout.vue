@@ -454,10 +454,10 @@ export default {
         if (!userId) return
 
         this.loadingNotifications = true
-        // Use query without orderBy to avoid index requirement
+        // Query notifications by userId AND recipientType: 'driver' (to get notifications from Admin)
         const notificationsQuery = query(
           collection(db, 'notifications'),
-          where('recipientId', '==', userId),
+          where('userId', '==', userId),
           where('recipientType', '==', 'driver'),
           limit(50)
         )
@@ -480,9 +480,32 @@ export default {
           this.loadingNotifications = false
           console.log('[v0] Driver notifications updated:', this.notifications.length)
         }, (error) => {
-          // Silently handle all errors - queries work without indexes, errors are expected
-          // Don't log to console to keep it clean
-          this.loadingNotifications = false
+          // Fallback: if query fails (e.g., no index), try without recipientType filter
+          console.log('[v0] Notification query with recipientType failed, trying fallback:', error.message)
+          const fallbackQuery = query(
+            collection(db, 'notifications'),
+            where('userId', '==', userId),
+            limit(50)
+          )
+          this.notificationsUnsubscribe = onSnapshot(fallbackQuery, (snapshot) => {
+            let notifications = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }))
+            .filter(n => !n.recipientType || n.recipientType === 'driver') // Filter in memory
+            
+            notifications.sort((a, b) => {
+              const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0))
+              const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0))
+              return dateB - dateA
+            })
+            
+            this.notifications = notifications
+            this.unreadCount = this.notifications.filter(n => !n.read).length
+            this.loadingNotifications = false
+          }, (fallbackError) => {
+            this.loadingNotifications = false
+          })
         })
       } catch (error) {
         console.error('[v0] Error setting up notifications listener:', error)

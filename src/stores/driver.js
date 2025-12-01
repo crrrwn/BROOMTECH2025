@@ -131,7 +131,7 @@ export const useDriverStore = defineStore("driver", {
 
           const today = new Date().toDateString()
           let lastRemitDate = driverData.lastRemitDate
-          
+
           // Normalize lastRemitDate - handle both string and Timestamp/Date formats
           if (lastRemitDate) {
             if (lastRemitDate.toDate) {
@@ -175,7 +175,7 @@ export const useDriverStore = defineStore("driver", {
               adminShare: adminShare.toFixed(2),
             }
             this.totalEarningsToday = totalEarned
-            
+
             console.log("[v0] Earnings calculated:", this.todayEarnings)
           } else {
             // Reset earnings if not remitted today or no earnings
@@ -187,7 +187,7 @@ export const useDriverStore = defineStore("driver", {
             this.totalEarningsToday = 0
             
             console.log("[v0] No remittance today or no earnings, earnings reset", {
-              hasRemitted: this.hasRemitted,
+            hasRemitted: this.hasRemitted,
               totalEarningsToday: driverData.totalEarningsToday
             })
           }

@@ -1,28 +1,5 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Profile completion notice -->
-    <div v-if="needsProfileCompletion" class="bg-red-50 border border-red-200 rounded-lg p-4">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">Profile Incomplete</h3>
-          <p class="mt-1 text-sm text-red-700">Please complete your profile information before booking services.</p>
-          <div class="mt-3">
-            <router-link
-              to="/user/profile?complete=true"
-              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              Complete Profile
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Header -->
     <div>
       <h1 class="text-2xl font-bold text-gray-900">Book a Service</h1>
@@ -47,7 +24,7 @@
     </div>
 
     <!-- Service Selection -->
-    <div v-if="!needsProfileCompletion" class="bg-white p-6 rounded-lg shadow-sm border">
+    <div class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Select Service Type</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
@@ -78,7 +55,7 @@
     </div>
 
     <!-- Booking Form -->
-    <div v-if="selectedService && !needsProfileCompletion" class="bg-white p-6 rounded-lg shadow-sm border">
+    <div v-if="selectedService" class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Booking Details</h2>
 
       <!-- Map & route -->
@@ -581,6 +558,82 @@
         </div>
       </form>
     </div>
+
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="closeNotificationModal">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+        <div class="flex items-center mb-4">
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
+            notificationType === 'success' ? 'bg-green-100' : 
+            notificationType === 'error' ? 'bg-red-100' : 
+            notificationType === 'warning' ? 'bg-yellow-100' :
+            'bg-blue-100'
+          ]">
+            <svg 
+              v-if="notificationType === 'success'"
+              class="w-6 h-6 text-green-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'error'"
+              class="w-6 h-6 text-red-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg 
+              v-else-if="notificationType === 'warning'"
+              class="w-6 h-6 text-yellow-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <svg 
+              v-else
+              class="w-6 h-6 text-blue-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 :class="[
+            'text-lg font-semibold',
+            notificationType === 'success' ? 'text-green-900' : 
+            notificationType === 'error' ? 'text-red-900' : 
+            notificationType === 'warning' ? 'text-yellow-900' :
+            'text-blue-900'
+          ]">
+            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : notificationType === 'warning' ? 'Warning' : 'Information' }}
+          </h3>
+        </div>
+        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+        <div class="flex justify-end">
+          <button
+            @click="closeNotificationModal"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors',
+              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
+              notificationType === 'warning' ? 'bg-yellow-600 text-white hover:bg-yellow-700' :
+              'bg-blue-600 text-white hover:bg-blue-700'
+            ]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -591,6 +644,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { weatherService } from '@/services/weatherService'
 import { loggingService } from '@/services/loggingService'
+import { realtimeService } from '@/services/realtime'
 
 export default {
   name: 'BookService',
@@ -605,6 +659,11 @@ export default {
       formError: '',
       uploadingBillReceipt: false,
       billReceiptProgress: 0,
+
+      // Notification modal state
+      showNotificationModal: false,
+      notificationType: 'success', // 'success', 'error', 'warning', 'info'
+      notificationMessage: '',
 
       isBadWeather: false,
       currentWeather: '',
@@ -669,7 +728,6 @@ export default {
         pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
       },
 
-      needsProfileCompletion: false
     }
   },
   computed: {
@@ -686,8 +744,6 @@ export default {
     }
   },
   async mounted() {
-    await this.checkProfileCompletion()
-
     this.loadGoogleMapsAPI()
     await this.loadPricingSettings()
     await this.checkBadWeatherFeeEnabled()
@@ -745,31 +801,16 @@ export default {
     },
     // ------------------------------------------------------------
 
-    async checkProfileCompletion() {
-      try {
-        const user = this.authStore?.user
-        const userProfile = this.authStore?.userProfile
+    // Notification modal methods
+    showNotification(type, message) {
+      this.notificationType = type
+      this.notificationMessage = message
+      this.showNotificationModal = true
+    },
 
-        if (!user || !userProfile) {
-          this.needsProfileCompletion = true
-          return
-        }
-
-        // Check if required profile fields are filled
-        const hasRequiredFields = userProfile.firstName &&
-                                 userProfile.lastName &&
-                                 userProfile.phone &&
-                                 userProfile.address
-
-        this.needsProfileCompletion = !hasRequiredFields
-        console.log('[v1] Profile completion check:', {
-          hasRequiredFields,
-          needsProfileCompletion: this.needsProfileCompletion
-        })
-      } catch (error) {
-        console.error('[v1] Error checking profile completion:', error)
-        this.needsProfileCompletion = false
-      }
+    closeNotificationModal() {
+      this.showNotificationModal = false
+      this.notificationMessage = ''
     },
 
     async checkBadWeatherFeeEnabled() {
@@ -1278,16 +1319,12 @@ export default {
     async submitBooking() {
       try {
         this.formError = ''
-        if (this.needsProfileCompletion) {
-          this.formError = 'Please complete your profile first.'
-          return
-        }
 
         const user = this.authStore?.user
         const userProfile = this.authStore?.userProfile
         if (!user?.uid) {
           this.formError = 'You must be logged in to submit a booking.'
-          alert(this.formError)
+          this.showNotification('error', this.formError)
           return
         }
 
@@ -1390,8 +1427,26 @@ export default {
           console.warn('[v1 ⚠️] loggingService.logOrderCreated failed (non-blocking):', logErr?.message || logErr)
         }
 
-        alert(`Booking submitted successfully! Estimated Total: ₱${this.calculatedPrice.total}`)
-        this.$router.push('/user/orders')
+        // Send notification to Admin about new order
+        try {
+          await realtimeService.sendNotificationToAdmins({
+            title: 'New Order Received',
+            message: `New ${this.selectedService.name} order #${orderRef.id.substring(0, 8)} from ${userProfile?.firstName || 'User'} ${userProfile?.lastName || ''}`.trim(),
+            type: 'new_order',
+            orderId: orderRef.id,
+            userId: user.uid,
+            serviceName: this.selectedService.name,
+            totalAmount: Number(this.calculatedPrice?.total || 0)
+          })
+          console.log('[v1] Notification sent to admins about new order')
+        } catch (notifErr) {
+          console.warn('[v1 ⚠️] Failed to send notification to admins (non-blocking):', notifErr?.message || notifErr)
+        }
+
+        this.showNotification('success', `Booking submitted successfully! Estimated Total: ₱${this.calculatedPrice.total}`)
+        setTimeout(() => {
+          this.$router.push('/user/orders')
+        }, 1500)
       } catch (err) {
         console.error('[v1 🔥] submitBooking error:', { code: err?.code, message: err?.message, err })
         if (err?.code === 'permission-denied') {
@@ -1401,7 +1456,7 @@ export default {
         } else {
           this.formError = 'Error submitting booking. Please try again.'
         }
-        alert(this.formError)
+        this.showNotification('error', this.formError)
       } finally {
         this.submitting = false
       }
@@ -1442,7 +1497,7 @@ export default {
   },
   watch: {
     async selectedService(newService) {
-      if (!newService || this.needsProfileCompletion) return
+      if (!newService) return
       await this.$nextTick()
       this.initializeMap()
       await this.$nextTick()

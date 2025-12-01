@@ -262,7 +262,12 @@ export default {
       if (!userId) return
       
       const notificationsRef = collection(db, 'notifications')
-      const q = query(notificationsRef, where('userId', '==', userId))
+      // Filter by userId AND recipientType: 'user' (to get notifications from Driver and Admin)
+      const q = query(
+        notificationsRef, 
+        where('userId', '==', userId),
+        where('recipientType', '==', 'user')
+      )
       
       this.unsubscribe = onSnapshot(q, (snapshot) => {
         this.notifications = snapshot.docs
@@ -270,9 +275,32 @@ export default {
             id: doc.id,
             ...doc.data()
           }))
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0))
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0))
+            return dateB - dateA
+          })
         
         this.unreadCount = this.notifications.filter(n => !n.read).length
+      }, (error) => {
+        // Fallback: if query fails (e.g., no index), try without recipientType filter
+        console.log('[v0] Notification query with recipientType failed, trying fallback:', error.message)
+        const fallbackQ = query(notificationsRef, where('userId', '==', userId))
+        this.unsubscribe = onSnapshot(fallbackQ, (snapshot) => {
+          this.notifications = snapshot.docs
+            .map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }))
+            .filter(n => !n.recipientType || n.recipientType === 'user') // Filter in memory
+            .sort((a, b) => {
+              const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0))
+              const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0))
+              return dateB - dateA
+            })
+          
+          this.unreadCount = this.notifications.filter(n => !n.read).length
+        })
       })
     },
     

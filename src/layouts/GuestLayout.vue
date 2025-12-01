@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b">
+    <nav v-if="!isAuthPage" class="bg-white shadow-sm border-b">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
@@ -74,7 +74,7 @@
     </main>
     
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
+    <footer v-if="!isAuthPage" class="bg-gray-900 text-white py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -119,15 +119,6 @@
         <div class="border-t border-gray-800 mt-8 pt-8">
           <div class="flex flex-col sm:flex-row justify-between items-center">
             <p class="text-gray-400">&copy; 2025 BroomTech. All rights reserved.</p>
-            <router-link 
-              to="/admin/login" 
-              class="mt-2 sm:mt-0 text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center"
-            >
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-              </svg>
-              Admin Portal
-            </router-link>
           </div>
         </div>
       </div>
@@ -136,7 +127,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -144,6 +135,12 @@ export default {
   setup() {
     const router = useRouter()
     const mobileMenuOpen = ref(false)
+    
+    // Check if current route is login or register page
+    const isAuthPage = computed(() => {
+      const route = router.currentRoute.value
+      return route.name === 'login' || route.name === 'register'
+    })
 
     const handleNavigation = (path) => {
       console.log('[v0] Navigating to:', path)
@@ -180,6 +177,7 @@ export default {
 
     return {
       mobileMenuOpen,
+      isAuthPage,
       handleNavigation,
       scrollToSection
     }
