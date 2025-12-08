@@ -142,24 +142,70 @@
                               notification.type === 'account_banned' ? 'bg-red-100' :
                               notification.type === 'account_unbanned' ? 'bg-green-100' :
                               notification.type === 'account_unflagged' ? 'bg-blue-100' :
+                              notification.type === 'new_order' ? 'bg-green-100' :
+                              notification.type === 'info' ? 'bg-blue-100' :
                               'bg-gray-100'
                             ]"
                           >
+                            <!-- Warning Icon -->
                             <svg 
-                              :class="[
-                                'w-5 h-5',
-                                notification.type === 'warning' ? 'text-yellow-600' :
-                                notification.type === 'account_flagged' ? 'text-orange-600' :
-                                notification.type === 'account_banned' ? 'text-red-600' :
-                                notification.type === 'account_unbanned' ? 'text-green-600' :
-                                notification.type === 'account_unflagged' ? 'text-blue-600' :
-                                'text-gray-600'
-                              ]"
+                              v-if="notification.type === 'warning'"
+                              class="w-5 h-5 text-yellow-600"
                               fill="none" 
                               stroke="currentColor" 
                               viewBox="0 0 24 24"
                             >
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <!-- Success/Unbanned Icon -->
+                            <svg 
+                              v-else-if="notification.type === 'account_unbanned' || notification.type === 'new_order'"
+                              class="w-5 h-5 text-green-600"
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <!-- Error/Banned Icon -->
+                            <svg 
+                              v-else-if="notification.type === 'account_banned'"
+                              class="w-5 h-5 text-red-600"
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <!-- Info/Unflagged Icon -->
+                            <svg 
+                              v-else-if="notification.type === 'account_unflagged' || notification.type === 'info'"
+                              class="w-5 h-5 text-blue-600"
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <!-- Flagged Icon -->
+                            <svg 
+                              v-else-if="notification.type === 'account_flagged'"
+                              class="w-5 h-5 text-orange-600"
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
+                            </svg>
+                            <!-- Default Icon -->
+                            <svg 
+                              v-else
+                              class="w-5 h-5 text-gray-600"
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                             </svg>
                           </div>
                           <div class="flex-1 min-w-0">
@@ -333,20 +379,46 @@ export default {
       }
     },
     
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      const now = new Date()
-      const diffMs = now - date
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMs / 3600000)
-      const diffDays = Math.floor(diffMs / 86400000)
+    formatDate(dateInput) {
+      if (!dateInput) return 'Invalid Date'
       
-      if (diffMins < 1) return 'Just now'
-      if (diffMins < 60) return `${diffMins}m ago`
-      if (diffHours < 24) return `${diffHours}h ago`
-      if (diffDays < 7) return `${diffDays}d ago`
-      
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      try {
+        // Handle Firestore Timestamp
+        let date
+        if (dateInput && typeof dateInput === 'object' && dateInput.toDate) {
+          date = dateInput.toDate()
+        } else if (dateInput && typeof dateInput === 'object' && dateInput.seconds) {
+          // Firestore Timestamp with seconds property
+          date = new Date(dateInput.seconds * 1000)
+        } else if (typeof dateInput === 'string') {
+          date = new Date(dateInput)
+        } else if (dateInput instanceof Date) {
+          date = dateInput
+        } else {
+          return 'Invalid Date'
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          return 'Invalid Date'
+        }
+        
+        const now = new Date()
+        const diffMs = now - date
+        const diffMins = Math.floor(diffMs / 60000)
+        const diffHours = Math.floor(diffMs / 3600000)
+        const diffDays = Math.floor(diffMs / 86400000)
+        
+        if (diffMins < 1) return 'Just now'
+        if (diffMins < 60) return `${diffMins}m ago`
+        if (diffHours < 24) return `${diffHours}h ago`
+        if (diffDays < 7) return `${diffDays}d ago`
+        
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      } catch (error) {
+        console.error('Error formatting date:', error, dateInput)
+        return 'Invalid Date'
+      }
     }
   },
   mounted() {

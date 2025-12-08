@@ -730,6 +730,58 @@
               </div>
             </div>
 
+            <!-- Additional Orders Section -->
+            <div v-if="selectedOrderForDetails.additionalOrders && selectedOrderForDetails.additionalOrders.length > 0" class="bg-white p-4 rounded-lg border border-blue-200">
+              <h4 class="font-medium text-gray-900 mb-3">Additional Orders</h4>
+              <div class="space-y-4">
+                <div v-for="(additionalOrder, index) in selectedOrderForDetails.additionalOrders" :key="index" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <h5 class="font-medium text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</h5>
+                      <p class="text-xs text-gray-500 mt-1">
+                        Added: {{ additionalOrder.createdAt ? formatOrderDate(additionalOrder.createdAt) : 'N/A' }}
+                      </p>
+                    </div>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full" :class="
+                      additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                      additionalOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    ">
+                      {{ additionalOrder.status || 'pending' }}
+                    </span>
+                  </div>
+                  
+                  <div v-if="additionalOrder.pickupAddress || additionalOrder.deliveryAddress" class="mt-2 text-sm">
+                    <div v-if="additionalOrder.pickupAddress" class="text-gray-600">
+                      <span class="font-medium">Pickup:</span> {{ additionalOrder.pickupAddress }}
+                    </div>
+                    <div v-if="additionalOrder.deliveryAddress" class="text-gray-600 mt-1">
+                      <span class="font-medium">Delivery:</span> {{ additionalOrder.deliveryAddress }}
+                    </div>
+                  </div>
+                  
+                  <div v-if="additionalOrder.routeInfo" class="mt-2 text-xs text-gray-500">
+                    <span>Distance: {{ additionalOrder.routeInfo.distance }}</span>
+                    <span class="ml-3">ETA: {{ additionalOrder.routeInfo.duration }}</span>
+                  </div>
+                  
+                  <div v-if="additionalOrder.pricing" class="mt-3 pt-3 border-t border-blue-200">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Order Total:</span>
+                      <span class="font-medium text-green-600">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing.total || 0).toFixed(2) }}</span>
+                    </div>
+                  </div>
+                  
+                  <div v-if="additionalOrder.formData" class="mt-2 text-xs text-gray-600">
+                    <div v-for="(value, key) in additionalOrder.formData" :key="key" v-if="value && typeof value === 'string' && value.trim()" class="mt-1">
+                      <span class="font-medium">{{ key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim() }}:</span>
+                      {{ value.length > 50 ? value.substring(0, 50) + '...' : value }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- New section: Proof of Delivery from driver -->
             <div v-if="selectedOrderForDetails.proofOfDelivery?.url" class="bg-white p-4 rounded-lg border">
               <h4 class="font-medium text-gray-900 mb-3">Proof of Delivery</h4>

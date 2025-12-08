@@ -194,6 +194,28 @@
                 <strong>Notes:</strong> {{ booking.notes }}
               </p>
             </div>
+            
+            <!-- Additional Orders Section -->
+            <div v-if="booking.additionalOrders && booking.additionalOrders.length > 0" class="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-200">
+              <h4 class="text-sm font-semibold text-gray-900 mb-2">Additional Orders ({{ booking.additionalOrders.length }})</h4>
+              <div class="space-y-2">
+                <div v-for="(additionalOrder, index) in booking.additionalOrders" :key="index" class="bg-white p-2 rounded border border-blue-200">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</p>
+                      <p class="text-xs text-gray-500 mt-1">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing?.total || 55).toFixed(2) }}</p>
+                    </div>
+                    <span class="px-2 py-0.5 text-xs font-medium rounded-full" :class="
+                      additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                      additionalOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    ">
+                      {{ additionalOrder.status || 'pending' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="ml-6 text-right">
             <div class="mb-4">

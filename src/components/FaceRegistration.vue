@@ -29,17 +29,76 @@
         </div>
 
         <!-- Face detection status -->
-        <div v-if="faceDetected && !detecting" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+        <div v-if="faceDetected && !detecting && !registering" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
           ✓ Face Detected
         </div>
 
-        <div v-if="detecting" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
-          <div class="text-white text-center">
-            <svg class="animate-spin h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <!-- Face Scan Progress Ring -->
+        <div v-if="detecting" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="relative w-64 h-64">
+            <!-- Scanning Circle Progress Ring -->
+            <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <!-- Background circle -->
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.3)"
+                stroke-width="4"
+              />
+              <!-- Progress circle -->
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="rgb(59, 130, 246)"
+                stroke-width="4"
+                stroke-linecap="round"
+                :stroke-dasharray="283"
+                :stroke-dashoffset="283 - (scanProgress * 283 / 100)"
+                class="transition-all duration-300"
+              />
             </svg>
-            <p class="text-sm">Detecting face...</p>
+            <!-- Center text -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+              <svg class="animate-spin h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p class="text-sm font-semibold">Scanning Face...</p>
+              <p class="text-xs mt-1 opacity-75">{{ Math.round(scanProgress) }}%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Registration Loading Circle -->
+        <div v-if="registering" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
+          <div class="text-white text-center">
+            <div class="relative w-32 h-32 mx-auto mb-4">
+              <!-- Spinning circle ring -->
+              <svg class="absolute inset-0 w-full h-full transform -rotate-90 animate-spin" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="rgb(59, 130, 246)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-dasharray="283"
+                  stroke-dashoffset="70"
+                />
+              </svg>
+              <!-- Center icon -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <p class="text-sm font-semibold">Registering Face...</p>
           </div>
         </div>
       </div>
@@ -100,12 +159,13 @@ const error = ref('')
 const registrationAttempts = ref(0)
 const showCooldown = ref(false)
 const cooldownSeconds = ref(120) // 2 minutes
+const scanProgress = ref(0) // Progress for scanning circle
 let stream = null
 let detectionInterval = null
 let cooldownInterval = null
 let autoRegisterTimeout = null
-let faceDetectedCount = ref(0) // Count consecutive detections for stability
 let currentDescriptor = null
+let scanProgressInterval = null
 
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
@@ -156,30 +216,70 @@ onUnmounted(() => {
 })
 
 const startDetection = () => {
+  // Stop detection if face is already detected
+  if (faceDetected.value) return
+
   detectionInterval = setInterval(async () => {
-    if (!videoElement.value || detecting.value || registering.value || showCooldown.value) return
+    // Stop detection once face is detected
+    if (faceDetected.value || !videoElement.value || detecting.value || registering.value || showCooldown.value) {
+      if (faceDetected.value && detectionInterval) {
+        clearInterval(detectionInterval)
+        detectionInterval = null
+        if (scanProgressInterval) {
+          clearInterval(scanProgressInterval)
+          scanProgressInterval = null
+        }
+        scanProgress.value = 0
+      }
+      return
+    }
 
     try {
       detecting.value = true
+      scanProgress.value = 0
+      
+      // Start progress animation
+      if (scanProgressInterval) {
+        clearInterval(scanProgressInterval)
+      }
+      scanProgressInterval = setInterval(() => {
+        if (scanProgress.value < 100) {
+          scanProgress.value += 2
+        } else {
+          clearInterval(scanProgressInterval)
+          scanProgressInterval = null
+        }
+      }, 30)
+
       const detection = await detectFace(videoElement.value)
       
       if (detection) {
+        // Stop detection interval - face detected, only detect once
+        if (detectionInterval) {
+          clearInterval(detectionInterval)
+          detectionInterval = null
+        }
+        if (scanProgressInterval) {
+          clearInterval(scanProgressInterval)
+          scanProgressInterval = null
+        }
+        scanProgress.value = 100
+        
         faceDetected.value = true
         currentDescriptor = getFaceDescriptor(detection)
-        faceDetectedCount.value++
         
-        // Auto-register after face is detected for 2 seconds (4 consecutive detections at 500ms interval)
-        if (faceDetectedCount.value >= 4 && !registering.value && !autoRegisterTimeout) {
+        // Auto-register after face is detected (wait 2 seconds for stability)
+        if (!registering.value && !autoRegisterTimeout) {
           autoRegisterTimeout = setTimeout(() => {
-            if (currentDescriptor && !registering.value && !showCooldown.value) {
+            if (currentDescriptor && !registering.value && !showCooldown.value && faceDetected.value) {
               handleRegister()
             }
-          }, 500) // Small delay to ensure stability
+          }, 2000) // 2 second delay to ensure face is stable
         }
       } else {
         faceDetected.value = false
         currentDescriptor = null
-        faceDetectedCount.value = 0
+        scanProgress.value = 0
         // Clear auto-register timeout if face is lost
         if (autoRegisterTimeout) {
           clearTimeout(autoRegisterTimeout)
@@ -189,13 +289,17 @@ const startDetection = () => {
     } catch (err) {
       console.error('Detection error:', err)
       faceDetected.value = false
-      faceDetectedCount.value = 0
+      scanProgress.value = 0
       if (autoRegisterTimeout) {
         clearTimeout(autoRegisterTimeout)
         autoRegisterTimeout = null
       }
     } finally {
       detecting.value = false
+      if (scanProgressInterval) {
+        clearInterval(scanProgressInterval)
+        scanProgressInterval = null
+      }
     }
   }, 500) // Check every 500ms
 }
@@ -204,6 +308,11 @@ const stopCamera = () => {
   if (detectionInterval) {
     clearInterval(detectionInterval)
     detectionInterval = null
+  }
+  
+  if (scanProgressInterval) {
+    clearInterval(scanProgressInterval)
+    scanProgressInterval = null
   }
   
   if (autoRegisterTimeout) {
@@ -258,7 +367,6 @@ const handleRegister = async () => {
 
   registering.value = true
   error.value = ''
-  faceDetectedCount.value = 0 // Reset count after registration attempt
   if (autoRegisterTimeout) {
     clearTimeout(autoRegisterTimeout)
     autoRegisterTimeout = null
@@ -282,8 +390,10 @@ const handleRegister = async () => {
       error.value = 'Failed to register face. Please try again.'
       // Emit failed event for each failed attempt
       emit('failed', registrationAttempts.value)
-      // Reset face detection count to allow retry
-      faceDetectedCount.value = 0
+      // Restart detection for retry
+      faceDetected.value = false
+      currentDescriptor = null
+      startDetection()
     }
   } finally {
     registering.value = false

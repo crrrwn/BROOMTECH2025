@@ -149,8 +149,6 @@ export default {
         { status: 'confirmed', label: 'Confirmed', time: null },
         { status: 'driver_assigned', label: 'Driver Assigned', time: null },
         { status: 'in_transit', label: 'In Transit', time: null },
-        { status: 'on_the_way', label: 'On The Way', time: null },
-        { status: 'arrived', label: 'Arrived', time: null },
         { status: 'delivered', label: 'Delivered', time: null }
       ],
       estimatedArrival: '15 mins',
@@ -609,8 +607,6 @@ export default {
         confirmed: this.order.confirmedAt,
         driver_assigned: this.order.driverAssignedAt,
         in_transit: this.order.inTransitAt,
-        on_the_way: this.order.onTheWayAt,
-        arrived: this.order.arrivedAt,
         delivered: this.order.deliveredAt
       }
 
@@ -633,7 +629,7 @@ export default {
     isStepCompleted(status) {
       if (!this.order) return false
       
-      const statusOrder = ['confirmed', 'driver_assigned', 'in_transit', 'on_the_way', 'arrived', 'delivered']
+      const statusOrder = ['confirmed', 'driver_assigned', 'in_transit', 'delivered']
       const currentIndex = statusOrder.indexOf(this.order.status)
       const stepIndex = statusOrder.indexOf(status)
       

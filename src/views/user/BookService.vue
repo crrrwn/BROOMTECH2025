@@ -106,7 +106,23 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant/Store Name *</label>
-              <input type="text" v-model.trim="bookingForm.restaurantName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+              <input 
+                type="text" 
+                v-model.trim="bookingForm.restaurantName" 
+                required 
+                @input="onRestaurantNameInput"
+                @blur="validateRestaurantName"
+                :class="[
+                  'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
+                  restaurantNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
+                ]"
+              />
+              <p v-if="restaurantNameWarning" class="text-xs text-yellow-600 mt-1 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                {{ restaurantNameWarning }}
+              </p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant Address *</label>
@@ -116,8 +132,18 @@
                 required
                 ref="restaurantAddressInput"
                 @input="onAddressManualInput"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                @focus="onRestaurantAddressFocus"
+                :class="[
+                  'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
+                  restaurantAddressWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
+                ]"
               />
+              <p v-if="restaurantAddressWarning" class="text-xs text-yellow-600 mt-1 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                {{ restaurantAddressWarning }}
+              </p>
             </div>
           </div>
 
@@ -186,7 +212,25 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Biller Name *</label>
-              <input type="text" v-model.trim="bookingForm.billerName" required placeholder="e.g., MERALCO, GLOBE, PLDT" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
+              <input 
+                type="text" 
+                v-model.trim="bookingForm.billerName" 
+                required 
+                ref="billerNameInput"
+                @input="onBillerNameInput"
+                @focus="onBillerNameFocus"
+                placeholder="e.g., MERALCO, GLOBE, PLDT" 
+                :class="[
+                  'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
+                  billerNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
+                ]"
+              />
+              <p v-if="billerNameWarning" class="text-xs text-yellow-600 mt-1 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                {{ billerNameWarning }}
+              </p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Account Name *</label>
@@ -699,6 +743,13 @@ export default {
       autocompleteInstances: {},
       mapsReady: false,
       debounceTimer: null,
+      formSaveTimer: null,
+      restaurantNameWarning: '',
+      restaurantAddressWarning: '',
+      billerNameWarning: '',
+      jollibeeMarkers: [],
+      billerMarkers: [],
+      jollibeePlacesService: null,
 
       services: [
         { id: 'food-delivery', name: 'Food Delivery', description: 'Restaurant orders and food delivery', icon: 'M12 6l3 6-3 6-3-6 3-6z' },
@@ -744,6 +795,9 @@ export default {
     }
   },
   async mounted() {
+    // Restore form data from localStorage
+    this.restoreFormData()
+    
     this.loadGoogleMapsAPI()
     await this.loadPricingSettings()
     await this.checkBadWeatherFeeEnabled()
@@ -754,6 +808,28 @@ export default {
     }, 10 * 60 * 1000)
   },
   beforeUnmount() {
+    // Save form data to localStorage before leaving
+    this.saveFormData()
+    
+    // Clean up timers
+    if (this.formSaveTimer) {
+      clearTimeout(this.formSaveTimer)
+    }
+    
+    // Clean up Jollibee markers
+    this.clearJollibeeMarkers()
+    
+    // Clean up biller markers
+    this.clearBillerMarkers()
+    
+    // Clean up global functions
+    if (window.selectJollibeeLocation) {
+      delete window.selectJollibeeLocation
+    }
+    if (window.selectBillerLocation) {
+      delete window.selectBillerLocation
+    }
+    
     if (this.weatherCheckInterval) {
       clearInterval(this.weatherCheckInterval)
     }
@@ -764,6 +840,62 @@ export default {
     }
   },
   methods: {
+    // ---------- Form Persistence ----------
+    saveFormData() {
+      try {
+        const formDataToSave = {
+          selectedService: this.selectedService,
+          bookingForm: { ...this.bookingForm },
+          timestamp: Date.now()
+        }
+        localStorage.setItem('bookServiceFormData', JSON.stringify(formDataToSave))
+      } catch (error) {
+        console.error('Error saving form data:', error)
+      }
+    },
+
+    restoreFormData() {
+      try {
+        const savedData = localStorage.getItem('bookServiceFormData')
+        if (savedData) {
+          const parsed = JSON.parse(savedData)
+          // Only restore if data is less than 24 hours old
+          const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+          if (Date.now() - parsed.timestamp < maxAge) {
+            if (parsed.selectedService) {
+              this.selectedService = parsed.selectedService
+            }
+            if (parsed.bookingForm) {
+              // Merge saved form data with current form
+              this.bookingForm = { ...this.bookingForm, ...parsed.bookingForm }
+              
+              // If restaurant name exists, trigger search after map loads
+              if (this.bookingForm.restaurantName && this.bookingForm.restaurantName.length >= 3) {
+                this.$nextTick(() => {
+                  if (this.mapsReady) {
+                    this.initializeMap()
+                    setTimeout(() => {
+                      this.searchRestaurantLocations(this.bookingForm.restaurantName.toLowerCase().trim())
+                    }, 1000)
+                  }
+                })
+              }
+            }
+          } else {
+            // Clear old data
+            localStorage.removeItem('bookServiceFormData')
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring form data:', error)
+        localStorage.removeItem('bookServiceFormData')
+      }
+    },
+
+    clearFormData() {
+      localStorage.removeItem('bookServiceFormData')
+    },
+
     // ---------- helpers to sanitize data for Firestore ----------
     _sanitizeForFirestore(value) {
       // remove undefined, convert to null; strip File objects
@@ -855,11 +987,26 @@ export default {
 
       const distanceInKm = this.routeInfo.distanceValue / 1000
 
-      // Base charge: 55 pesos for first 3km
-      const baseCharge = 55
+      // Get admin's pricing settings
+      // Check if there's a service-specific pricing
+      const servicePricing = this.pricingSettings?.services?.find(s => s.id === this.selectedService.id)
+      const adminBaseFee = servicePricing?.minCharge || this.pricingSettings?.pricingRules?.baseFee || 55
+      const adminDistanceRate = servicePricing?.distanceRate || this.pricingSettings?.pricingRules?.distanceRate || 10
+      
+      let baseCharge = 0
+      let distanceFee = 0
 
-      // Distance fee: 10 pesos per km after 3km
-      const distanceFee = distanceInKm > 3 ? (distanceInKm - 3) * 10 : 0
+      // New pricing logic:
+      // 1-3km: 10 pesos total
+      // >3km: Use admin's fixed rate (baseFee + distanceRate per km after 3km)
+      if (distanceInKm <= 3) {
+        baseCharge = 10
+        distanceFee = 0
+      } else {
+        // Use admin's fixed rate for distances > 3km
+        baseCharge = adminBaseFee
+        distanceFee = (distanceInKm - 3) * adminDistanceRate
+      }
 
       const badWeatherFee = (this.isBadWeather && this.badWeatherFeeEnabled) ? 5 : 0
 
@@ -913,13 +1060,17 @@ export default {
 
       this.selectedService = service
       this.formError = ''
-      this.resetBookingForm()
+      // Don't reset form if user is switching services - preserve data
+      // Only reset if explicitly needed
       this.routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
       this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
 
       if (this.directionsRenderer) {
         this.directionsRenderer.setDirections({ routes: [] })
       }
+
+      // Save form data when service changes
+      this.saveFormData()
 
       this.$nextTick(() => {
         this.initializeMap()
@@ -939,11 +1090,355 @@ export default {
         medicineNames: '', prescriptionFile: null, quantity: '',
         pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
       }
+      this.clearFormData()
+      this.clearJollibeeMarkers()
+      this.restaurantNameWarning = ''
+      this.restaurantAddressWarning = ''
     },
 
     onAddressManualInput() {
+      // Save form data on input
+      this.saveFormData()
+      
       clearTimeout(this.debounceTimer)
       this.debounceTimer = setTimeout(() => this.updateRoute(), 350)
+    },
+
+    onRestaurantNameInput() {
+      this.saveFormData()
+      this.validateRestaurantName()
+      
+      // Check if user typed a restaurant name (Jollibee, McDonalds, etc.)
+      const name = this.bookingForm.restaurantName.toLowerCase().trim()
+      if (name.length >= 3) {
+        // Search for restaurant locations if name is at least 3 characters
+        this.searchRestaurantLocations(name)
+      } else {
+        // Clear markers if name is too short
+        this.clearJollibeeMarkers()
+      }
+    },
+
+    validateRestaurantName() {
+      const name = this.bookingForm.restaurantName.trim()
+      if (!name) {
+        this.restaurantNameWarning = ''
+        return
+      }
+      if (name.length < 2) {
+        this.restaurantNameWarning = 'Restaurant name must be at least 2 characters'
+      } else {
+        this.restaurantNameWarning = ''
+      }
+    },
+
+    onRestaurantAddressFocus() {
+      const name = this.bookingForm.restaurantName.toLowerCase().trim()
+      if (name.length >= 3) {
+        this.restaurantAddressWarning = 'Tip: Select a location from the map markers or type the address'
+      }
+    },
+
+    onBillerNameInput() {
+      this.saveFormData()
+      const name = this.bookingForm.billerName.toLowerCase().trim()
+      if (name.length >= 3) {
+        // Search for biller locations (PLDT, MERALCO, GLOBE, etc.)
+        this.searchBillerLocations(name)
+      } else {
+        this.clearBillerMarkers()
+      }
+    },
+
+    onBillerNameFocus() {
+      const name = this.bookingForm.billerName.toLowerCase().trim()
+      if (name.length >= 3) {
+        this.billerNameWarning = 'Tip: Select a location from the map markers'
+      }
+    },
+
+    searchBillerLocations(billerName) {
+      if (!this.jollibeePlacesService || !this.map) return
+
+      // Clear existing biller markers
+      this.clearBillerMarkers()
+
+      // Calapan City bounds
+      const calapanBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(13.3000, 121.0000),
+        new window.google.maps.LatLng(13.5000, 121.3000)
+      )
+
+      // Search for biller in Calapan City
+      const request = {
+        query: `${billerName} Calapan City, Oriental Mindoro`,
+        fields: ['name', 'geometry', 'formatted_address', 'place_id'],
+        locationBias: calapanBounds
+      }
+
+      this.jollibeePlacesService.textSearch(request, (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          // Filter results to only include Calapan City locations
+          const calapanResults = results.filter(place => {
+            const address = (place.formatted_address || '').toLowerCase()
+            return address.includes('calapan') || address.includes('oriental mindoro')
+          })
+
+          calapanResults.forEach((place) => {
+            if (place.geometry && place.geometry.location) {
+              const marker = new window.google.maps.Marker({
+                position: place.geometry.location,
+                map: this.map,
+                title: place.name,
+                icon: {
+                  url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                  scaledSize: new window.google.maps.Size(40, 40)
+                },
+                animation: window.google.maps.Animation.DROP
+              })
+
+              // Escape HTML for safety
+              const safeName = place.name.replace(/'/g, "\\'")
+              const safeAddress = place.formatted_address.replace(/'/g, "\\'")
+
+              // Add info window
+              const infoWindow = new window.google.maps.InfoWindow({
+                content: `
+                  <div style="padding: 8px; min-width: 200px;">
+                    <strong style="color: #3b82f6;">${place.name}</strong><br>
+                    <small style="color: #666;">${place.formatted_address}</small><br>
+                    <button onclick="window.selectBillerLocation('${safeName}', '${safeAddress}')" 
+                            style="margin-top: 8px; padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                      Select This Location
+                    </button>
+                  </div>
+                `
+              })
+
+              marker.addListener('click', () => {
+                // Close all other info windows
+                this.billerMarkers.forEach(m => {
+                  if (m.infoWindow) m.infoWindow.close()
+                })
+                infoWindow.open(this.map, marker)
+              })
+
+              this.billerMarkers.push({ marker, infoWindow, place })
+            }
+          })
+
+          // Fit map to show all biller locations
+          if (calapanResults.length > 0) {
+            const bounds = new window.google.maps.LatLngBounds()
+            calapanResults.forEach(place => {
+              if (place.geometry && place.geometry.location) {
+                bounds.extend(place.geometry.location)
+              }
+            })
+            this.map.fitBounds(bounds, { padding: 50 })
+          }
+        } else {
+          console.warn('Biller search failed:', status)
+        }
+      })
+    },
+
+    clearBillerMarkers() {
+      this.billerMarkers.forEach(({ marker, infoWindow }) => {
+        marker.setMap(null)
+        if (infoWindow) infoWindow.close()
+      })
+      this.billerMarkers = []
+    },
+
+    addBillerMarker(location, name, address) {
+      if (!this.map) return
+
+      // Clear existing biller marker
+      this.clearBillerMarkers()
+
+      const marker = new window.google.maps.Marker({
+        position: location,
+        map: this.map,
+        title: name,
+        icon: {
+          url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+          scaledSize: new window.google.maps.Size(40, 40)
+        },
+        label: { text: 'B', color: 'white', fontWeight: 'bold' }
+      })
+
+      const infoWindow = new window.google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px;">
+            <strong>${name}</strong><br>
+            <small>${address}</small>
+          </div>
+        `
+      })
+
+      marker.addListener('click', () => {
+        infoWindow.open(this.map, marker)
+      })
+
+      this.billerMarkers.push({ marker, infoWindow, place: { name, formatted_address: address } })
+      
+      // Center map on biller location
+      this.map.setCenter(location)
+      this.map.setZoom(15)
+    },
+
+    selectBillerLocation(name, address) {
+      this.bookingForm.billerName = name
+      this.billerNameWarning = ''
+      this.saveFormData()
+      
+      // Close all info windows
+      this.billerMarkers.forEach(m => {
+        if (m.infoWindow) m.infoWindow.close()
+      })
+    },
+
+    searchRestaurantLocations(restaurantName) {
+      if (!this.jollibeePlacesService || !this.map) return
+
+      // Clear existing markers
+      this.clearJollibeeMarkers()
+
+      // Calapan City center and bounds
+      const calapanCenter = { lat: 13.4119, lng: 121.1803 }
+      const calapanBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(13.3000, 121.0000),
+        new window.google.maps.LatLng(13.5000, 121.3000)
+      )
+
+      // Search for restaurant in Calapan City
+      const request = {
+        query: `${restaurantName} Calapan City, Oriental Mindoro`,
+        fields: ['name', 'geometry', 'formatted_address', 'place_id'],
+        locationBias: calapanBounds
+      }
+
+      this.jollibeePlacesService.textSearch(request, (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          // Filter results to only include Calapan City locations
+          const calapanResults = results.filter(place => {
+            const address = (place.formatted_address || '').toLowerCase()
+            return address.includes('calapan') || address.includes('oriental mindoro')
+          })
+
+          calapanResults.forEach((place) => {
+            if (place.geometry && place.geometry.location) {
+              const marker = new window.google.maps.Marker({
+                position: place.geometry.location,
+                map: this.map,
+                title: place.name,
+                icon: {
+                  url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                  scaledSize: new window.google.maps.Size(40, 40)
+                },
+                animation: window.google.maps.Animation.DROP
+              })
+
+              // Escape HTML in address and name for safety
+              const safeName = place.name.replace(/'/g, "\\'")
+              const safeAddress = place.formatted_address.replace(/'/g, "\\'")
+
+              // Add info window
+              const infoWindow = new window.google.maps.InfoWindow({
+                content: `
+                  <div style="padding: 8px; min-width: 200px;">
+                    <strong style="color: #10b981;">${place.name}</strong><br>
+                    <small style="color: #666;">${place.formatted_address}</small><br>
+                    <button onclick="window.selectJollibeeLocation('${safeAddress}', '${safeName}')" 
+                            style="margin-top: 8px; padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                      Select This Location
+                    </button>
+                  </div>
+                `
+              })
+
+              marker.addListener('click', () => {
+                // Close all other info windows
+                this.jollibeeMarkers.forEach(m => {
+                  if (m.infoWindow) m.infoWindow.close()
+                })
+                infoWindow.open(this.map, marker)
+              })
+
+              this.jollibeeMarkers.push({ marker, infoWindow, place })
+            }
+          })
+
+          // Fit map to show all Jollibee locations
+          if (calapanResults.length > 0) {
+            const bounds = new window.google.maps.LatLngBounds()
+            calapanResults.forEach(place => {
+              if (place.geometry && place.geometry.location) {
+                bounds.extend(place.geometry.location)
+              }
+            })
+            // Add padding to bounds
+            this.map.fitBounds(bounds, { padding: 50 })
+          } else {
+            // If no results, clear warning
+            this.restaurantAddressWarning = ''
+          }
+        } else {
+          console.warn('Restaurant search failed:', status)
+        }
+      })
+    },
+
+    searchJollibeeLocations() {
+      // Alias for backward compatibility
+      this.searchRestaurantLocations('jollibee')
+    },
+
+    clearJollibeeMarkers() {
+      this.jollibeeMarkers.forEach(({ marker, infoWindow }) => {
+        marker.setMap(null)
+        if (infoWindow) infoWindow.close()
+      })
+      this.jollibeeMarkers = []
+    },
+
+    selectJollibeeLocation(address, name) {
+      // Set address with restaurant name included
+      this.bookingForm.restaurantAddress = address
+      
+      // Update restaurant name if it's empty or matches the search
+      const currentName = this.bookingForm.restaurantName.toLowerCase().trim()
+      const selectedName = name.toLowerCase().trim()
+      if (!this.bookingForm.restaurantName || currentName.length < 3 || selectedName.includes(currentName) || currentName.includes(selectedName.split(' ')[0])) {
+        this.bookingForm.restaurantName = name
+      }
+      
+      this.restaurantAddressWarning = ''
+      this.restaurantNameWarning = ''
+      this.saveFormData()
+      
+      // Add marker for selected location
+      if (this.map && this.jollibeeMarkers.length > 0) {
+        const selectedPlace = this.jollibeeMarkers.find(m => {
+          const placeAddr = m.place.formatted_address || ''
+          return placeAddr === address || address.includes(placeAddr) || placeAddr.includes(address)
+        })
+        if (selectedPlace) {
+          // Highlight selected marker
+          selectedPlace.marker.setIcon({
+            url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+            scaledSize: new window.google.maps.Size(40, 40)
+          })
+        }
+      }
+      
+      this.updateRoute()
+      
+      // Close all info windows
+      this.jollibeeMarkers.forEach(m => {
+        if (m.infoWindow) m.infoWindow.close()
+      })
     },
 
     loadGoogleMapsAPI() {
@@ -994,6 +1489,21 @@ export default {
 
       this.geocoder = new window.google.maps.Geocoder()
       this.distanceService = new window.google.maps.DistanceMatrixService()
+      
+      // Initialize Places Service for Jollibee search
+      if (window.google && window.google.maps && window.google.maps.places) {
+        this.jollibeePlacesService = new window.google.maps.places.PlacesService(this.map)
+      }
+      
+      // Make selectJollibeeLocation available globally for info window buttons
+      window.selectJollibeeLocation = (address, name) => {
+        this.selectJollibeeLocation(address, name)
+      }
+      
+      // Make selectBillerLocation available globally for info window buttons
+      window.selectBillerLocation = (name, address) => {
+        this.selectBillerLocation(name, address)
+      }
     },
 
     initializeAutocomplete() {
@@ -1006,7 +1516,8 @@ export default {
         'returnAddressInput',
         'dropoffAddressInput',
         'storeAddressInput',
-        'storePreferenceInput'
+        'storePreferenceInput',
+        'billerNameInput'
       ]
 
       const calapanBounds = new window.google.maps.LatLngBounds(
@@ -1019,12 +1530,13 @@ export default {
         if (!input) return
 
         const isStorePreference = refKey === 'storePreferenceInput'
+        const isBillerName = refKey === 'billerNameInput'
         const acOptions = {
           componentRestrictions: { country: 'ph' },
-          fields: ['place_id', 'geometry', 'name', 'formatted_address'],
+          fields: ['place_id', 'geometry', 'name', 'formatted_address', 'types'],
           bounds: calapanBounds,
           strictBounds: false,
-          types: isStorePreference ? ['establishment'] : ['establishment', 'geocode']
+          types: isStorePreference ? ['establishment'] : isBillerName ? ['establishment'] : ['establishment', 'geocode']
         }
 
         const ac = new window.google.maps.places.Autocomplete(input, acOptions)
@@ -1034,12 +1546,18 @@ export default {
           if (!place.geometry) return
 
           if (!calapanBounds.contains(place.geometry.location)) {
-            alert('Please select a location within Calapan City area.')
+            this.showNotification('warning', 'Please select a location within Calapan City area.')
             input.value = ''
             return
           }
 
-          const addr = place.formatted_address
+          // Include place name in address if it's an establishment
+          let addr = place.formatted_address
+          if (place.name && place.types && place.types.includes('establishment')) {
+            // Include the establishment name in the address
+            addr = `${place.name}, ${place.formatted_address}`
+          }
+          
           input.value = addr
 
           if (refKey === 'storePreferenceInput') {
@@ -1047,7 +1565,21 @@ export default {
             return
           }
 
-          if (refKey === 'restaurantAddressInput') this.bookingForm.restaurantAddress = addr
+          if (refKey === 'billerNameInput') {
+            this.bookingForm.billerName = place.name || addr
+            this.billerNameWarning = ''
+            // Show biller location on map
+            this.addBillerMarker(place.geometry.location, place.name, place.formatted_address)
+            return
+          }
+
+          if (refKey === 'restaurantAddressInput') {
+            this.bookingForm.restaurantAddress = addr
+            // Also update restaurant name if it's empty or if the place name matches common restaurant names
+            if (place.name && (!this.bookingForm.restaurantName || this.bookingForm.restaurantName.length < 3)) {
+              this.bookingForm.restaurantName = place.name
+            }
+          }
           else if (refKey === 'deliveryAddressInput') this.bookingForm.deliveryAddress = addr
           else if (refKey === 'pickupAddressInput') this.bookingForm.pickupAddress = addr
           else if (refKey === 'returnAddressInput') this.bookingForm.returnAddress = addr
@@ -1056,6 +1588,7 @@ export default {
 
           this.addAddressMarker(place.geometry.location, addr, refKey)
           this.updateRoute()
+          this.saveFormData()
         })
 
         this.autocompleteInstances[refKey] = ac
@@ -1088,7 +1621,7 @@ export default {
 
     getCurrentLocation() {
       if (!navigator.geolocation) {
-        alert("Error: Your browser doesn't support geolocation.")
+        this.showNotification('error', "Error: Your browser doesn't support geolocation.")
         return
       }
 
@@ -1135,7 +1668,7 @@ export default {
             errorMsg = 'Location request timed out. Please try again or enter address manually.'
           }
 
-          alert(errorMsg)
+          this.showNotification('error', errorMsg)
           console.error('[v1] Geolocation error:', error.code, error.message)
         },
         options
@@ -1185,9 +1718,21 @@ export default {
             this.directionsRenderer.setOptions({ suppressMarkers: true })
             this.directionsRenderer.setDirections(response)
             const leg = response.routes[0].legs[0]
+            // Format distance in km
+            const distanceInKm = leg.distance.value / 1000
+            const formattedDistance = distanceInKm < 1 
+              ? `${Math.round(leg.distance.value)} m` 
+              : `${distanceInKm.toFixed(2)} km`
+            
+            // Format duration
+            const durationInMinutes = Math.round(leg.duration.value / 60)
+            const formattedDuration = durationInMinutes < 60
+              ? `${durationInMinutes} min`
+              : `${Math.floor(durationInMinutes / 60)}h ${durationInMinutes % 60} min`
+            
             this.routeInfo = {
-              distance: leg.distance.text,
-              duration: leg.duration.text,
+              distance: formattedDistance,
+              duration: formattedDuration,
               distanceValue: leg.distance.value, // in meters
               durationValue: leg.duration.value  // in seconds
             }
@@ -1213,18 +1758,18 @@ export default {
 
       const okTypes = ['image/jpeg','image/png','application/pdf']
       if (!okTypes.includes(file.type)) {
-        alert('Invalid file type. Please upload JPG, PNG, or PDF.')
+        this.showNotification('error', 'Invalid file type. Please upload JPG, PNG, or PDF.')
         return
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert('File too large. Max 5MB only.')
+        this.showNotification('error', 'File too large. Max 5MB only.')
         return
       }
 
       this.bookingForm.billReceiptFile = file
       const user = this.authStore?.user
       if (!user?.uid) {
-        alert('Please log in to upload a receipt.')
+        this.showNotification('error', 'Please log in to upload a receipt.')
         return
       }
       await this.uploadBillReceipt(file, user.uid)
@@ -1252,14 +1797,25 @@ export default {
             (err) => {
               this.uploadingBillReceipt = false
               console.error('[v1] upload error:', err.code, err.message)
+              let errorMessage = 'Upload failed. Please try again.'
+              
               if (err.code === 'storage/unauthenticated') {
-                alert('Please log in before uploading a receipt.')
+                errorMessage = 'Please log in before uploading a receipt.'
+                this.showNotification('error', errorMessage)
               } else if (err.code === 'storage/unauthorized') {
-                alert('Upload blocked by Storage Rules. Please check your Firebase Storage rules.')
+                errorMessage = 'Upload blocked by Storage Rules. Please check your Firebase Storage rules. Make sure the storage rules allow authenticated users to upload files to billReceipts/{userId}/ folder.'
+                this.showNotification('error', errorMessage)
               } else if (err.code === 'storage/canceled') {
-                alert('Upload cancelled.')
+                errorMessage = 'Upload cancelled.'
+                this.showNotification('warning', errorMessage)
+              } else if (err.code === 'storage/quota-exceeded') {
+                errorMessage = 'Storage quota exceeded. Please contact support.'
+                this.showNotification('error', errorMessage)
+              } else if (err.code === 'storage/unavailable') {
+                errorMessage = 'Storage service is temporarily unavailable. Please try again later.'
+                this.showNotification('error', errorMessage)
               } else {
-                alert('Upload failed. Please try again.')
+                this.showNotification('error', errorMessage)
               }
               reject(err)
             },
@@ -1267,6 +1823,7 @@ export default {
               this.uploadingBillReceipt = false
               const url = await getDownloadURL(task.snapshot.ref)
               this.bookingForm.billReceiptUrl = url
+              this.showNotification('success', 'Receipt uploaded successfully!')
               resolve(url)
             }
           )
@@ -1443,6 +2000,17 @@ export default {
           console.warn('[v1 ⚠️] Failed to send notification to admins (non-blocking):', notifErr?.message || notifErr)
         }
 
+        // Clear form data after successful submission
+        this.resetBookingForm()
+        this.selectedService = null
+        this.routeInfo = { distance: '', duration: '', distanceValue: 0, durationValue: 0 }
+        this.calculatedPrice = { baseCharge: 55, distanceFee: 0, timeFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
+        
+        // Clear map directions
+        if (this.directionsRenderer) {
+          this.directionsRenderer.setDirections({ routes: [] })
+        }
+        
         this.showNotification('success', `Booking submitted successfully! Estimated Total: ₱${this.calculatedPrice.total}`)
         setTimeout(() => {
           this.$router.push('/user/orders')
@@ -1514,6 +2082,18 @@ export default {
     },
     'bookingForm.paymentMethod'() {
       this.calculateDeliveryFee()
+      this.saveFormData()
+    },
+    // Auto-save form data when bookingForm changes
+    bookingForm: {
+      handler() {
+        // Debounce save to avoid too many localStorage writes
+        clearTimeout(this.formSaveTimer)
+        this.formSaveTimer = setTimeout(() => {
+          this.saveFormData()
+        }, 500)
+      },
+      deep: true
     }
   }
 }

@@ -115,7 +115,13 @@
                   <p class="font-medium text-gray-900">{{ order.driver?.name || 'Driver Assigned' }}</p>
                 </div>
                 <div class="flex space-x-2">
-                  <!-- Removed phone button, keeping only message button -->
+                  <button @click="openAddOrderModal(order)"
+                          class="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          title="Add another order">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                  </button>
                   <button @click="openChatWithDriver(order)"
                           class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                           title="Chat with driver">
@@ -663,9 +669,279 @@
       </div>
     </div>
 
+    <!-- Add Order Modal -->
+    <div v-if="showAddOrderModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto" @click.self="closeAddOrderModal">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full my-8 relative" @click.stop>
+        <div class="sticky top-0 bg-white border-b p-6 flex items-center justify-between z-10">
+          <h2 class="text-xl font-semibold text-gray-900">Add Another Order</h2>
+          <button 
+            type="button"
+            @click="closeAddOrderModal" 
+            class="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded p-1 relative z-20 cursor-pointer"
+            aria-label="Close modal"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="p-6 max-h-[70vh] overflow-y-auto">
+          <form @submit.prevent="submitAdditionalOrder" @submit.stop class="space-y-4">
+            <!-- Service Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Service Type *</label>
+              <select 
+                v-model="additionalOrderForm.serviceId" 
+                required
+                @change="onAdditionalServiceChange"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">Select a service</option>
+                <option value="food-delivery">Food Delivery</option>
+                <option value="bill-payments">Bill Payments</option>
+                <option value="grocery-shopping">Grocery Shopping</option>
+                <option value="gift-delivery">Gift Delivery</option>
+                <option value="medicine-delivery">Medicine Delivery</option>
+                <option value="pickup-drop">Pick-up & Drop</option>
+              </select>
+            </div>
+
+            <!-- Dynamic Form Fields based on selected service -->
+            <div v-if="additionalOrderForm.serviceId" class="space-y-4 border-t pt-4">
+              <!-- Food Delivery Fields -->
+              <template v-if="additionalOrderForm.serviceId === 'food-delivery'">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant Name *</label>
+                    <input type="text" v-model.trim="additionalOrderForm.restaurantName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant Address *</label>
+                    <input 
+                      type="text" 
+                      v-model.trim="additionalOrderForm.restaurantAddress" 
+                      required 
+                      ref="additionalRestaurantAddressInput"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Food Order Details *</label>
+                  <textarea v-model.trim="additionalOrderForm.foodOrderDetails" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+                  <select v-model="additionalOrderForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Select budget range</option>
+                    <option value="P1-P499">₱1 - ₱499</option>
+                    <option value="P500-P999">₱500 - ₱999</option>
+                    <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                    <option value="P2000+">₱2,000+</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Bill Payments Fields -->
+              <template v-if="additionalOrderForm.serviceId === 'bill-payments'">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Biller Name *</label>
+                    <input type="text" v-model.trim="additionalOrderForm.billerName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
+                    <input type="text" v-model.trim="additionalOrderForm.accountNumber" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Amount to Pay *</label>
+                  <input type="number" v-model.number="additionalOrderForm.amountToPay" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+                  <select v-model="additionalOrderForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Select budget range</option>
+                    <option value="P1-P499">₱1 - ₱499</option>
+                    <option value="P500-P999">₱500 - ₱999</option>
+                    <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                    <option value="P2000+">₱2,000+</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Grocery Shopping Fields -->
+              <template v-if="additionalOrderForm.serviceId === 'grocery-shopping'">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Shopping List *</label>
+                  <textarea v-model.trim="additionalOrderForm.shoppingList" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+                  <select v-model="additionalOrderForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Select budget range</option>
+                    <option value="P1-P499">₱1 - ₱499</option>
+                    <option value="P500-P999">₱500 - ₱999</option>
+                    <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                    <option value="P2000+">₱2,000+</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Gift Delivery Fields -->
+              <template v-if="additionalOrderForm.serviceId === 'gift-delivery'">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Gift Type *</label>
+                  <input type="text" v-model.trim="additionalOrderForm.giftType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Store Name *</label>
+                    <input type="text" v-model.trim="additionalOrderForm.storeName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Store Address *</label>
+                    <input 
+                      type="text" 
+                      v-model.trim="additionalOrderForm.storeAddress" 
+                      required 
+                      ref="additionalStoreAddressInput"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+                  <select v-model="additionalOrderForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Select budget range</option>
+                    <option value="P1-P499">₱1 - ₱499</option>
+                    <option value="P500-P999">₱500 - ₱999</option>
+                    <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                    <option value="P2000+">₱2,000+</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Medicine Delivery Fields -->
+              <template v-if="additionalOrderForm.serviceId === 'medicine-delivery'">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Medicine Names *</label>
+                  <textarea v-model.trim="additionalOrderForm.medicineNames" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+                  <input type="text" v-model.trim="additionalOrderForm.quantity" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+                  <select v-model="additionalOrderForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Select budget range</option>
+                    <option value="P1-P499">₱1 - ₱499</option>
+                    <option value="P500-P999">₱500 - ₱999</option>
+                    <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                    <option value="P2000+">₱2,000+</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Pick-up & Drop Fields -->
+              <template v-if="additionalOrderForm.serviceId === 'pickup-drop'">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Pick-up Address *</label>
+                    <input 
+                      type="text" 
+                      v-model.trim="additionalOrderForm.pickupAddress" 
+                      required 
+                      ref="additionalPickupAddressInput"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Drop-off Address *</label>
+                    <input 
+                      type="text" 
+                      v-model.trim="additionalOrderForm.dropoffAddress" 
+                      required 
+                      ref="additionalDropoffAddressInput"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Item Description *</label>
+                  <textarea v-model.trim="additionalOrderForm.itemDescription" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
+                  <select v-model="additionalOrderForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Select budget range</option>
+                    <option value="P1-P499">₱1 - ₱499</option>
+                    <option value="P500-P999">₱500 - ₱999</option>
+                    <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                    <option value="P2000+">₱2,000+</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Payment Method -->
+              <div class="border-t pt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
+                <div class="space-y-2">
+                  <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+                    <input 
+                      type="radio" 
+                      v-model="additionalOrderForm.paymentMethod" 
+                      value="GCASH"
+                      @click.stop
+                      class="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 cursor-pointer" 
+                    />
+                    <span class="ml-2 text-sm text-gray-700">GCash</span>
+                  </label>
+                  <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+                    <input 
+                      type="radio" 
+                      v-model="additionalOrderForm.paymentMethod" 
+                      value="COD"
+                      @click.stop
+                      class="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 cursor-pointer" 
+                    />
+                    <span class="ml-2 text-sm text-gray-700">Cash on Delivery (COD)</span>
+                  </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Note: Additional orders are fixed at ₱55 regardless of payment method.</p>
+              </div>
+            </div>
+
+            <div v-if="additionalOrderError" class="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {{ additionalOrderError }}
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+              <button 
+                type="button"
+                @click="closeAddOrderModal" 
+                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                @click="submitAdditionalOrder"
+                :disabled="submittingAdditionalOrder || !additionalOrderForm.serviceId"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors cursor-pointer relative z-10 font-medium"
+              >
+                {{ submittingAdditionalOrder ? 'Adding Order...' : 'Add Order' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Notification Modal -->
-    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" @click.self="closeNotificationModal" style="z-index: 9999 !important;">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative" @click.stop style="z-index: 10000 !important;">
         <div class="flex items-center mb-4">
           <div :class="[
             'w-12 h-12 rounded-full flex items-center justify-center mr-4',
@@ -692,8 +968,17 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
             <svg 
+              v-else-if="notificationType === 'warning'"
+              class="w-6 h-6 text-yellow-600"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <svg 
               v-else
-              class="w-6 h-6 text-blue-600" 
+              class="w-6 h-6 text-blue-600"
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -796,6 +1081,32 @@ export default {
       chatId: null,
       chatPartner: null,
 
+      // add order modal state
+      showAddOrderModal: false,
+      addOrderToOrderId: null,
+      additionalOrderForm: {
+        serviceId: '',
+        paymentMethod: 'COD',
+        restaurantName: '',
+        restaurantAddress: '',
+        foodOrderDetails: '',
+        budgetRange: '',
+        billerName: '',
+        accountNumber: '',
+        amountToPay: '',
+        shoppingList: '',
+        giftType: '',
+        storeName: '',
+        storeAddress: '',
+        medicineNames: '',
+        quantity: '',
+        pickupAddress: '',
+        dropoffAddress: '',
+        itemDescription: ''
+      },
+      submittingAdditionalOrder: false,
+      additionalOrderError: '',
+
       // notification modal state
       showNotificationModal: false,
       notificationType: 'success',
@@ -831,6 +1142,7 @@ export default {
   },
   async mounted() {
     await this.loadOrders()
+    this.loadGoogleMapsAPI()
   },
   beforeUnmount() {
     realtimeService.unsubscribe(`user_orders_${this.authStore.user.uid}`)
@@ -1075,6 +1387,518 @@ export default {
       }
     },
 
+    // ====== ADD ORDER MODAL ======
+    openAddOrderModal(order) {
+      if (!order.driverId && !order.driver) {
+        this.showNotification('error', 'No driver assigned to this order yet. Please wait for driver assignment.')
+        return
+      }
+      this.addOrderToOrderId = order.id
+      this.showAddOrderModal = true
+      this.additionalOrderError = ''
+      // Reset form
+      this.additionalOrderForm = {
+        serviceId: '',
+        paymentMethod: 'COD',
+        restaurantName: '',
+        restaurantAddress: '',
+        foodOrderDetails: '',
+        budgetRange: '',
+        billerName: '',
+        accountNumber: '',
+        amountToPay: '',
+        shoppingList: '',
+        giftType: '',
+        storeName: '',
+        storeAddress: '',
+        medicineNames: '',
+        quantity: '',
+        pickupAddress: '',
+        dropoffAddress: '',
+        itemDescription: ''
+      }
+      
+      // Initialize autocomplete after modal opens
+      this.$nextTick(() => {
+        if (this.mapsReady) {
+          this.initializeAdditionalOrderAutocomplete()
+        }
+      })
+    },
+
+    closeAddOrderModal() {
+      console.log('[MyOrders] Closing Add Order Modal')
+      
+      // Clean up autocomplete instances
+      if (this.additionalOrderAutocompleteInstances) {
+        Object.values(this.additionalOrderAutocompleteInstances).forEach(ac => {
+          if (ac && typeof ac.setPlace === 'function') {
+            ac.setPlace(null)
+          }
+        })
+        this.additionalOrderAutocompleteInstances = {}
+      }
+      
+      // Close the modal immediately
+      this.showAddOrderModal = false
+      this.addOrderToOrderId = null
+      this.additionalOrderError = ''
+      
+      // Reset form
+      this.additionalOrderForm = {
+        serviceId: '',
+        paymentMethod: 'COD',
+        restaurantName: '',
+        restaurantAddress: '',
+        foodOrderDetails: '',
+        budgetRange: '',
+        billerName: '',
+        accountNumber: '',
+        amountToPay: '',
+        shoppingList: '',
+        giftType: '',
+        storeName: '',
+        storeAddress: '',
+        medicineNames: '',
+        quantity: '',
+        pickupAddress: '',
+        dropoffAddress: '',
+        itemDescription: ''
+      }
+    },
+
+    onAdditionalServiceChange() {
+      // Reset form fields when service changes
+      this.additionalOrderForm = {
+        ...this.additionalOrderForm,
+        restaurantName: '',
+        restaurantAddress: '',
+        foodOrderDetails: '',
+        billerName: '',
+        accountNumber: '',
+        amountToPay: '',
+        shoppingList: '',
+        giftType: '',
+        storeName: '',
+        storeAddress: '',
+        medicineNames: '',
+        quantity: '',
+        pickupAddress: '',
+        dropoffAddress: '',
+        itemDescription: ''
+      }
+    },
+
+    async submitAdditionalOrder() {
+      this.additionalOrderError = ''
+      
+      if (!this.addOrderToOrderId) {
+        this.additionalOrderError = 'Order ID is missing'
+        this.showNotification('error', 'Order ID is missing. Please try again.')
+        return
+      }
+
+      if (!this.additionalOrderForm.serviceId) {
+        this.additionalOrderError = 'Please select a service type'
+        this.showNotification('error', 'Please select a service type')
+        return
+      }
+
+      // Validate required fields based on service
+      const serviceId = this.additionalOrderForm.serviceId
+      const form = this.additionalOrderForm
+
+      if (serviceId === 'food-delivery') {
+        if (!form.restaurantName || !form.restaurantAddress || !form.foodOrderDetails || !form.budgetRange) {
+          this.additionalOrderError = 'Please fill all required fields for Food Delivery'
+          this.showNotification('error', 'Please fill all required fields for Food Delivery')
+          return
+        }
+      } else if (serviceId === 'bill-payments') {
+        if (!form.billerName || !form.accountNumber || !form.amountToPay || !form.budgetRange) {
+          this.additionalOrderError = 'Please fill all required fields for Bill Payments'
+          this.showNotification('error', 'Please fill all required fields for Bill Payments')
+          return
+        }
+      } else if (serviceId === 'grocery-shopping') {
+        if (!form.shoppingList || !form.budgetRange) {
+          this.additionalOrderError = 'Please fill all required fields for Grocery Shopping'
+          this.showNotification('error', 'Please fill all required fields for Grocery Shopping')
+          return
+        }
+      } else if (serviceId === 'gift-delivery') {
+        if (!form.giftType || !form.storeName || !form.storeAddress || !form.budgetRange) {
+          this.additionalOrderError = 'Please fill all required fields for Gift Delivery'
+          this.showNotification('error', 'Please fill all required fields for Gift Delivery')
+          return
+        }
+      } else if (serviceId === 'medicine-delivery') {
+        if (!form.medicineNames || !form.quantity || !form.budgetRange) {
+          this.additionalOrderError = 'Please fill all required fields for Medicine Delivery'
+          this.showNotification('error', 'Please fill all required fields for Medicine Delivery')
+          return
+        }
+      } else if (serviceId === 'pickup-drop') {
+        if (!form.pickupAddress || !form.dropoffAddress || !form.itemDescription || !form.budgetRange) {
+          this.additionalOrderError = 'Please fill all required fields for Pick-up & Drop'
+          this.showNotification('error', 'Please fill all required fields for Pick-up & Drop')
+          return
+        }
+      }
+
+      this.submittingAdditionalOrder = true
+
+      try {
+        const orderRef = doc(db, 'orders', this.addOrderToOrderId)
+        const orderDoc = await getDoc(orderRef)
+        
+        if (!orderDoc.exists()) {
+          this.submittingAdditionalOrder = false
+          this.additionalOrderError = 'Order not found'
+          this.showNotification('error', 'Order not found. Please try again.')
+          return
+        }
+
+        const orderData = orderDoc.data()
+        
+        // Get service name
+        const serviceNames = {
+          'food-delivery': 'Food Delivery',
+          'bill-payments': 'Bill Payments',
+          'grocery-shopping': 'Grocery Shopping',
+          'gift-delivery': 'Gift Delivery',
+          'medicine-delivery': 'Medicine Delivery',
+          'pickup-drop': 'Pick-up & Drop'
+        }
+
+        // Calculate route and pricing for additional order (similar to BookService)
+        let routeInfo = { distance: 'N/A', duration: 'N/A', distanceValue: 0, durationValue: 0 }
+        let pricing = { baseCharge: 55, distanceFee: 0, badWeatherFee: 0, gcashFee: 0, subtotal: 55, total: 55 }
+        
+        // Try to calculate route if addresses are available
+        if (this.mapsReady && window.google && window.google.maps) {
+          try {
+            const directionsService = new window.google.maps.DirectionsService()
+            let origin = ''
+            let destination = ''
+            
+            switch (serviceId) {
+              case 'food-delivery':
+                origin = form.restaurantAddress
+                destination = orderData.deliveryAddress || orderData.formData?.deliveryAddress
+                break
+              case 'bill-payments':
+                origin = form.pickupAddress || orderData.pickupAddress
+                destination = form.returnAddress || orderData.deliveryAddress
+                break
+              case 'pickup-drop':
+                origin = form.pickupAddress
+                destination = form.dropoffAddress
+                break
+              default:
+                origin = orderData.pickupAddress || ''
+                destination = orderData.deliveryAddress || orderData.formData?.deliveryAddress || ''
+            }
+            
+            if (origin && destination) {
+              await new Promise((resolve) => {
+                directionsService.route(
+                  {
+                    origin,
+                    destination,
+                    travelMode: window.google.maps.TravelMode.DRIVING,
+                    unitSystem: window.google.maps.UnitSystem.METRIC
+                  },
+                  (response, status) => {
+                    if (status === 'OK') {
+                      const leg = response.routes[0].legs[0]
+                      const distanceInKm = leg.distance.value / 1000
+                      const formattedDistance = distanceInKm < 1 
+                        ? `${Math.round(leg.distance.value)} m` 
+                        : `${distanceInKm.toFixed(2)} km`
+                      const durationInMinutes = Math.round(leg.duration.value / 60)
+                      const formattedDuration = durationInMinutes < 60
+                        ? `${durationInMinutes} min`
+                        : `${Math.floor(durationInMinutes / 60)}h ${durationInMinutes % 60} min`
+                      
+                      routeInfo = {
+                        distance: formattedDistance,
+                        duration: formattedDuration,
+                        distanceValue: leg.distance.value,
+                        durationValue: leg.duration.value
+                      }
+                      
+                      // Fixed ₱55 for additional orders (not based on budget range, distance, or payment method)
+                      // Always ₱55 regardless of payment method
+                      pricing = {
+                        baseCharge: 55,
+                        distanceFee: 0,
+                        badWeatherFee: 0,
+                        gcashFee: 0,
+                        subtotal: 55,
+                        total: 55
+                      }
+                    }
+                    resolve()
+                  }
+                )
+              })
+            }
+          } catch (error) {
+            console.error('Error calculating route for additional order:', error)
+          }
+        }
+        
+        // Determine pickup and delivery addresses
+        let pickupAddress = ''
+        let deliveryAddress = ''
+        switch (serviceId) {
+          case 'food-delivery':
+            pickupAddress = form.restaurantAddress
+            deliveryAddress = orderData.deliveryAddress || orderData.formData?.deliveryAddress || ''
+            break
+          case 'bill-payments':
+            pickupAddress = form.pickupAddress || orderData.pickupAddress || ''
+            deliveryAddress = form.returnAddress || orderData.deliveryAddress || ''
+            break
+          case 'pickup-drop':
+            pickupAddress = form.pickupAddress
+            deliveryAddress = form.dropoffAddress
+            break
+          default:
+            pickupAddress = orderData.pickupAddress || ''
+            deliveryAddress = orderData.deliveryAddress || orderData.formData?.deliveryAddress || ''
+        }
+        
+        // Create additional order data (same structure as BookService)
+        const additionalOrder = {
+          serviceId: serviceId,
+          serviceName: serviceNames[serviceId],
+          formData: { ...this.additionalOrderForm },
+          paymentMethod: this.additionalOrderForm.paymentMethod,
+          pickupAddress: pickupAddress,
+          deliveryAddress: deliveryAddress,
+          routeInfo: routeInfo,
+          pricing: pricing,
+          totalAmount: pricing.total,
+          priceEstimate: { total: pricing.total },
+          gcashCharge: 0, // No GCash fee for additional orders (fixed ₱55)
+          status: 'pending',
+          createdAt: new Date().toISOString(), // Use Date instead of serverTimestamp() to avoid array error
+          userId: this.authStore.user.uid
+        }
+
+        // Get existing additional orders or create new array
+        const existingAdditionalOrders = orderData.additionalOrders || []
+        
+        // Update order with additional order
+        await updateDoc(orderRef, {
+          additionalOrders: [...existingAdditionalOrders, additionalOrder],
+          updatedAt: new Date().toISOString()
+        })
+
+        // Calculate new total (original + additional)
+        const originalTotal = orderData.totalAmount || orderData.pricing?.total || 0
+        const additionalTotal = additionalOrder.totalAmount || 55
+        const newTotal = originalTotal + additionalTotal
+
+        // Ensure pricing object exists before updating
+        const updateData = {
+          totalAmount: newTotal
+        }
+        
+        // Only update pricing.total if pricing object exists, otherwise create it
+        if (orderData.pricing) {
+          updateData['pricing.total'] = newTotal
+        } else {
+          updateData.pricing = {
+            ...(orderData.pricing || {}),
+            total: newTotal
+          }
+        }
+
+        // Update total amount
+        await updateDoc(orderRef, updateData)
+
+        // Send notifications to Admin and Driver about additional order
+        try {
+          // Notify Admin
+          await realtimeService.sendNotificationToAdmins({
+            title: 'Additional Order Added',
+            message: `User added an additional ${additionalOrder.serviceName} order to Order #${this.addOrderToOrderId.substring(0, 8)}. New total: ₱${newTotal.toFixed(2)}`,
+            type: 'additional_order',
+            orderId: this.addOrderToOrderId,
+            userId: this.authStore.user.uid,
+            serviceName: additionalOrder.serviceName,
+            totalAmount: Number(additionalOrder.totalAmount || 55),
+            additionalOrderId: additionalOrder.serviceId
+          })
+          console.log('[MyOrders] Notification sent to admins about additional order')
+        } catch (notifErr) {
+          console.warn('[MyOrders] Failed to send notification to admins (non-blocking):', notifErr?.message || notifErr)
+        }
+
+        // Notify Driver if assigned
+        if (orderData.driverId) {
+          try {
+            await realtimeService.sendNotification(orderData.driverId, {
+              title: 'Additional Order Added',
+              message: `Customer added an additional ${additionalOrder.serviceName} order to Order #${this.addOrderToOrderId.substring(0, 8)}. New total: ₱${newTotal.toFixed(2)}`,
+              type: 'additional_order',
+              recipientType: 'driver',
+              orderId: this.addOrderToOrderId,
+              serviceName: additionalOrder.serviceName,
+              totalAmount: Number(additionalOrder.totalAmount || 55)
+            })
+            console.log('[MyOrders] Notification sent to driver about additional order')
+          } catch (notifErr) {
+            console.warn('[MyOrders] Failed to send notification to driver (non-blocking):', notifErr?.message || notifErr)
+          }
+        }
+
+        // Reset submitting state first
+        this.submittingAdditionalOrder = false
+        
+        // Show success notification immediately (it has higher z-index)
+        this.showNotification('success', `Additional order added successfully! New total: ₱${newTotal.toFixed(2)}`)
+        
+        // Close Add Order modal after showing notification
+        setTimeout(() => {
+          this.closeAddOrderModal()
+          // Refresh orders
+          this.loadOrders()
+        }, 200)
+      } catch (error) {
+        console.error('Error adding additional order:', error)
+        this.additionalOrderError = error.message || 'Failed to add order. Please try again.'
+        
+        // Reset submitting state
+        this.submittingAdditionalOrder = false
+        
+        // Show error notification
+        this.showNotification('error', `Failed to add order: ${error.message || 'Please try again.'}`)
+        
+        // Don't close modal on error - let user see the error and try again
+      }
+    },
+
+    loadGoogleMapsAPI() {
+      return new Promise((resolve, reject) => {
+        if (window.google && window.google.maps) {
+          this.mapsReady = true
+          resolve()
+          return
+        }
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`
+        script.async = true
+        script.defer = true
+        script.onerror = () => reject(new Error('Failed to load Google Maps API'))
+        script.onload = () => {
+          this.mapsReady = true
+          resolve()
+        }
+        document.head.appendChild(script)
+      })
+    },
+    
+    initializeAdditionalOrderAutocomplete() {
+      if (!this.mapsReady || !window.google || !window.google.maps || !window.google.maps.places) {
+        return
+      }
+      
+      const calapanBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(13.35, 121.15),
+        new window.google.maps.LatLng(13.45, 121.25)
+      )
+      
+      const autocompleteOptions = {
+        bounds: calapanBounds,
+        componentRestrictions: { country: 'ph' },
+        types: ['address']
+      }
+      
+      // Restaurant Address
+      if (this.$refs.additionalRestaurantAddressInput) {
+        const ac = new window.google.maps.places.Autocomplete(
+          this.$refs.additionalRestaurantAddressInput,
+          autocompleteOptions
+        )
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace()
+          if (place.geometry) {
+            if (!calapanBounds.contains(place.geometry.location)) {
+              this.showNotification('warning', 'Please select a location within Calapan City area.')
+              this.$refs.additionalRestaurantAddressInput.value = ''
+              return
+            }
+            this.additionalOrderForm.restaurantAddress = place.formatted_address
+          }
+        })
+        this.additionalOrderAutocompleteInstances.restaurantAddress = ac
+      }
+      
+      // Store Address
+      if (this.$refs.additionalStoreAddressInput) {
+        const ac = new window.google.maps.places.Autocomplete(
+          this.$refs.additionalStoreAddressInput,
+          autocompleteOptions
+        )
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace()
+          if (place.geometry) {
+            if (!calapanBounds.contains(place.geometry.location)) {
+              this.showNotification('warning', 'Please select a location within Calapan City area.')
+              this.$refs.additionalStoreAddressInput.value = ''
+              return
+            }
+            this.additionalOrderForm.storeAddress = place.formatted_address
+          }
+        })
+        this.additionalOrderAutocompleteInstances.storeAddress = ac
+      }
+      
+      // Pickup Address
+      if (this.$refs.additionalPickupAddressInput) {
+        const ac = new window.google.maps.places.Autocomplete(
+          this.$refs.additionalPickupAddressInput,
+          autocompleteOptions
+        )
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace()
+          if (place.geometry) {
+            if (!calapanBounds.contains(place.geometry.location)) {
+              this.showNotification('warning', 'Please select a location within Calapan City area.')
+              this.$refs.additionalPickupAddressInput.value = ''
+              return
+            }
+            this.additionalOrderForm.pickupAddress = place.formatted_address
+          }
+        })
+        this.additionalOrderAutocompleteInstances.pickupAddress = ac
+      }
+      
+      // Dropoff Address
+      if (this.$refs.additionalDropoffAddressInput) {
+        const ac = new window.google.maps.places.Autocomplete(
+          this.$refs.additionalDropoffAddressInput,
+          autocompleteOptions
+        )
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace()
+          if (place.geometry) {
+            if (!calapanBounds.contains(place.geometry.location)) {
+              this.showNotification('warning', 'Please select a location within Calapan City area.')
+              this.$refs.additionalDropoffAddressInput.value = ''
+              return
+            }
+            this.additionalOrderForm.dropoffAddress = place.formatted_address
+          }
+        })
+        this.additionalOrderAutocompleteInstances.dropoffAddress = ac
+      }
+    },
+
     async fetchDriverInfo(order) {
       if (!order.driverId || order.driver) return
       
@@ -1182,9 +2006,24 @@ export default {
     },
 
     showNotification(type, message) {
+      console.log('[MyOrders] showNotification called:', type, message)
       this.notificationType = type
       this.notificationMessage = message
+      
+      // Show notification modal immediately - no delay
       this.showNotificationModal = true
+      console.log('[MyOrders] Notification modal state:', this.showNotificationModal)
+      
+      // Force Vue to update DOM immediately
+      this.$forceUpdate()
+      
+      // Double check after nextTick to ensure it's visible
+      this.$nextTick(() => {
+        if (!this.showNotificationModal) {
+          this.showNotificationModal = true
+          this.$forceUpdate()
+        }
+      })
     },
 
     closeNotificationModal() {

@@ -215,6 +215,62 @@
               </div>
             </div>
           </div>
+          
+          <!-- Additional Orders Section -->
+          <div v-if="order?.additionalOrders && order.additionalOrders.length > 0" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 class="font-medium text-gray-900 mb-3">Additional Orders ({{ order.additionalOrders.length }})</h4>
+            <div class="space-y-4">
+              <div v-for="(additionalOrder, index) in order.additionalOrders" :key="index" class="bg-white p-4 rounded-lg border border-blue-200">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <h5 class="font-medium text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</h5>
+                    <p class="text-xs text-gray-500 mt-1">
+                      Added: {{ additionalOrder.createdAt ? formatAdditionalOrderDate(additionalOrder.createdAt) : 'N/A' }}
+                    </p>
+                  </div>
+                  <span class="px-2 py-1 text-xs font-medium rounded-full" :class="
+                    additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                    additionalOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    'bg-gray-100 text-gray-800'
+                  ">
+                    {{ additionalOrder.status || 'pending' }}
+                  </span>
+                </div>
+                
+                <div v-if="additionalOrder.pickupAddress || additionalOrder.deliveryAddress" class="mt-2 text-sm">
+                  <div v-if="additionalOrder.pickupAddress" class="text-gray-600 mb-1">
+                    <span class="font-medium">Pickup:</span> {{ additionalOrder.pickupAddress }}
+                  </div>
+                  <div v-if="additionalOrder.deliveryAddress" class="text-gray-600">
+                    <span class="font-medium">Delivery:</span> {{ additionalOrder.deliveryAddress }}
+                  </div>
+                </div>
+                
+                <div v-if="additionalOrder.routeInfo" class="mt-2 text-xs text-gray-500">
+                  <span>Distance: {{ additionalOrder.routeInfo.distance }}</span>
+                  <span class="ml-3">ETA: {{ additionalOrder.routeInfo.duration }}</span>
+                </div>
+                
+                <div v-if="additionalOrder.pricing || additionalOrder.totalAmount" class="mt-3 pt-3 border-t border-blue-200">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Order Total:</span>
+                    <span class="font-medium text-green-600">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing?.total || 55).toFixed(2) }}</span>
+                  </div>
+                </div>
+                
+                <!-- Additional Order Form Data -->
+                <div v-if="additionalOrder.formData" class="mt-3 pt-3 border-t border-blue-200">
+                  <h6 class="text-xs font-medium text-gray-700 mb-2">Order Details:</h6>
+                  <div class="space-y-1 text-xs">
+                    <div v-for="(value, key) in additionalOrder.formData" :key="key" v-if="value && typeof value === 'string' && value.trim()" class="flex justify-between">
+                      <span class="text-gray-600">{{ formatFieldLabel(key) }}:</span>
+                      <span class="font-medium text-right max-w-xs truncate">{{ value.length > 50 ? value.substring(0, 50) + '...' : value }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -348,7 +404,10 @@
               </div>
               <div class="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
                 <span class="text-gray-900">Total:</span>
-                <span class="text-green-600">₱{{ calculateNewTotalWithGCash().toFixed(2) }}</span>
+                <span class="text-green-600">₱{{ (order.totalAmount || calculateNewTotalWithGCash()).toFixed(2) }}</span>
+              </div>
+              <div v-if="order.totalAmount" class="text-xs text-gray-500 mt-1 text-center">
+                (Current total from My Assignments)
               </div>
             </div>
           </div>
@@ -1173,6 +1232,32 @@ export default {
         .replace(/Receiver Contact/i, 'Receiver Contact')
         .replace(/Preferred Time/i, 'Preferred Time')
     },
+    
+    formatAdditionalOrderDate(dateValue) {
+      if (!dateValue) return 'N/A'
+      try {
+        let date
+        if (dateValue.toDate) {
+          date = dateValue.toDate()
+        } else if (typeof dateValue === 'string') {
+          date = new Date(dateValue)
+        } else if (dateValue.seconds) {
+          date = new Date(dateValue.seconds * 1000)
+        } else {
+          date = new Date(dateValue)
+        }
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (error) {
+        console.error('Error formatting additional order date:', error)
+        return 'N/A'
+      }
+    },
 
     async finishDelivery() {
       // Navigate back to assignments or show completion modal
@@ -1192,7 +1277,19 @@ export default {
 
     showItemsTotalModal() {
       if (!this.order) return
-      this.itemsTotal = this.order.pricing?.itemsTotal || 0
+      // Display the current totalAmount from MyAssignments (which includes items total)
+      // If totalAmount exists, calculate itemsTotal from it
+      if (this.order.totalAmount && this.order.pricing) {
+        const baseCharge = this.order.pricing.baseCharge || 0
+        const distanceFee = this.order.pricing.distanceFee || 0
+        const badWeatherFee = this.order.pricing.badWeatherFee || 0
+        const gcashFee = this.order.pricing.gcashFee || 0
+        // Calculate itemsTotal from totalAmount
+        const calculatedItemsTotal = this.order.totalAmount - baseCharge - distanceFee - badWeatherFee - gcashFee
+        this.itemsTotal = calculatedItemsTotal > 0 ? calculatedItemsTotal : (this.order.pricing.itemsTotal || 0)
+      } else {
+        this.itemsTotal = this.order.pricing?.itemsTotal || 0
+      }
       this.showItemsModal = true
     },
 
