@@ -89,3 +89,115 @@ export const getFaceDescriptor = (detection) => {
   return Array.from(detection.descriptor)
 }
 
+// Liveness detection - check if face is moving (prevents photo attacks)
+// Real faces have slight movements, photos are static
+export const checkLiveness = (currentDetection, previousDetections = []) => {
+  if (!currentDetection || !currentDetection.landmarks) {
+    return { isLive: false, reason: 'No face detected' }
+  }
+
+  // Get face bounding box center
+  const currentBox = currentDetection.detection.box
+  const currentCenter = {
+    x: currentBox.x + currentBox.width / 2,
+    y: currentBox.y + currentBox.height / 2
+  }
+
+  // Need at least 3 previous detections to check movement
+  if (previousDetections.length < 3) {
+    return { isLive: true, reason: 'Collecting samples' } // Still collecting, assume live
+  }
+
+  // Check if face position has changed (real faces move slightly)
+  let totalMovement = 0
+  for (let i = 0; i < previousDetections.length; i++) {
+    const prevBox = previousDetections[i].detection.box
+    const prevCenter = {
+      x: prevBox.x + prevBox.width / 2,
+      y: prevBox.y + prevBox.height / 2
+    }
+    
+    const movement = Math.sqrt(
+      Math.pow(currentCenter.x - prevCenter.x, 2) + 
+      Math.pow(currentCenter.y - prevCenter.y, 2)
+    )
+    totalMovement += movement
+  }
+
+  const avgMovement = totalMovement / previousDetections.length
+  const boxSize = Math.max(currentBox.width, currentBox.height)
+  const movementRatio = avgMovement / boxSize
+
+  // Real faces typically have 1-5% movement, photos have <0.5%
+  // Also check if face size changes (real faces move closer/farther)
+  let sizeVariation = 0
+  for (let i = 0; i < previousDetections.length; i++) {
+    const prevBox = previousDetections[i].detection.box
+    const prevSize = Math.max(prevBox.width, prevBox.height)
+    const currentSize = Math.max(currentBox.width, currentBox.height)
+    sizeVariation += Math.abs(currentSize - prevSize) / prevSize
+  }
+  const avgSizeVariation = sizeVariation / previousDetections.length
+
+  // Check landmarks for subtle changes (eye positions, etc.)
+  const currentLandmarks = currentDetection.landmarks.positions
+  let landmarkMovement = 0
+  if (previousDetections.length > 0 && previousDetections[0].landmarks) {
+    const prevLandmarks = previousDetections[0].landmarks.positions
+    for (let i = 0; i < Math.min(currentLandmarks.length, prevLandmarks.length); i++) {
+      const dx = currentLandmarks[i].x - prevLandmarks[i].x
+      const dy = currentLandmarks[i].y - prevLandmarks[i].y
+      landmarkMovement += Math.sqrt(dx * dx + dy * dy)
+    }
+    landmarkMovement = landmarkMovement / currentLandmarks.length
+  }
+
+  // Liveness criteria:
+  // 1. Face position should have some movement (movementRatio > 0.3%)
+  // 2. Face size should vary slightly (avgSizeVariation > 0.2%)
+  // 3. Landmarks should show some movement (landmarkMovement > 1 pixel average)
+  const isLive = movementRatio > 0.003 || avgSizeVariation > 0.002 || landmarkMovement > 1
+
+  if (!isLive) {
+    return { 
+      isLive: false, 
+      reason: 'No movement detected. Please ensure you are using a live camera, not a photo.',
+      movementRatio,
+      sizeVariation: avgSizeVariation,
+      landmarkMovement
+    }
+  }
+
+  return { 
+    isLive: true, 
+    reason: 'Live face detected',
+    movementRatio,
+    sizeVariation: avgSizeVariation,
+    landmarkMovement
+  }
+}
+
+// Enhanced face detection with liveness check
+export const detectFaceWithLiveness = async (videoElement, previousDetections = []) => {
+  if (!modelsLoaded) {
+    const loaded = await loadModels()
+    if (!loaded) {
+      throw new Error('Failed to load face recognition models')
+    }
+  }
+
+  const detection = await faceapi
+    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks()
+    .withFaceDescriptor()
+
+  if (!detection) {
+    return { detection: null, liveness: { isLive: false, reason: 'No face detected' } }
+  }
+
+  // Check liveness
+  const liveness = checkLiveness(detection, previousDetections)
+
+  return { detection, liveness }
+}
+

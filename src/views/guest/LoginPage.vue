@@ -244,6 +244,7 @@
       @verified="handleFaceVerified"
       @failed="handleFaceVerificationFailed"
       @cancel="handleFaceVerificationCancel"
+      @signout="handleFaceVerificationSignout"
     />
   </div>
 </template>
@@ -508,6 +509,14 @@ const handleFaceVerificationCancel = async () => {
   // Logout user if they cancel face verification
   await authStore.logout()
   showNotification('warning', 'Face verification is required. Please log in again.')
+}
+
+const handleFaceVerificationSignout = async () => {
+  // Sign out user immediately when face doesn't match - BLOCK LOGIN
+  showFaceVerification.value = false
+  // Ensure user is logged out completely
+  await authStore.logout()
+  showNotification('error', 'Face verification failed. Face does not match registered face. Access denied. Please log in again.')
 }
 </script>
 

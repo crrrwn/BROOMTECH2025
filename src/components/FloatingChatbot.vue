@@ -31,8 +31,8 @@
               </svg>
             </div>
             <div>
-              <h3 class="font-semibold text-sm">BroomBot</h3>
-              <p class="text-xs opacity-90">Online now</p>
+              <h3 class="font-semibold text-sm">Booking Assistant</h3>
+              <p class="text-xs opacity-90">I can help you book services</p>
             </div>
           </div>
           <button @click="toggleChat" class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors">
@@ -47,28 +47,28 @@
       <div class="p-3 bg-gray-50 border-b">
         <div class="flex flex-wrap gap-2">
           <button
-            @click="sendQuickMessage('Check my order status')"
+            @click="sendQuickMessage('How do I book a food delivery?')"
             class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors"
           >
-            📦 Order Status
+            🍔 Food Delivery
           </button>
           <button
-            @click="sendQuickMessage('I need help booking a service')"
+            @click="sendQuickMessage('How do I book bill payments?')"
             class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors"
           >
-            📅 Book Service
+            💳 Bill Payments
           </button>
           <button
-            @click="sendQuickMessage('What are your service rates?')"
+            @click="sendQuickMessage('How do I book grocery shopping?')"
             class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200 transition-colors"
           >
-            💰 Pricing
+            🛒 Grocery Shopping
           </button>
           <button
-            @click="sendQuickMessage('I need technical support')"
+            @click="sendQuickMessage('What services do you offer?')"
             class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs hover:bg-orange-200 transition-colors"
           >
-            🛠️ Support
+            📋 All Services
           </button>
         </div>
       </div>
@@ -80,10 +80,17 @@
           <div class="max-w-xs">
             <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
               <p class="text-sm text-green-800">
-                👋 Hi! I'm BroomBot, your BroomTech assistant. How can I help you today?
+                👋 Hi! I'm your booking assistant. I can help you:
               </p>
+              <ul class="text-xs text-green-700 mt-2 ml-4 list-disc space-y-1">
+                <li>Book food delivery, bill payments, grocery shopping, and more</li>
+                <li>Understand how each service works</li>
+                <li>Check pricing and delivery fees</li>
+                <li>Navigate the booking process</li>
+              </ul>
+              <p class="text-sm text-green-800 mt-2">What would you like to book today?</p>
             </div>
-            <p class="text-xs text-gray-500 mt-1">BroomBot • now</p>
+            <p class="text-xs text-gray-500 mt-1">Booking Assistant • now</p>
           </div>
         </div>
 
@@ -94,7 +101,7 @@
               <p>{{ message.text }}</p>
             </div>
             <p class="text-xs text-gray-500 mt-1" :class="message.isUser ? 'text-right' : 'text-left'">
-              {{ message.isUser ? 'You' : 'BroomBot' }} • {{ formatTime(message.timestamp) }}
+              {{ message.isUser ? 'You' : 'Assistant' }} • {{ formatTime(message.timestamp) }}
             </p>
           </div>
         </div>
@@ -109,7 +116,7 @@
                 <div class="w-2 h-2 bg-green-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
               </div>
             </div>
-            <p class="text-xs text-gray-500 mt-1">BroomBot is typing...</p>
+            <p class="text-xs text-gray-500 mt-1">Assistant is typing...</p>
           </div>
         </div>
       </div>
@@ -196,39 +203,71 @@ export default {
     generateBotResponse(userMessage) {
       const message = userMessage.toLowerCase()
       
-      if (message.includes('order') && message.includes('status')) {
-        return "I can help you check your order status! Please provide your order number, or you can view all your orders in the 'My Orders' section of your dashboard."
+      // Food Delivery
+      if (message.includes('food') && (message.includes('delivery') || message.includes('book'))) {
+        return "🍔 To book Food Delivery:\n1. Go to 'Book Service' → Select 'Food Delivery'\n2. Enter restaurant name and address (e.g., Jollibee, McDonald's)\n3. Enter delivery address and recipient details\n4. Add food order details and special instructions\n5. Review the route on the map and estimated delivery fee\n6. Submit your booking!\n\n💡 Tip: Make sure both addresses are within Calapan City!"
       }
       
-      if (message.includes('help') || message.includes('support') || message.includes('technical')) {
-        return "I'm here to help! For technical support, you can contact our team at support@broomtech.com or call us at (02) 8123-4567. Our support hours are 8AM-8PM daily."
+      // Bill Payments
+      if (message.includes('bill') && (message.includes('payment') || message.includes('pay'))) {
+        return "💳 To book Bill Payments:\n1. Go to 'Book Service' → Select 'Bill Payments'\n2. Enter biller name (e.g., MERALCO, GLOBE, PLDT)\n3. Fill in account name, account number, and amount\n4. Upload receipt/reference (required)\n5. Enter pickup and return addresses\n6. Review and submit!\n\n📋 Note: Receipt upload is required for bill payment services."
       }
       
-      if (message.includes('price') || message.includes('rate') || message.includes('cost') || message.includes('pricing')) {
-        return "Our BroomTech service rates: Basic cleaning starts at ₱500, Deep cleaning at ₱800, Premium service at ₱1,200. Rates may vary by location and service complexity."
+      // Grocery Shopping
+      if (message.includes('grocery') || (message.includes('shopping') && message.includes('book'))) {
+        return "🛒 To book Grocery Shopping:\n1. Go to 'Book Service' → Select 'Grocery Shopping'\n2. Enter your shopping list\n3. Select store preference (optional)\n4. Enter delivery address\n5. Add preferred delivery time (optional)\n6. Review estimated fee and submit!\n\n💡 Our driver will shop for you and deliver to your address."
       }
       
-      if (message.includes('book') || message.includes('schedule') || message.includes('service')) {
-        return "You can book a BroomTech service by going to 'Book Service' in your dashboard. Choose your service type, select date & time, and confirm your booking!"
+      // Gift Delivery
+      if (message.includes('gift') || (message.includes('delivery') && message.includes('gift'))) {
+        return "🎁 To book Gift Delivery:\n1. Go to 'Book Service' → Select 'Gift Delivery'\n2. Enter gift type (e.g., Flowers, Cake, Jewelry)\n3. Enter recipient name and contact\n4. Enter store name and address (where to buy)\n5. Enter delivery address\n6. Select preferred date & time\n7. Review and submit!\n\n💝 Perfect for birthdays, anniversaries, and special occasions!"
       }
-
-      if (message.includes('driver') || message.includes('cleaner')) {
-        return "Our professional cleaners are background-checked and trained. You can track your assigned cleaner and communicate through the app once your booking is confirmed."
+      
+      // Medicine Delivery
+      if (message.includes('medicine') || message.includes('prescription')) {
+        return "💊 To book Medicine Delivery:\n1. Go to 'Book Service' → Select 'Medicine Delivery'\n2. Enter medicine names\n3. Upload prescription (if required)\n4. Enter quantity needed\n5. Enter delivery address\n6. Review and submit!\n\n⚠️ Important: Please ensure prescription is valid and medicines are available."
       }
-
-      if (message.includes('payment') || message.includes('pay')) {
-        return "We accept various payment methods: GCash, PayMaya, Credit/Debit cards, and Cash on Delivery. Payment is processed securely through our platform."
+      
+      // Pickup & Drop
+      if (message.includes('pickup') || message.includes('drop') || message.includes('pick-up')) {
+        return "📦 To book Pickup & Drop:\n1. Go to 'Book Service' → Select 'Pickup & Drop'\n2. Enter pickup address and contact\n3. Enter item description and type\n4. Enter dropoff address\n5. Select preferred pickup date & time\n6. Review route and estimated fee\n7. Submit your booking!\n\n🚗 Great for sending packages, documents, or items within Calapan City!"
       }
-
-      if (message.includes('cancel') || message.includes('reschedule')) {
-        return "You can cancel or reschedule your booking up to 2 hours before the scheduled time through your 'My Orders' section. Cancellation fees may apply for last-minute changes."
+      
+      // All Services
+      if (message.includes('service') && (message.includes('all') || message.includes('offer') || message.includes('available'))) {
+        return "📋 We offer these services:\n\n🍔 Food Delivery - Order from restaurants\n💳 Bill Payments - Pay bills and get receipts\n🛒 Grocery Shopping - Shop for you and deliver\n🎁 Gift Delivery - Send gifts to loved ones\n💊 Medicine Delivery - Get medicines delivered\n📦 Pickup & Drop - Send packages and items\n\nAll services are available within Calapan City only. Go to 'Book Service' to get started!"
+      }
+      
+      // Pricing
+      if (message.includes('price') || message.includes('rate') || message.includes('cost') || message.includes('fee')) {
+        return "💰 Delivery Fee Structure:\n\n• Base Charge (First 3km): ₱10\n• Distance Fee (After 3km): ₱2 per km\n• Bad Weather Surcharge: May apply during heavy rain\n\n💡 The exact fee is calculated based on your route and shown before booking. You can see the estimated delivery fee on the map after entering addresses!"
+      }
+      
+      // How to book / booking process
+      if (message.includes('how') && (message.includes('book') || message.includes('order'))) {
+        return "📝 General Booking Steps:\n\n1. Go to 'Book Service' in your dashboard\n2. Select the service type you need\n3. Fill in all required fields (marked with *)\n4. Enter addresses - make sure they're within Calapan City\n5. Review the map route and estimated delivery fee\n6. Choose payment method (COD, GCash, etc.)\n7. Submit your booking!\n\n✅ You'll receive a confirmation and can track your order in 'My Orders'."
+      }
+      
+      // Address / Location
+      if (message.includes('address') || message.includes('location') || message.includes('calapan')) {
+        return "📍 Important Location Info:\n\n• All services are available ONLY within Calapan City\n• When entering addresses, make sure they're in Calapan City, Oriental Mindoro\n• The map will show if your address is valid\n• You can use 'Use Current Location' button if you're in Calapan City\n• Addresses outside Calapan City cannot be booked"
+      }
+      
+      // Payment methods
+      if (message.includes('payment') || message.includes('pay') || message.includes('method')) {
+        return "💳 Payment Methods Available:\n\n• Cash on Delivery (COD) - Pay when service is completed\n• GCash - Digital payment via GCash\n• Other digital wallets\n\n💡 Payment method is selected during booking. COD is available for most services!"
+      }
+      
+      // Order status / tracking
+      if (message.includes('order') && (message.includes('status') || message.includes('track'))) {
+        return "📦 To check your order status:\n\n1. Go to 'My Orders' in your dashboard\n2. You'll see all your orders with their current status\n3. Statuses include: Pending, Confirmed, In Transit, On The Way, Delivered, Cancelled\n4. Click on an order to see full details\n5. You can chat with your driver, cancel (within 30 seconds), or give feedback\n\n💬 You can also contact your assigned driver directly!"
       }
       
       // Default responses
       const defaultResponses = [
-        "Thank you for contacting BroomTech! How can I assist you with your cleaning services today?",
-        "I'm here to help with your BroomTech needs! Could you please provide more details about what you need assistance with?",
-        "That's a great question! Let me help you find the information you need about our cleaning services."
+        "I'm here to help you book services! What would you like to book? You can ask about:\n• Food Delivery\n• Bill Payments\n• Grocery Shopping\n• Gift Delivery\n• Medicine Delivery\n• Pickup & Drop",
+        "Need help booking a service? Just tell me which service you're interested in, and I'll guide you through the process!",
+        "I can help you with booking any of our services. What would you like to know more about?"
       ]
       
       return defaultResponses[Math.floor(Math.random() * defaultResponses.length)]

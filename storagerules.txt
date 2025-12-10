@@ -1,0 +1,140 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Helper function to check if user is owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Public paths - read only
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // No public writes
+    }
+
+    // Chat images - STRICT: Only participants can access
+    // Path structure: chat-images/{chatId}/{userId}/{fileName}
+    match /chat-images/{chatId}/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (
+                     isOwner(userId) || 
+                     isAdmin()
+                   );
+      
+      // STRICT: Only owner can upload, with size and type validation
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 10 * 1024 * 1024 && // Max 10MB
+                      request.resource.contentType.matches('image/.*');
+      
+      // Only owner or admin can delete
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Remittance receipts - STRICT: Only owner and admin
+    match /remittance-receipts/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 10 * 1024 * 1024 && // Max 10MB
+                      request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Delivery proofs - STRICT: Only owner and admin
+    match /delivery-proofs/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 10 * 1024 * 1024 && // Max 10MB
+                      request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Profile pictures - STRICT: Only owner and admin
+    match /profiles/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // User profiles - STRICT: Only owner and admin
+    match /user-profiles/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Bill Receipts - STRICT: Only owner and admin
+    match /billReceipts/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      (request.resource.contentType.matches('image/.*') || 
+                       request.resource.contentType == 'application/pdf');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Face images - STRICT SECURITY: Critical for face verification
+    // Only owner can upload, only owner and admin can read
+    // This prevents unauthorized access to face images
+    match /face-images/{userId}/{allPaths=**} {
+      // STRICT: Only owner and admin can read face images
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      
+      // STRICT: Only owner can upload their own face image during registration
+      // Must be image, max 5MB, and only during registration/update
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      request.resource.contentType.matches('image/.*');
+      
+      // STRICT: Only owner or admin can delete face images
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Driver documents - STRICT: Only owner and admin
+    match /driver-documents/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 10 * 1024 * 1024 && // Max 10MB
+                      (request.resource.contentType.matches('image/.*') || 
+                       request.resource.contentType == 'application/pdf');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Payment proofs - STRICT: Only owner and admin
+    match /payment-proofs/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Default: Deny all other access (STRICT)
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

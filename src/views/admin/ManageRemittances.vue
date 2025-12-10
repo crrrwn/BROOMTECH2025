@@ -35,8 +35,14 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="bg-white rounded-lg shadow-sm border p-12 text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p class="text-gray-600">Loading remittances...</p>
+    </div>
+
     <!-- Remittances Table -->
-    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+    <div v-else class="bg-white rounded-lg shadow-sm border overflow-hidden">
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
@@ -53,6 +59,11 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
+            <tr v-if="getFilteredRemittances().length === 0">
+              <td colspan="9" class="px-6 py-8 text-center text-gray-500">
+                No remittances found
+              </td>
+            </tr>
             <tr v-for="remittance in getFilteredRemittances()" :key="remittance.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ remittance.driverName }}</td>
               <td class="px-6 py-4 text-sm text-gray-900">₱{{ remittance.amount.toFixed(2) }}</td>
@@ -216,34 +227,85 @@ export default {
     }
   },
   methods: {
-    setupRemittancesListener() {
+    async setupRemittancesListener() {
       try {
         if (this.unsubscribe) {
           this.unsubscribe()
         }
 
+        // First, try to get remittances with getDocs to check if collection exists and has data
+        try {
+          const remittancesRef = collection(db, 'remittances')
+          const initialSnapshot = await getDocs(query(remittancesRef, limit(1)))
+          console.log('[v0] Remittances collection check:', initialSnapshot.size, 'documents found')
+        } catch (error) {
+          console.error('[v0] Error checking remittances collection:', error)
+          // Continue anyway, might be permission issue but listener might still work
+        }
+
+        // Query without orderBy to avoid index requirement, then sort manually
         const remittancesQuery = query(
           collection(db, 'remittances'),
-          orderBy('date', 'desc'),
           limit(100)
         )
         
-        this.unsubscribe = onSnapshot(remittancesQuery, (snapshot) => {
-          this.remittances = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-          
-          console.log('[v0] Remittances loaded (real-time):', this.remittances.length)
-          this.loading = false
-        }, (error) => {
-          console.error('[v0] Error with remittances listener:', error)
-          this.toast.error('Error loading remittances')
-          this.loading = false
-        })
+        this.unsubscribe = onSnapshot(
+          remittancesQuery, 
+          (snapshot) => {
+            try {
+              if (snapshot.empty) {
+                console.log('[v0] No remittances found in collection')
+                this.remittances = []
+                this.loading = false
+                return
+              }
+
+              this.remittances = snapshot.docs.map(doc => {
+                const data = doc.data()
+                return {
+                  id: doc.id,
+                  ...data
+                }
+              })
+              
+              // Sort by date descending manually
+              this.remittances.sort((a, b) => {
+                const dateA = a.date?.toDate ? a.date.toDate() : (a.date ? new Date(a.date) : (a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0)))
+                const dateB = b.date?.toDate ? b.date.toDate() : (b.date ? new Date(b.date) : (b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0)))
+                return dateB - dateA
+              })
+              
+              console.log('[v0] Remittances loaded successfully:', this.remittances.length)
+              this.loading = false
+            } catch (error) {
+              console.error('[v0] Error processing remittances snapshot:', error)
+              this.toast.error('Error processing remittances data')
+              this.loading = false
+            }
+          }, 
+          (error) => {
+            console.error('[v0] Error with remittances listener:', error)
+            console.error('[v0] Error code:', error.code)
+            console.error('[v0] Error message:', error.message)
+            
+            // Provide more specific error messages
+            let errorMessage = 'Error loading remittances'
+            if (error.code === 'permission-denied') {
+              errorMessage = 'Permission denied. Please check Firestore security rules for remittances collection.'
+            } else if (error.code === 'unavailable') {
+              errorMessage = 'Firestore service is temporarily unavailable. Please try again later.'
+            } else if (error.message && error.message.includes('index')) {
+              errorMessage = 'Database index required. Please check Firestore console for index creation link.'
+            }
+            
+            this.toast.error(errorMessage)
+            this.loading = false
+          }
+        )
       } catch (error) {
         console.error('[v0] Error setting up listener:', error)
-        this.toast.error('Error setting up remittances listener')
+        console.error('[v0] Error details:', error.code, error.message)
+        this.toast.error('Error setting up remittances listener: ' + (error.message || 'Unknown error'))
         this.loading = false
       }
     },

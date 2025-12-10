@@ -346,8 +346,8 @@
     <div class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-6">Fraud Detection Patterns</h2>
       
-      <!-- Added 3 summary cards showing fraud detection statistics -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Summary card showing fraud detection statistics -->
+      <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
         <!-- Frequent Cancels Card -->
         <div class="bg-red-50 border border-red-200 rounded-lg p-6">
           <div class="flex items-start justify-between mb-3">
@@ -359,36 +359,7 @@
           </div>
           <h3 class="text-sm font-medium text-red-900 mb-1">Frequent Cancels</h3>
           <p class="text-3xl font-bold text-red-600 mb-2">{{ fraudStats.frequentCancels }}</p>
-          <p class="text-sm text-red-700">Users with 5+ cancels this week</p>
-        </div>
-
-        <!-- Fake Addresses Card -->
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <div class="flex items-start justify-between mb-3">
-            <div class="p-2 bg-yellow-100 rounded-lg">
-              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </div>
-          </div>
-          <h3 class="text-sm font-medium text-yellow-900 mb-1">Fake Addresses</h3>
-          <p class="text-3xl font-bold text-yellow-600 mb-2">{{ fraudStats.fakeAddresses }}</p>
-          <p class="text-sm text-yellow-700">Suspicious location patterns</p>
-        </div>
-
-        <!-- Abuse Reports Card -->
-        <div class="bg-orange-50 border border-orange-200 rounded-lg p-6">
-          <div class="flex items-start justify-between mb-3">
-            <div class="p-2 bg-orange-100 rounded-lg">
-              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-              </svg>
-            </div>
-          </div>
-          <h3 class="text-sm font-medium text-orange-900 mb-1">Abuse Reports</h3>
-          <p class="text-3xl font-bold text-orange-600 mb-2">{{ fraudStats.abuseReports }}</p>
-          <p class="text-sm text-orange-700">Driver/User abuse reports</p>
+          <p class="text-sm text-red-700">Users with 3+ cancels this week</p>
         </div>
       </div>
 
@@ -424,9 +395,7 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span 
                     :class="{
-                      'bg-red-100 text-red-800': user.alertType === 'Frequent Cancels',
-                      'bg-yellow-100 text-yellow-800': user.alertType === 'Fake Address',
-                      'bg-orange-100 text-orange-800': user.alertType === 'Abuse Report'
+                      'bg-red-100 text-red-800': user.alertType === 'Frequent Cancels'
                     }"
                     class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                   >
@@ -761,18 +730,10 @@ export default {
       fraudSettings: {
         flagFrequentCancels: true,
         cancelThreshold: 3,
-        cancelPeriod: '7',
-        flagFakeAddresses: true,
-        fakeAddressThreshold: 2,
-        addressDetectionMethod: 'both',
-        flagAbusiveBehavior: true,
-        abusiveThreshold: 2,
-        abusiveAction: 'flag'
+        cancelPeriod: '7'
       },
       fraudStats: {
-        frequentCancels: 0,
-        fakeAddresses: 0,
-        abuseReports: 0
+        frequentCancels: 0
       },
       flaggedUsers: [],
       showFlagModal: false,
@@ -998,8 +959,6 @@ export default {
         const ordersRef = collection(db, 'orders')
         
         let frequentCancels = 0
-        let fakeAddresses = 0
-        let abuseReports = 0
         const flagged = []
         
         const userPromises = usersSnapshot.docs.map(async (userDoc) => {
@@ -1020,7 +979,8 @@ export default {
           
           const userFlags = []
           
-          if (cancelCount >= 5) {
+          // Detect fraud after 3 cancels
+          if (cancelCount >= 3) {
             userFlags.push({
               type: 'frequentCancels',
               data: {
@@ -1038,44 +998,6 @@ export default {
             })
           }
           
-          const failedDeliveries = user.failedDeliveries || 0
-          if (failedDeliveries >= 2) {
-            userFlags.push({
-              type: 'fakeAddresses',
-              data: {
-                id: userId,
-                name: userName,
-                email: user.email || 'No email',
-                initials: this.getInitials(userName),
-                alertType: 'Fake Address',
-                pattern: 'Non-existent locations',
-                riskLevel: 'Medium',
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                isFlagged: user.status === 'flagged',
-                isBanned: user.status === 'banned'
-              }
-            })
-          }
-          
-          const abuseCount = user.abuseReports || 0
-          if (abuseCount >= 1) {
-            userFlags.push({
-              type: 'abuseReports',
-              data: {
-                id: userId,
-                name: userName,
-                email: user.email || 'No email',
-                initials: this.getInitials(userName),
-                alertType: 'Abuse Report',
-                pattern: 'Verbal abuse to drivers',
-                riskLevel: abuseCount >= 3 ? 'High' : 'Medium',
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                isFlagged: user.status === 'flagged',
-                isBanned: user.status === 'banned'
-              }
-            })
-          }
-          
           return userFlags
         })
         
@@ -1085,8 +1007,6 @@ export default {
         allUserFlags.forEach(userFlags => {
           userFlags.forEach(flag => {
             if (flag.type === 'frequentCancels') frequentCancels++
-            if (flag.type === 'fakeAddresses') fakeAddresses++
-            if (flag.type === 'abuseReports') abuseReports++
             
             if (!seenUsers.has(flag.data.id)) {
               flagged.push(flag.data)
@@ -1096,9 +1016,7 @@ export default {
         })
         
         this.fraudStats = {
-          frequentCancels,
-          fakeAddresses,
-          abuseReports
+          frequentCancels
         }
         
         this.flaggedUsers = flagged
@@ -1279,13 +1197,7 @@ export default {
         this.fraudSettings = {
           flagFrequentCancels: true,
           cancelThreshold: 3,
-          cancelPeriod: '7',
-          flagFakeAddresses: true,
-          fakeAddressThreshold: 2,
-          addressDetectionMethod: 'both',
-          flagAbusiveBehavior: true,
-          abusiveThreshold: 2,
-          abusiveAction: 'flag'
+          cancelPeriod: '7'
         }
         
         // Save all default settings to Firestore

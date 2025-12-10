@@ -668,31 +668,73 @@ export default {
   methods: {
     async loadOrderData() {
       try {
+        if (!this.orderId) {
+          console.error('[v0] No order ID provided')
+          this.toast.error('Order ID is missing')
+          this.$router.push('/driver/assignments')
+          return
+        }
+
         const orderRef = doc(db, 'orders', this.orderId)
         const orderSnap = await getDoc(orderRef)
         
         if (!orderSnap.exists()) {
-          this.toast.error('Order not found')
+          console.error('[v0] Order not found:', this.orderId)
+          this.toast.error('Order not found. It may have been deleted or does not exist.')
+          this.$router.push('/driver/assignments')
+          return
+        }
+
+        const orderData = orderSnap.data()
+        
+        // Verify that the driver has access to this order
+        const driverId = this.authStore.user?.uid
+        if (orderData.driverId !== driverId && !this.authStore.isAdmin) {
+          console.error('[v0] Driver does not have access to this order:', {
+            orderDriverId: orderData.driverId,
+            currentDriverId: driverId
+          })
+          this.toast.error('You do not have permission to view this order')
           this.$router.push('/driver/assignments')
           return
         }
 
         this.order = {
           id: orderSnap.id,
-          ...orderSnap.data()
+          ...orderData
         }
 
         // Load customer data if needed
         if (this.order.userId) {
-          const userRef = doc(db, 'users', this.order.userId)
-          const userSnap = await getDoc(userRef)
-          if (userSnap.exists()) {
-            this.order.customerData = userSnap.data()
+          try {
+            const userRef = doc(db, 'users', this.order.userId)
+            const userSnap = await getDoc(userRef)
+            if (userSnap.exists()) {
+              this.order.customerData = userSnap.data()
+            }
+          } catch (userError) {
+            console.warn('[v0] Error loading customer data:', userError)
+            // Don't fail the entire load if customer data can't be loaded
           }
         }
       } catch (error) {
         console.error('[v0] Error loading order:', error)
-        this.toast.error('Failed to load order data')
+        console.error('[v0] Error details:', {
+          code: error.code,
+          message: error.message,
+          orderId: this.orderId
+        })
+        
+        let errorMessage = 'Failed to load order data'
+        if (error.code === 'permission-denied') {
+          errorMessage = 'You do not have permission to view this order'
+        } else if (error.code === 'not-found') {
+          errorMessage = 'Order not found. It may have been deleted.'
+        } else if (error.message) {
+          errorMessage = `Failed to load order: ${error.message}`
+        }
+        
+        this.toast.error(errorMessage)
         this.$router.push('/driver/assignments')
       }
     },

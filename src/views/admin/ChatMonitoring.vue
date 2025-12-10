@@ -181,14 +181,22 @@
                       </span>
                     </div>
                     
-                    <!-- Image Message -->
-                    <div v-if="message.messageType === 'image' && message.imageUrl && !message.deleted" class="mb-2">
-                      <img
-                        :src="message.imageUrl"
-                        alt="Chat image"
-                        class="max-w-full h-auto rounded-lg cursor-pointer"
-                        @click="openImagePreview(message.imageUrl)"
-                      />
+                    <!-- Image Message - Show even if deleted (for admin monitoring) -->
+                    <div v-if="message.messageType === 'image' && message.imageUrl" class="mb-2">
+                      <div v-if="message.deleted" class="mb-1 flex items-center space-x-2">
+                        <span class="text-xs text-red-600 font-medium">[DELETED PHOTO]</span>
+                        <span class="text-xs text-gray-500">
+                          Deleted by: {{ getSenderName(message) }}
+                        </span>
+                      </div>
+                      <div :class="message.deleted ? 'opacity-50 border-2 border-red-300' : ''">
+                        <img
+                          :src="message.imageUrl"
+                          :alt="message.deleted ? 'Deleted chat image' : 'Chat image'"
+                          class="max-w-full h-auto rounded-lg cursor-pointer"
+                          @click="openImagePreview(message.imageUrl)"
+                        />
+                      </div>
                     </div>
                     
                     <!-- Text Message (show original even if deleted) -->

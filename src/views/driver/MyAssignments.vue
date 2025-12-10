@@ -680,7 +680,14 @@ export default {
       this.loadAssignedBookings()
     },
     async startDelivery(booking) {
+      if (!booking || !booking.id) {
+        console.error('[v0] Invalid booking object:', booking)
+        this.$toast?.error?.('Invalid order. Please try again.')
+        return
+      }
+
       this.selectedBooking = booking
+      
       if (booking.status === 'driver_assigned') {
         try {
           const bookingRef = doc(db, 'orders', booking.id)
@@ -692,12 +699,18 @@ export default {
           this.$toast?.success?.('Delivery started!')
         } catch (error) {
           console.error('[v0] Error starting delivery:', error)
-          this.$toast?.error?.('Failed to start delivery')
+          this.$toast?.error?.('Failed to start delivery. Please try again.')
+          return
         }
       }
       
       // Navigate to delivery tracking page
-      this.$router.push(`/driver/tracking/${booking.id}`)
+      try {
+        await this.$router.push(`/driver/tracking/${booking.id}`)
+      } catch (routerError) {
+        console.error('[v0] Error navigating to tracking page:', routerError)
+        this.$toast?.error?.('Failed to open tracking page. Please try again.')
+      }
     },
     openChat() {
       this.$router.push('/driver/chat')

@@ -62,7 +62,7 @@
       <div class="mb-6">
         <h3 class="text-md font-medium text-gray-800 mb-3">Route & Distance</h3>
         <div class="bg-gray-100 rounded-lg p-4">
-          <div id="map" class="w-full h-64 rounded-lg mb-3"></div>
+          <div id="map" class="w-full h-96 rounded-lg mb-3 overflow-hidden" style="min-height: 384px; position: relative;"></div>
           <div class="flex justify-between items-center text-sm">
             <div class="flex items-center space-x-4">
               <span class="text-gray-600">Distance: <strong>{{ routeInfo.distance }}</strong></span>
@@ -1108,15 +1108,9 @@ export default {
       this.saveFormData()
       this.validateRestaurantName()
       
-      // Check if user typed a restaurant name (Jollibee, McDonalds, etc.)
-      const name = this.bookingForm.restaurantName.toLowerCase().trim()
-      if (name.length >= 3) {
-        // Search for restaurant locations if name is at least 3 characters
-        this.searchRestaurantLocations(name)
-      } else {
-        // Clear markers if name is too short
-        this.clearJollibeeMarkers()
-      }
+      // REMOVED: Automatic map search when typing restaurant name
+      // Markers will only appear when user selects/enters an address
+      this.clearJollibeeMarkers()
     },
 
     validateRestaurantName() {
@@ -1133,28 +1127,21 @@ export default {
     },
 
     onRestaurantAddressFocus() {
-      const name = this.bookingForm.restaurantName.toLowerCase().trim()
-      if (name.length >= 3) {
-        this.restaurantAddressWarning = 'Tip: Select a location from the map markers or type the address'
-      }
+      // Tip removed - markers only appear when address is selected/entered
+      this.restaurantAddressWarning = ''
     },
 
     onBillerNameInput() {
       this.saveFormData()
-      const name = this.bookingForm.billerName.toLowerCase().trim()
-      if (name.length >= 3) {
-        // Search for biller locations (PLDT, MERALCO, GLOBE, etc.)
-        this.searchBillerLocations(name)
-      } else {
-        this.clearBillerMarkers()
-      }
+      
+      // REMOVED: Automatic map search when typing biller name
+      // Markers will only appear when user selects/enters an address
+      this.clearBillerMarkers()
     },
 
     onBillerNameFocus() {
-      const name = this.bookingForm.billerName.toLowerCase().trim()
-      if (name.length >= 3) {
-        this.billerNameWarning = 'Tip: Select a location from the map markers'
-      }
+      // Tip removed - markers only appear when address is selected/entered
+      this.billerNameWarning = ''
     },
 
     searchBillerLocations(billerName) {
@@ -1163,10 +1150,10 @@ export default {
       // Clear existing biller markers
       this.clearBillerMarkers()
 
-      // Calapan City bounds
+      // Calapan City bounds (tighter bounds around exact coordinates)
       const calapanBounds = new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(13.3000, 121.0000),
-        new window.google.maps.LatLng(13.5000, 121.3000)
+        new window.google.maps.LatLng(13.3000, 121.0800), // South-West
+        new window.google.maps.LatLng(13.4500, 121.2500)  // North-East
       )
 
       // Search for biller in Calapan City
@@ -1178,10 +1165,21 @@ export default {
 
       this.jollibeePlacesService.textSearch(request, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-          // Filter results to only include Calapan City locations
+          // STRICT FILTER: Only include Calapan City locations
           const calapanResults = results.filter(place => {
+            if (!place.geometry || !place.geometry.location) return false
+            
             const address = (place.formatted_address || '').toLowerCase()
-            return address.includes('calapan') || address.includes('oriental mindoro')
+            const location = place.geometry.location
+            
+            // Must contain 'calapan' in address AND be within bounds
+            const isInCalapan = address.includes('calapan') || 
+                               address.includes('calapan city') ||
+                               address.includes('oriental mindoro')
+            
+            const isWithinBounds = calapanBounds.contains(location)
+            
+            return isInCalapan && isWithinBounds
           })
 
           calapanResults.forEach((place) => {
@@ -1305,26 +1303,38 @@ export default {
       // Clear existing markers
       this.clearJollibeeMarkers()
 
-      // Calapan City center and bounds
-      const calapanCenter = { lat: 13.4119, lng: 121.1803 }
+      // Calapan City exact coordinates and bounds
+      const calapanCenter = { lat: 13.3771, lng: 121.1646 }
       const calapanBounds = new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(13.3000, 121.0000),
-        new window.google.maps.LatLng(13.5000, 121.3000)
+        new window.google.maps.LatLng(13.3000, 121.0800), // South-West
+        new window.google.maps.LatLng(13.4500, 121.2500)  // North-East
       )
 
-      // Search for restaurant in Calapan City
+      // STRICT: Search for restaurant ONLY in Calapan City
       const request = {
-        query: `${restaurantName} Calapan City, Oriental Mindoro`,
+        query: `${restaurantName} Calapan City, Oriental Mindoro, Philippines`,
         fields: ['name', 'geometry', 'formatted_address', 'place_id'],
-        locationBias: calapanBounds
+        locationBias: calapanBounds,
+        bounds: calapanBounds // Add bounds to restrict search area
       }
 
       this.jollibeePlacesService.textSearch(request, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-          // Filter results to only include Calapan City locations
+          // STRICT FILTER: Only include Calapan City locations
           const calapanResults = results.filter(place => {
+            if (!place.geometry || !place.geometry.location) return false
+            
             const address = (place.formatted_address || '').toLowerCase()
-            return address.includes('calapan') || address.includes('oriental mindoro')
+            const location = place.geometry.location
+            
+            // Must contain 'calapan' in address AND be within bounds
+            const isInCalapan = address.includes('calapan') || 
+                               address.includes('calapan city') ||
+                               address.includes('oriental mindoro')
+            
+            const isWithinBounds = calapanBounds.contains(location)
+            
+            return isInCalapan && isWithinBounds
           })
 
           calapanResults.forEach((place) => {
@@ -1469,7 +1479,16 @@ export default {
       const mapElement = document.getElementById('map')
       if (!mapElement || !this.mapsReady) return
 
-      const calapanCenter = { lat: 13.4119, lng: 121.1803 }
+      // Calapan City exact coordinates
+      const calapanCenter = { lat: 13.3771, lng: 121.1646 }
+
+      // Tighter bounds around Calapan City (approximately 10km radius)
+      const calapanBounds = {
+        north: 13.4500,
+        south: 13.3000,
+        east: 121.2500,
+        west: 121.0800
+      }
 
       this.map = new window.google.maps.Map(mapElement, {
         center: calapanCenter,
@@ -1478,13 +1497,19 @@ export default {
         streetViewControl: false,
         fullscreenControl: false,
         restriction: {
-          latLngBounds: { north: 13.5, south: 13.3, east: 121.3, west: 121.0 },
-          strictBounds: false
+          latLngBounds: calapanBounds,
+          strictBounds: true // STRICT: Prevent panning outside Calapan City
         }
       })
 
       this.directionsService = new window.google.maps.DirectionsService()
-      this.directionsRenderer = new window.google.maps.DirectionsRenderer({ draggable: false, suppressMarkers: true })
+      // Add padding to prevent route from being cut off
+      this.directionsRenderer = new window.google.maps.DirectionsRenderer({ 
+        draggable: false, 
+        suppressMarkers: true,
+        preserveViewport: false,
+        panel: null
+      })
       this.directionsRenderer.setMap(this.map)
 
       this.geocoder = new window.google.maps.Geocoder()
@@ -1520,9 +1545,10 @@ export default {
         'billerNameInput'
       ]
 
+      // Calapan City bounds (tighter bounds around exact coordinates: lat: 13.3771, lng: 121.1646)
       const calapanBounds = new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(13.3000, 121.0000),
-        new window.google.maps.LatLng(13.5000, 121.3000)
+        new window.google.maps.LatLng(13.3000, 121.0800), // South-West
+        new window.google.maps.LatLng(13.4500, 121.2500)  // North-East
       )
 
       refs.forEach((refKey) => {
@@ -1535,7 +1561,7 @@ export default {
           componentRestrictions: { country: 'ph' },
           fields: ['place_id', 'geometry', 'name', 'formatted_address', 'types'],
           bounds: calapanBounds,
-          strictBounds: false,
+          strictBounds: true, // STRICT: Only show results within Calapan City bounds
           types: isStorePreference ? ['establishment'] : isBillerName ? ['establishment'] : ['establishment', 'geocode']
         }
 
@@ -1545,8 +1571,17 @@ export default {
           const place = ac.getPlace()
           if (!place.geometry) return
 
+          // STRICT: Validate location is within Calapan City bounds
           if (!calapanBounds.contains(place.geometry.location)) {
-            this.showNotification('warning', 'Please select a location within Calapan City area.')
+            this.showNotification('warning', 'Please select a location within Calapan City area only.')
+            input.value = ''
+            return
+          }
+          
+          // Additional validation: Check if address contains Calapan
+          const address = (place.formatted_address || '').toLowerCase()
+          if (!address.includes('calapan') && !address.includes('oriental mindoro')) {
+            this.showNotification('warning', 'Please select a location within Calapan City, Oriental Mindoro only.')
             input.value = ''
             return
           }
@@ -1562,6 +1597,13 @@ export default {
 
           if (refKey === 'storePreferenceInput') {
             this.bookingForm.storePreference = place.name || addr
+            this.saveFormData()
+            // Update route for grocery shopping when store is selected
+            if (this.selectedService && this.selectedService.id === 'grocery-shopping') {
+              setTimeout(() => {
+                this.updateRoute()
+              }, 100)
+            }
             return
           }
 
@@ -1587,8 +1629,11 @@ export default {
           else if (refKey === 'storeAddressInput') this.bookingForm.storeAddress = addr
 
           this.addAddressMarker(place.geometry.location, addr, refKey)
-          this.updateRoute()
           this.saveFormData()
+          // Update route after a short delay to ensure map is ready
+          setTimeout(() => {
+            this.updateRoute()
+          }, 100)
         })
 
         this.autocompleteInstances[refKey] = ac
@@ -1631,9 +1676,23 @@ export default {
         maximumAge: 0
       }
 
+      // Calapan City bounds for validation
+      const calapanBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(13.3000, 121.0800), // South-West
+        new window.google.maps.LatLng(13.4500, 121.2500)  // North-East
+      )
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const position = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          
+          // STRICT: Validate location is within Calapan City bounds
+          const locationLatLng = new window.google.maps.LatLng(position.lat, position.lng)
+          if (!calapanBounds.contains(locationLatLng)) {
+            this.showNotification('warning', 'Your current location is outside Calapan City. Please type an address within Calapan City instead.')
+            return
+          }
+
           if (this.currentLocationMarker) this.currentLocationMarker.setMap(null)
 
           this.currentLocationMarker = new window.google.maps.Marker({
@@ -1650,6 +1709,13 @@ export default {
           if (!this.geocoder) return
           this.geocoder.geocode({ location: position }, (results, status) => {
             if (status === 'OK' && results?.[0]) {
+              // Additional validation: Check if address contains Calapan
+              const address = (results[0].formatted_address || '').toLowerCase()
+              if (!address.includes('calapan') && !address.includes('oriental mindoro')) {
+                this.showNotification('warning', 'Your current location is outside Calapan City. Please type an address within Calapan City instead.')
+                return
+              }
+              
               if (this.selectedService && (this.selectedService.id === 'pickup-drop' || this.selectedService.id === 'bill-payments')) {
                 this.bookingForm.pickupAddress = results[0].formatted_address
               }
@@ -1691,9 +1757,29 @@ export default {
           destination = this.bookingForm.returnAddress
           break
         case 'grocery-shopping':
+          // For grocery shopping, use store preference if available, otherwise use current location
+          if (this.bookingForm.storePreference && this.bookingForm.storePreference.trim()) {
+            origin = this.bookingForm.storePreference
+          } else if (this.currentLocationMarker) {
+            origin = this.currentLocationMarker.getPosition()
+          } else {
+            // Use a default Calapan City center if no location is set
+            origin = { lat: 13.3771, lng: 121.1646 }
+          }
+          destination = this.bookingForm.deliveryAddress
+          break
         case 'gift-delivery':
+          // For gift delivery, use store address as origin
+          origin = this.bookingForm.storeAddress || (this.currentLocationMarker ? this.currentLocationMarker.getPosition() : { lat: 13.3771, lng: 121.1646 })
+          destination = this.bookingForm.deliveryAddress
+          break
         case 'medicine-delivery':
-          if (this.currentLocationMarker) origin = this.currentLocationMarker.getPosition()
+          // For medicine delivery, use current location or default
+          if (this.currentLocationMarker) {
+            origin = this.currentLocationMarker.getPosition()
+          } else {
+            origin = { lat: 13.3771, lng: 121.1646 }
+          }
           destination = this.bookingForm.deliveryAddress
           break
         case 'pickup-drop':
@@ -1702,7 +1788,24 @@ export default {
           break
       }
 
-      if (!origin || !destination) return
+      // Validate destination exists (required for all services)
+      if (!destination || !destination.trim()) return
+      
+      // For services that require origin address, validate it exists
+      if (this.selectedService.id === 'food-delivery' || this.selectedService.id === 'bill-payments' || this.selectedService.id === 'pickup-drop') {
+        if (!origin || !origin.trim()) return
+      }
+      
+      // For services with optional origin (grocery, gift, medicine), ensure we have a valid origin
+      if (this.selectedService.id === 'grocery-shopping' || this.selectedService.id === 'gift-delivery' || this.selectedService.id === 'medicine-delivery') {
+        // If origin is not set or is an object (lat/lng), it's valid
+        // If origin is a string but empty, use default
+        if (typeof origin === 'string' && !origin.trim()) {
+          origin = { lat: 13.3771, lng: 121.1646 } // Calapan City center
+        } else if (!origin) {
+          origin = { lat: 13.3771, lng: 121.1646 } // Calapan City center
+        }
+      }
 
       this.directionsService.route(
         {
@@ -1715,8 +1818,55 @@ export default {
         },
         (response, status) => {
           if (status === 'OK') {
-            this.directionsRenderer.setOptions({ suppressMarkers: true })
+            // Set preserveViewport to true initially, then manually fit bounds
+            // This prevents the renderer from auto-fitting and cutting off the route
+            this.directionsRenderer.setOptions({ 
+              suppressMarkers: true,
+              preserveViewport: true // Set to true first to prevent auto-fit
+            })
             this.directionsRenderer.setDirections(response)
+            
+            // Force map to resize and fit the ENTIRE route properly (including all points along the path)
+            setTimeout(() => {
+              if (this.map) {
+                const bounds = new window.google.maps.LatLngBounds()
+                
+                // Include ALL points along the route path, not just start and end
+                response.routes[0].legs.forEach(leg => {
+                  // Add start and end locations
+                  bounds.extend(leg.start_location)
+                  bounds.extend(leg.end_location)
+                  
+                  // Add ALL steps along the route to ensure complete blue line is visible
+                  if (leg.steps) {
+                    leg.steps.forEach(step => {
+                      if (step.path) {
+                        step.path.forEach(point => {
+                          bounds.extend(point)
+                        })
+                      }
+                      // Also include step start and end locations
+                      if (step.start_location) bounds.extend(step.start_location)
+                      if (step.end_location) bounds.extend(step.end_location)
+                    })
+                  }
+                })
+                
+                // Add generous padding to ensure full blue route line is visible (not cut off)
+                // Use larger padding values to prevent any part of the route from being cut off
+                this.map.fitBounds(bounds, { 
+                  padding: { top: 100, right: 100, bottom: 100, left: 100 }
+                })
+                
+                // Force a resize event to ensure map renders correctly
+                setTimeout(() => {
+                  if (window.google && window.google.maps && window.google.maps.event) {
+                    window.google.maps.event.trigger(this.map, 'resize')
+                  }
+                }, 50)
+              }
+            }, 300) // Increased timeout to ensure route is fully rendered before fitting bounds
+            
             const leg = response.routes[0].legs[0]
             // Format distance in km
             const distanceInKm = leg.distance.value / 1000

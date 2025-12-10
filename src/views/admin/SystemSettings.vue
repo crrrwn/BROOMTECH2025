@@ -27,7 +27,7 @@
     <div class="bg-white rounded-lg p-6 shadow-sm border">
       <!-- Use translation for section title -->
       <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.systemStatus') }}</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
             <!-- Use translations for toggle labels -->
@@ -45,27 +45,6 @@
               :class="[ 
                 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
                 systemStatus.badWeatherFee ? 'translate-x-6' : 'translate-x-1'
-              ]"
-            />
-          </button>
-        </div>
-
-        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div>
-            <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.autoAcceptOrders') }}</p>
-            <p class="text-xs text-gray-500">{{ t('systemSettings.autoAcceptOrdersDesc') }}</p>
-          </div>
-          <button 
-            @click="toggleAutoAcceptOrders"
-            :class="[ 
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              systemStatus.autoAcceptOrders ? 'bg-primary' : 'bg-gray-300'
-            ]"
-          >
-            <span 
-              :class="[ 
-                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                systemStatus.autoAcceptOrders ? 'translate-x-6' : 'translate-x-1'
               ]"
             />
           </button>
@@ -123,43 +102,6 @@
         </div>
       </div>
 
-      <div class="mt-6 pt-6 border-t">
-        <h4 class="text-md font-semibold text-gray-900 mb-4">Weather API Configuration</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">OpenWeather API Key</label>
-            <input 
-              v-model="appSettings.openWeatherApiKey"
-              type="password" 
-              placeholder="Enter your OpenWeather API key"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-            />
-            <p class="text-xs text-gray-500 mt-1">Get your free API key from <a href="https://openweathermap.org/api" target="_blank" class="text-blue-600 hover:underline">openweathermap.org</a></p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Default Latitude</label>
-            <input 
-              v-model.number="appSettings.defaultLat"
-              type="number" 
-              step="0.0001"
-              placeholder="13.4125"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-            />
-            <p class="text-xs text-gray-500 mt-1">Default location for weather checks</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Default Longitude</label>
-            <input 
-              v-model.number="appSettings.defaultLon"
-              type="number" 
-              step="0.0001"
-              placeholder="121.1800"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-            />
-            <p class="text-xs text-gray-500 mt-1">Default location for weather checks</p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Notification Settings -->
@@ -216,55 +158,6 @@
       </div>
     </div>
 
-    <!-- Security Settings -->
-    <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.securitySettings') }}</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.sessionTimeout') }}</label>
-          <input 
-            v-model="securitySettings.sessionTimeout"
-            type="number" 
-            min="5"
-            max="480"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.maxLoginAttempts') }}</label>
-          <input 
-            v-model="securitySettings.maxLoginAttempts"
-            type="number" 
-            min="3"
-            max="10"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.passwordMinLength') }}</label>
-          <input 
-            v-model="securitySettings.passwordMinLength"
-            type="number" 
-            min="6"
-            max="20"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.lockoutDuration') }}</label>
-          <input 
-            v-model="securitySettings.lockoutDuration"
-            type="number" 
-            min="5"
-            max="1440"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-      </div>
-    </div>
 
     <!-- System Logs -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
@@ -352,18 +245,14 @@ const toast = useToast()
 const { t, locale } = useI18n()
 
 const defaultSystemStatus = {
-  badWeatherFee: false,
-  autoAcceptOrders: true
+  badWeatherFee: false
 }
 
 const defaultAppSettings = {
   name: 'BroomTech Delivery',
   supportPhone: '+63 912 345 6789',
   currency: 'PHP',
-  language: 'en',
-  openWeatherApiKey: '',
-  defaultLat: 13.4125,
-  defaultLon: 121.1800
+  language: 'en'
 }
 
 const defaultNotificationSettings = {
@@ -373,26 +262,15 @@ const defaultNotificationSettings = {
   paymentConfirmations: true
 }
 
-const defaultSecuritySettings = {
-  sessionTimeout: 60,
-  maxLoginAttempts: 5,
-  passwordMinLength: 8,
-  lockoutDuration: 30
-}
-
 const systemStatus = ref({
-  badWeatherFee: false,
-  autoAcceptOrders: true
+  badWeatherFee: false
 })
 
 const appSettings = ref({
   name: 'BroomTech Delivery',
   supportPhone: '+63 912 345 6789',
   currency: 'PHP',
-  language: 'en',
-  openWeatherApiKey: '',
-  defaultLat: 13.4125,
-  defaultLon: 121.1800
+  language: 'en'
 })
 
 const notificationSettings = ref({
@@ -400,13 +278,6 @@ const notificationSettings = ref({
   driverAssignment: true,
   deliveryUpdates: true,
   paymentConfirmations: true
-})
-
-const securitySettings = ref({
-  sessionTimeout: 60,
-  maxLoginAttempts: 5,
-  passwordMinLength: 8,
-  lockoutDuration: 30
 })
 
 const systemLogs = ref([])
@@ -450,44 +321,12 @@ const toggleBadWeatherFee = async () => {
   }
 }
 
-const toggleAutoAcceptOrders = async () => {
-  try {
-    systemStatus.value.autoAcceptOrders = !systemStatus.value.autoAcceptOrders
-    
-    const settingsRef = doc(db, 'settings', 'system')
-    await updateDoc(settingsRef, {
-      autoAcceptOrders: systemStatus.value.autoAcceptOrders,
-      updatedAt: new Date()
-    })
-    
-    // Log the activity
-    await loggingService.logAutoAcceptToggle(
-      null,
-      systemStatus.value.autoAcceptOrders,
-      'orders'
-    )
-    
-    toast.success(
-      systemStatus.value.autoAcceptOrders 
-        ? t('systemSettings.autoAcceptOrdersEnabled') 
-        : t('systemSettings.autoAcceptOrdersDisabled')
-    )
-    
-    // Refresh logs to show the new entry
-    await loadSystemLogs()
-  } catch (error) {
-    console.error('Error updating auto-accept orders:', error)
-    toast.error(t('common.updateFailed'))
-    systemStatus.value.autoAcceptOrders = !systemStatus.value.autoAcceptOrders
-  }
-}
 
 const saveSettings = async () => {
   try {
     const systemSettingsRef = doc(db, 'settings', 'system')
     await setDoc(systemSettingsRef, {
       badWeatherFee: systemStatus.value.badWeatherFee,
-      autoAcceptOrders: systemStatus.value.autoAcceptOrders,
       updatedAt: new Date()
     }, { merge: true })
     
@@ -503,12 +342,6 @@ const saveSettings = async () => {
     const notificationSettingsRef = doc(db, 'settings', 'notifications')
     await setDoc(notificationSettingsRef, {
       ...notificationSettings.value,
-      updatedAt: new Date()
-    }, { merge: true })
-    
-    const securitySettingsRef = doc(db, 'settings', 'security')
-    await setDoc(securitySettingsRef, {
-      ...securitySettings.value,
       updatedAt: new Date()
     }, { merge: true })
     
@@ -531,7 +364,6 @@ const resetSettings = async () => {
     systemStatus.value = { ...defaultSystemStatus }
     appSettings.value = { ...defaultAppSettings }
     notificationSettings.value = { ...defaultNotificationSettings }
-    securitySettings.value = { ...defaultSecuritySettings }
     
     // Update language
     locale.value = defaultAppSettings.language
@@ -553,12 +385,6 @@ const resetSettings = async () => {
     const notificationSettingsRef = doc(db, 'settings', 'notifications')
     await setDoc(notificationSettingsRef, {
       ...defaultNotificationSettings,
-      updatedAt: new Date()
-    })
-    
-    const securitySettingsRef = doc(db, 'settings', 'security')
-    await setDoc(securitySettingsRef, {
-      ...defaultSecuritySettings,
       updatedAt: new Date()
     })
     
@@ -630,7 +456,6 @@ const loadSystemSettings = async () => {
     if (settingsDoc.exists()) {
       const settings = settingsDoc.data()
       systemStatus.value.badWeatherFee = settings.badWeatherFee || false
-      systemStatus.value.autoAcceptOrders = settings.autoAcceptOrders !== false
     }
     
     const appSettingsRef = doc(db, 'settings', 'application')
@@ -649,13 +474,6 @@ const loadSystemSettings = async () => {
     
     if (notificationSettingsDoc.exists()) {
       notificationSettings.value = { ...notificationSettingsDoc.data() }
-    }
-    
-    const securitySettingsRef = doc(db, 'settings', 'security')
-    const securitySettingsDoc = await getDoc(securitySettingsRef)
-    
-    if (securitySettingsDoc.exists()) {
-      securitySettings.value = { ...securitySettingsDoc.data() }
     }
   } catch (error) {
     console.error('Error loading system settings:', error)

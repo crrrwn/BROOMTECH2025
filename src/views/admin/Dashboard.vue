@@ -131,29 +131,6 @@
             </div>
             
             <div class="flex items-center justify-between">
-              <span class="text-gray-700">Auto-Accept Users</span>
-              <div class="flex items-center space-x-2">
-                <span :class="systemStatus.autoAcceptUsers ? 'text-green-600' : 'text-gray-500'" class="text-sm">
-                  {{ systemStatus.autoAcceptUsers ? 'Enabled' : 'Disabled' }}
-                </span>
-                <button 
-                  @click="toggleAutoAccept"
-                  :class="[
-                    'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                    systemStatus.autoAcceptUsers ? 'bg-primary' : 'bg-gray-300'
-                  ]"
-                >
-                  <span 
-                    :class="[
-                      'inline-block h-3 w-3 transform rounded-full bg-white transition-transform',
-                      systemStatus.autoAcceptUsers ? 'translate-x-5' : 'translate-x-1'
-                    ]"
-                  />
-                </button>
-              </div>
-            </div>
-            
-            <div class="flex items-center justify-between">
               <span class="text-gray-700">AI Fraud Detection</span>
               <span class="text-green-600 text-sm">Active</span>
             </div>
@@ -190,58 +167,6 @@
         </div>
       </div>
 
-       Charts Section 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         Added revenue filter dropdown 
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Daily Revenue</h3>
-            <select 
-              v-model="revenueFilter" 
-              @change="updateRevenueChart"
-              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="today">Today</option>
-              <option value="last7days">Last 7 Days</option>
-              <option value="last30days">Last 30 Days</option>
-              <option value="thisMonth">This Month</option>
-              <option value="lastMonth">Last Month</option>
-            </select>
-          </div>
-          <div class="h-64 flex items-end justify-between space-x-2">
-            <div v-for="(day, index) in revenueChart" :key="index" class="flex flex-col items-center flex-1">
-              <div 
-                class="bg-primary rounded-t w-full transition-all duration-300 hover:bg-green-600 relative group"
-                :style="{ height: `${(day.amount / Math.max(...revenueChart.map(d => d.amount), 1)) * 200}px` }"
-              >
-                <div class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  ₱{{ day.amount.toLocaleString() }}
-                </div>
-              </div>
-              <div class="mt-2 text-center">
-                <p class="text-xs text-gray-500">{{ day.day }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-         Fixed service distribution to properly fetch and display order counts 
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Service Distribution</h3>
-          <div class="space-y-4">
-            <div v-for="service in serviceDistribution" :key="service.name" class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div :class="service.color" class="w-4 h-4 rounded"></div>
-                <span class="text-sm text-gray-700">{{ service.name }}</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <span class="text-sm font-medium text-gray-900">{{ service.percentage }}%</span>
-                <span class="text-xs text-gray-500">({{ service.count }})</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
        Live Orders 
       <div class="bg-white rounded-lg shadow-sm border">
@@ -335,7 +260,6 @@ export default {
     const toast = useToast()
     
     const loading = ref(true)
-    const revenueFilter = ref('last7days')
     
     const stats = ref({
       totalOrders: 0,
@@ -351,13 +275,10 @@ export default {
     })
 
     const systemStatus = ref({
-      badWeatherFee: false,
-      autoAcceptUsers: true
+      badWeatherFee: false
     })
 
     const recentActivity = ref([])
-    const revenueChart = ref([])
-    const serviceDistribution = ref([])
     const liveOrders = ref([])
     const listeners = ref([])
     const allOrders = ref([])
@@ -370,15 +291,12 @@ export default {
           if (docSnapshot.exists()) {
             const settings = docSnapshot.data()
             systemStatus.value.badWeatherFee = settings.badWeatherFee || false
-            systemStatus.value.autoAcceptUsers = settings.autoAcceptUsers !== false
           } else {
             await setDoc(settingsRef, {
               badWeatherFee: false,
-              autoAcceptUsers: true,
               createdAt: new Date()
             })
             systemStatus.value.badWeatherFee = false
-            systemStatus.value.autoAcceptUsers = true
           }
         }, (error) => {
           console.error('[v0] System settings listener error:', error)
@@ -503,30 +421,6 @@ export default {
           today.setHours(0, 0, 0, 0)
           let todayRevenue = 0
 
-          const serviceNameMap = {
-            'food-delivery': 'Food Delivery',
-            'Food Delivery': 'Food Delivery',
-            'bill-payments': 'Bill Payments',
-            'Bill Payments': 'Bill Payments',
-            'pickup-drop': 'Pick-up & Drop',
-            'Pick-up & Drop': 'Pick-up & Drop',
-            'gift-delivery': 'Gift Delivery',
-            'Gift Delivery': 'Gift Delivery',
-            'medicine-delivery': 'Medicine Delivery',
-            'Medicine Delivery': 'Medicine Delivery',
-            'grocery-shopping': 'Grocery Shopping',
-            'Grocery Shopping': 'Grocery Shopping'
-          }
-
-          const serviceCounts = {
-            'Food Delivery': 0,
-            'Bill Payments': 0,
-            'Pick-up & Drop': 0,
-            'Gift Delivery': 0,
-            'Medicine Delivery': 0,
-            'Grocery Shopping': 0
-          }
-
           snapshot.forEach(doc => {
             const order = doc.data()
             const orderDate = order.createdAt?.toDate()
@@ -535,40 +429,11 @@ export default {
             if (orderDate >= today && order.status === 'delivered') {
               todayRevenue += order.totalAmount || 0
             }
-
-            const serviceId = order.service || order.serviceType || 'unknown'
-            
-            const serviceName = serviceNameMap[serviceId] || serviceId
-            
-            if (serviceCounts.hasOwnProperty(serviceName)) {
-              serviceCounts[serviceName]++
-            }
           })
 
           stats.value.revenueToday = todayRevenue
           stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20)
 
-          const totalServices = Object.values(serviceCounts).reduce((a, b) => a + b, 0)
-          
-          const serviceColors = {
-            'Food Delivery': 'bg-blue-500',
-            'Bill Payments': 'bg-green-500',
-            'Pick-up & Drop': 'bg-yellow-500',
-            'Gift Delivery': 'bg-purple-500',
-            'Medicine Delivery': 'bg-red-500',
-            'Grocery Shopping': 'bg-indigo-500'
-          }
-
-          serviceDistribution.value = Object.entries(serviceCounts)
-            .map(([name, count]) => ({
-              name,
-              count,
-              percentage: totalServices > 0 ? Math.round((count / totalServices) * 100) : 0,
-              color: serviceColors[name] || 'bg-gray-500'
-            }))
-
-
-          updateRevenueChart()
 
         }, (error) => {
           console.log('[v0] Orders listener error:', error.message)
@@ -581,144 +446,6 @@ export default {
       } catch (error) {
         console.error('[v0] Error setting up orders listener:', error)
       }
-    }
-
-    const updateRevenueChart = () => {
-      const filter = revenueFilter.value
-      const now = new Date()
-      let chartData = []
-
-      if (filter === 'today') {
-        // Show hourly data for today
-        for (let i = 0; i < 24; i++) {
-          chartData.push({
-            day: `${i}:00`,
-            amount: 0
-          })
-        }
-
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
-        allOrders.value.forEach(order => {
-          const orderDate = order.createdAt?.toDate()
-          if (orderDate >= today && order.status === 'delivered') {
-            const hour = orderDate.getHours()
-            chartData[hour].amount += (order.totalAmount || 0) * 0.20
-          }
-        })
-      } else if (filter === 'last7days') {
-        // Show last 7 days
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date()
-          date.setDate(date.getDate() - i)
-          date.setHours(0, 0, 0, 0)
-          chartData.push({
-            date: date,
-            day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
-            amount: 0
-          })
-        }
-
-        allOrders.value.forEach(order => {
-          const orderDate = order.createdAt?.toDate()
-          if (orderDate && order.status === 'delivered') {
-            for (let dayData of chartData) {
-              const nextDay = new Date(dayData.date)
-              nextDay.setDate(nextDay.getDate() + 1)
-              if (orderDate >= dayData.date && orderDate < nextDay) {
-                dayData.amount += (order.totalAmount || 0) * 0.20
-                break
-              }
-            }
-          }
-        })
-      } else if (filter === 'last30days') {
-        // Show last 30 days (grouped by 5 days)
-        for (let i = 29; i >= 0; i -= 5) {
-          const date = new Date()
-          date.setDate(date.getDate() - i)
-          date.setHours(0, 0, 0, 0)
-          chartData.push({
-            date: date,
-            day: `${date.getMonth() + 1}/${date.getDate()}`,
-            amount: 0,
-            endDate: new Date(date.getTime() + 5 * 24 * 60 * 60 * 1000)
-          })
-        }
-
-        allOrders.value.forEach(order => {
-          const orderDate = order.createdAt?.toDate()
-          if (orderDate && order.status === 'delivered') {
-            for (let dayData of chartData) {
-              if (orderDate >= dayData.date && orderDate < dayData.endDate) {
-                dayData.amount += (order.totalAmount || 0) * 0.20
-                break
-              }
-            }
-          }
-        })
-      } else if (filter === 'thisMonth') {
-        // Show this month by weeks
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        
-        let currentWeek = 1
-        for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 7)) {
-          const weekEnd = new Date(d)
-          weekEnd.setDate(weekEnd.getDate() + 7)
-          chartData.push({
-            date: new Date(d),
-            day: `Week ${currentWeek}`,
-            amount: 0,
-            endDate: weekEnd > lastDay ? lastDay : weekEnd
-          })
-          currentWeek++
-        }
-
-        allOrders.value.forEach(order => {
-          const orderDate = order.createdAt?.toDate()
-          if (orderDate && order.status === 'delivered') {
-            for (let dayData of chartData) {
-              if (orderDate >= dayData.date && orderDate < dayData.endDate) {
-                dayData.amount += (order.totalAmount || 0) * 0.20
-                break
-              }
-            }
-          }
-        })
-      } else if (filter === 'lastMonth') {
-        // Show last month by weeks
-        const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
-        
-        let currentWeek = 1
-        for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 7)) {
-          const weekEnd = new Date(d)
-          weekEnd.setDate(weekEnd.getDate() + 7)
-          chartData.push({
-            date: new Date(d),
-            day: `Week ${currentWeek}`,
-            amount: 0,
-            endDate: weekEnd > lastDay ? lastDay : weekEnd
-          })
-          currentWeek++
-        }
-
-        allOrders.value.forEach(order => {
-          const orderDate = order.createdAt?.toDate()
-          if (orderDate && order.status === 'delivered') {
-            for (let dayData of chartData) {
-              if (orderDate >= dayData.date && orderDate < dayData.endDate) {
-                dayData.amount += (order.totalAmount || 0) * 0.20
-                break
-              }
-            }
-          }
-        })
-      }
-
-      revenueChart.value = chartData
     }
 
     const setupRecentActivityListener = () => {
@@ -875,27 +602,6 @@ export default {
       }
     }
 
-    const toggleAutoAccept = async () => {
-      try {
-        systemStatus.value.autoAcceptUsers = !systemStatus.value.autoAcceptUsers
-        
-        const settingsRef = doc(db, 'settings', 'system')
-        await updateDoc(settingsRef, {
-          autoAcceptUsers: systemStatus.value.autoAcceptUsers,
-          updatedAt: new Date()
-        })
-        
-        toast.success(
-          systemStatus.value.autoAcceptUsers 
-            ? 'Auto-Accept Users enabled' 
-            : 'Auto-Accept Users disabled'
-        )
-      } catch (error) {
-        console.error('[v0] Error updating auto-accept setting:', error)
-        toast.error('Failed to update auto-accept setting')
-        systemStatus.value.autoAcceptUsers = !systemStatus.value.autoAcceptUsers
-      }
-    }
 
     const initializeDashboard = async () => {
       loading.value = true
@@ -936,13 +642,8 @@ export default {
       stats,
       systemStatus,
       recentActivity,
-      revenueChart,
-      revenueFilter,
-      serviceDistribution,
       liveOrders,
       toggleWeatherFee,
-      toggleAutoAccept,
-      updateRevenueChart,
       formatStatus
     }
   }

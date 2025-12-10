@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="showTryAgain && !showCooldown ? handleTryAgain() : null">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
       <h3 class="text-xl font-semibold text-gray-900 mb-4">Face Verification</h3>
       <p class="text-gray-600 mb-4">
@@ -31,8 +31,13 @@
           </div>
         </div>
 
-        <!-- Face detection status -->
-        <div v-if="faceDetected && !detecting && !verifying" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+        <!-- Liveness check status -->
+        <div v-if="!livenessChecked && !faceDetectedOnce && !showTryAgain" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+          🔍 Checking liveness...
+        </div>
+
+        <!-- Face detection status - only show once, don't blink -->
+        <div v-if="faceDetectedOnce && !verifying && !showTryAgain" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
           ✓ Face Detected
         </div>
 
@@ -107,8 +112,25 @@
       </div>
 
       <!-- Attempts counter -->
-      <div v-if="verificationAttempts > 0 && verificationAttempts < 3" class="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-        Verification failed. Attempt {{ verificationAttempts }} of 3. Please try again.
+      <div v-if="verificationAttempts > 0 && verificationAttempts < 3 && !showCooldown" class="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+        <p class="mb-2">Verification failed. Attempt {{ verificationAttempts }} of 3. Please try again.</p>
+        <button
+          @click="handleTryAgain"
+          class="w-full mt-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+
+      <!-- Face does not match message -->
+      <div v-if="error && error.includes('Face does not match') && verificationAttempts < 3 && !showCooldown" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <p class="mb-2">Face does not match registered face. Attempt {{ verificationAttempts }} of 3. Please try again.</p>
+        <button
+          @click="handleTryAgain"
+          class="w-full mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        >
+          Try Again
+        </button>
       </div>
 
       <!-- Cooldown countdown -->
@@ -143,13 +165,18 @@
           {{ verifying ? 'Verifying...' : 'Verify Face' }}
         </button>
       </div>
+      
+      <!-- Tap to retry hint -->
+      <div v-if="showTryAgain && !showCooldown" class="mt-4 text-center">
+        <p class="text-sm text-gray-600 mb-2">Tap anywhere on the screen to retry</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { detectFace, getFaceDescriptor, loadModels, compareFaces } from '@/services/faceRecognitionService'
+import { detectFace, getFaceDescriptor, loadModels, compareFaces, detectFaceWithLiveness } from '@/services/faceRecognitionService'
 
 const props = defineProps({
   registeredDescriptor: {
@@ -158,7 +185,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['verified', 'failed', 'cancel'])
+const emit = defineEmits(['verified', 'failed', 'cancel', 'signout'])
 
 const videoElement = ref(null)
 const canvasElement = ref(null)
@@ -168,7 +195,9 @@ const verifying = ref(false)
 const error = ref('')
 const verificationAttempts = ref(0)
 const showCooldown = ref(false)
-const cooldownSeconds = ref(120) // 2 minutes
+const cooldownSeconds = ref(60) // 1 minute
+const faceDetectedOnce = ref(false) // Track if face was detected at least once
+const showTryAgain = ref(false) // Show try again button
 const scanProgress = ref(0) // Progress for scanning circle
 let stream = null
 let detectionInterval = null
@@ -176,6 +205,9 @@ let cooldownInterval = null
 let autoVerifyTimeout = null
 let currentDescriptor = null
 let scanProgressInterval = null
+let previousDetections = [] // Store previous detections for liveness check
+const livenessChecked = ref(false) // Track if liveness has been verified
+const livenessStatus = ref('') // Liveness status message
 
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
@@ -226,13 +258,19 @@ onUnmounted(() => {
 })
 
 const startDetection = () => {
-  // Stop detection if face is already detected
-  if (faceDetected.value) return
+  // Stop detection if face is already detected and verified once
+  if (faceDetectedOnce.value && !showTryAgain.value) return
+
+  // Clear any existing interval first
+  if (detectionInterval) {
+    clearInterval(detectionInterval)
+    detectionInterval = null
+  }
 
   detectionInterval = setInterval(async () => {
-    // Stop detection once face is detected
-    if (faceDetected.value || !videoElement.value || detecting.value || verifying.value || showCooldown.value) {
-      if (faceDetected.value && detectionInterval) {
+    // Stop detection once face is detected once and we're not in retry mode
+    if ((faceDetectedOnce.value && !showTryAgain.value) || !videoElement.value || detecting.value || verifying.value || showCooldown.value) {
+      if (faceDetectedOnce.value && !showTryAgain.value && detectionInterval) {
         clearInterval(detectionInterval)
         detectionInterval = null
         if (scanProgressInterval) {
@@ -261,45 +299,83 @@ const startDetection = () => {
         }
       }, 30)
 
-      const detection = await detectFace(videoElement.value)
+      // Use liveness detection
+      const result = await detectFaceWithLiveness(videoElement.value, previousDetections)
+      const detection = result.detection
+      const liveness = result.liveness
       
       if (detection) {
-        // Stop detection interval - face detected, only detect once
-        if (detectionInterval) {
-          clearInterval(detectionInterval)
-          detectionInterval = null
+        // Store detection for liveness tracking (keep last 5)
+        previousDetections.push(detection)
+        if (previousDetections.length > 5) {
+          previousDetections.shift()
         }
-        if (scanProgressInterval) {
-          clearInterval(scanProgressInterval)
-          scanProgressInterval = null
+
+        // Check liveness first
+        if (!livenessChecked.value) {
+          livenessStatus.value = liveness.reason
+          
+          if (!liveness.isLive && previousDetections.length >= 3) {
+            // Not a live face - block immediately
+            error.value = liveness.reason || 'Liveness check failed. Please use a live camera, not a photo.'
+            showTryAgain.value = true
+            faceDetected.value = false
+            faceDetectedOnce.value = false
+            currentDescriptor = null
+            previousDetections = [] // Reset
+            return
+          }
+          
+          // If we have enough samples and it's live, mark as checked
+          if (liveness.isLive && previousDetections.length >= 3) {
+            livenessChecked.value = true
+            livenessStatus.value = 'Live face verified'
+          }
         }
-        scanProgress.value = 100
-        
-        faceDetected.value = true
-        currentDescriptor = getFaceDescriptor(detection)
-        
-        // Auto-verify after face is detected (wait 2 seconds for stability)
-        if (!verifying.value && !autoVerifyTimeout) {
-          autoVerifyTimeout = setTimeout(() => {
-            if (currentDescriptor && !verifying.value && !showCooldown.value && faceDetected.value) {
-              handleVerify()
-            }
-          }, 2000) // 2 second delay to ensure face is stable
+
+        // Only process if we haven't detected once already (prevent blinking) and liveness is checked
+        if (!faceDetectedOnce.value && livenessChecked.value) {
+          // Stop detection interval - face detected, only detect once
+          if (detectionInterval) {
+            clearInterval(detectionInterval)
+            detectionInterval = null
+          }
+          if (scanProgressInterval) {
+            clearInterval(scanProgressInterval)
+            scanProgressInterval = null
+          }
+          scanProgress.value = 100
+          
+          faceDetected.value = true
+          faceDetectedOnce.value = true
+          currentDescriptor = getFaceDescriptor(detection)
+          showTryAgain.value = false
+          
+          // Auto-verify after face is detected (wait 2 seconds for stability)
+          if (!verifying.value && !autoVerifyTimeout) {
+            autoVerifyTimeout = setTimeout(() => {
+              if (currentDescriptor && !verifying.value && !showCooldown.value && faceDetected.value) {
+                handleVerify()
+              }
+            }, 2000) // 2 second delay to ensure face is stable
+          }
         }
       } else {
-        faceDetected.value = false
-        currentDescriptor = null
-        scanProgress.value = 0
-        // Clear auto-verify timeout if face is lost
-        if (autoVerifyTimeout) {
-          clearTimeout(autoVerifyTimeout)
-          autoVerifyTimeout = null
+        // Only reset if we're not in a retry state and haven't detected once
+        if (!showTryAgain.value && !faceDetectedOnce.value) {
+          faceDetected.value = false
+          currentDescriptor = null
+          scanProgress.value = 0
         }
+        // Don't clear auto-verify timeout if face is already detected once
+        // This prevents blinking when face is temporarily lost
       }
     } catch (err) {
       console.error('Detection error:', err)
-      faceDetected.value = false
-      scanProgress.value = 0
+      if (!showTryAgain.value) {
+        faceDetected.value = false
+        scanProgress.value = 0
+      }
       if (autoVerifyTimeout) {
         clearTimeout(autoVerifyTimeout)
         autoVerifyTimeout = null
@@ -342,7 +418,8 @@ const stopCamera = () => {
 
 const startCooldown = () => {
   showCooldown.value = true
-  cooldownSeconds.value = 120 // 2 minutes
+  cooldownSeconds.value = 60 // 1 minute
+  showTryAgain.value = false
 
   cooldownInterval = setInterval(() => {
     cooldownSeconds.value--
@@ -352,6 +429,15 @@ const startCooldown = () => {
       showCooldown.value = false
       verificationAttempts.value = 0 // Reset attempts after cooldown
       error.value = ''
+      faceDetectedOnce.value = false
+      faceDetected.value = false
+      livenessChecked.value = false // Reset liveness check
+      livenessStatus.value = ''
+      currentDescriptor = null
+      showTryAgain.value = false
+      previousDetections = [] // Reset previous detections
+      // Restart detection after cooldown
+      startDetection()
     }
   }, 1000)
 }
@@ -365,7 +451,7 @@ const handleVerify = async () => {
   if (verificationAttempts.value >= 3) {
     if (!showCooldown.value) {
       startCooldown()
-      error.value = 'Maximum verification attempts reached. Please wait 2 minutes before trying again.'
+      error.value = 'Maximum verification attempts reached. Please wait 1 minute before trying again.'
     }
     return
   }
@@ -391,45 +477,79 @@ const handleVerify = async () => {
       ? currentDescriptor
       : new Float32Array(currentDescriptor)
 
-    // Compare faces
-    const match = compareFaces(registeredDesc, currentDesc, 0.6)
+    // Compare faces - STRICT MATCHING (lower threshold = stricter)
+    // Threshold 0.5 is stricter than 0.6 - requires closer match
+    const match = compareFaces(registeredDesc, currentDesc, 0.5)
 
     if (match) {
       // Face matches - reset attempts on success
       verificationAttempts.value = 0
       emit('verified')
     } else {
-      // Face doesn't match
+      // Face doesn't match - block login immediately
       verificationAttempts.value++
       if (verificationAttempts.value >= 3) {
-        error.value = 'Face verification failed after 3 attempts. Please wait 2 minutes before trying again.'
+        error.value = 'Face verification failed after 3 attempts. Access denied. Please log in again.'
         startCooldown()
         emit('failed', verificationAttempts.value)
+        // Sign out user immediately since face doesn't match - BLOCK LOGIN
+        emit('signout')
       } else {
-        error.value = 'Face does not match. Please try again.'
-        // Restart detection for retry
+        error.value = `Face does not match registered face. Attempt ${verificationAttempts.value} of 3. Please try again.`
+        showTryAgain.value = true
         faceDetected.value = false
+        faceDetectedOnce.value = false // Reset so they can try again
+        livenessChecked.value = false // Reset liveness check
+        livenessStatus.value = ''
         currentDescriptor = null
-        startDetection()
+        previousDetections = [] // Reset previous detections
+        // Don't restart detection automatically - wait for user to click Try Again
       }
     }
   } catch (err) {
     console.error('Verification error:', err)
     verificationAttempts.value++
     if (verificationAttempts.value >= 3) {
-      error.value = 'Verification failed after 3 attempts. Please wait 2 minutes before trying again.'
+      error.value = 'Verification failed after 3 attempts. Access denied. Please log in again.'
       startCooldown()
       emit('failed', verificationAttempts.value)
+      // Sign out user on error - BLOCK LOGIN
+      emit('signout')
     } else {
-      error.value = 'Failed to verify face. Please try again.'
-      // Restart detection for retry
+      error.value = `Verification failed. Attempt ${verificationAttempts.value} of 3. Please try again.`
+      showTryAgain.value = true
       faceDetected.value = false
+      faceDetectedOnce.value = false // Reset so they can try again
+      livenessChecked.value = false // Reset liveness check
+      livenessStatus.value = ''
       currentDescriptor = null
-      startDetection()
+      previousDetections = [] // Reset previous detections
+      // Don't restart detection automatically - wait for user to click Try Again
     }
   } finally {
     verifying.value = false
   }
+}
+
+const handleTryAgain = () => {
+  showTryAgain.value = false
+  error.value = ''
+  faceDetected.value = false
+  faceDetectedOnce.value = false // Reset to allow new detection
+  livenessChecked.value = false // Reset liveness check
+  livenessStatus.value = ''
+  currentDescriptor = null
+  previousDetections = [] // Reset previous detections
+  if (autoVerifyTimeout) {
+    clearTimeout(autoVerifyTimeout)
+    autoVerifyTimeout = null
+  }
+  // Clear any existing detection interval before restarting
+  if (detectionInterval) {
+    clearInterval(detectionInterval)
+    detectionInterval = null
+  }
+  startDetection()
 }
 
 const handleCancel = () => {
