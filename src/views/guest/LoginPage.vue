@@ -8,13 +8,16 @@
     <div class="relative w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] border border-white/60 p-8 z-10 transition-all duration-500 hover:shadow-[0_40px_70px_rgba(0,0,0,0.15)]">
       
       <div class="text-center space-y-4">
-        <div class="flex justify-center relative">
+        <div class="flex justify-center relative group">
           <div class="absolute inset-0 bg-[#3ED400] rounded-full blur-lg opacity-20 animate-pulse"></div>
-          <img 
-            src="https://scontent.fmnl7-2.fna.fbcdn.net/v/t1.15752-9/514071591_1252432816270252_1243204019946633211_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeEne1_QgvnzPimBbfxq_loR-tDfpI8SJXz60N-kjxIlfByb9W5QUiBtwAWWz58nuc7ZAQLaDdcR5XLMXSyYpi5e&_nc_ohc=Z2MtLp4I_nIQ7kNvwGjEqRH&_nc_oc=AdlW1joxM16GAk8osLpxm86ruX_2cZ8qFxvWkKoFoGQW5UcUL3PiO6FB5KEvFBr0z1o&_nc_zt=23&_nc_ht=scontent.fmnl7-2.fna&oh=03_Q7cD4AE-HhtPzzzdURQul2Z4mlCen24maOimsa0KoTIw7wwBlQ&oe=695A82D2" 
-            alt="BroomTech Logo"
-            class="relative w-24 h-24 rounded-full object-cover border-[6px] border-white shadow-xl transform hover:rotate-6 transition-transform duration-500"
-          />
+          
+          <div class="relative w-24 h-24 rounded-full border-[6px] border-white shadow-xl overflow-hidden bg-white transform group-hover:rotate-6 transition-transform duration-500">
+             <img 
+              src="https://placehold.co/150x150/3ED400/ffffff?text=B" 
+              alt="BroomTech Logo"
+              class="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         <div>
@@ -120,7 +123,7 @@
               <div class="w-full border-t border-gray-200" />
             </div>
             <div class="relative flex justify-center text-xs uppercase tracking-wider">
-            </div>
+               </div>
           </div>
 
           <div class="mt-5">
@@ -226,7 +229,6 @@
       </div>
     </transition>
 
-    <!-- Face Registration Modal -->
     <FaceRegistration
       v-if="showFaceRegistration"
       @registered="handleFaceRegistered"
@@ -234,7 +236,6 @@
       @cancel="handleFaceRegistrationCancel"
     />
 
-    <!-- Face Verification Modal -->
     <FaceVerification
       v-if="showFaceVerification"
       :registered-descriptor="registeredFaceDescriptor"
@@ -537,4 +538,3 @@ const handleFaceVerificationSignout = async () => {
   100% { transform: scale(1); }
 }
 </style>
-

@@ -1,16 +1,23 @@
 <template>
   <div class="min-h-screen relative flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden font-sans">
     
-    <div class="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-[#A8EB12] rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse"></div>
-    <div class="absolute bottom-0 right-0 translate-x-1/3 translate-y-1/3 w-72 h-72 bg-[#3ED400] rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-pulse delay-1000"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#74E600] rounded-full mix-blend-multiply filter blur-[60px] opacity-40"></div>
+    <div class="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-[#A8EB12] rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse pointer-events-none"></div>
+    <div class="absolute bottom-0 right-0 translate-x-1/3 translate-y-1/3 w-72 h-72 bg-[#3ED400] rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-pulse delay-1000 pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#74E600] rounded-full mix-blend-multiply filter blur-[60px] opacity-40 pointer-events-none"></div>
 
     <div class="relative w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 p-6 sm:p-8 z-10">
       
-      <div class="text-center space-y-1 mb-6">
-        <div class="inline-flex p-2.5 bg-gradient-to-br from-[#A8EB12] to-[#3ED400] rounded-xl shadow-lg shadow-green-200 mb-1 transform hover:scale-110 transition-transform duration-300">
-          <span class="text-white font-black text-2xl drop-shadow-sm px-2">B</span>
+      <div class="text-center space-y-2 mb-6">
+        <div class="flex justify-center mb-2">
+           <div class="w-16 h-16 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+              <img 
+                src="https://placehold.co/100x100/3ED400/ffffff?text=B" 
+                alt="BroomTech Logo"
+                class="w-full h-full object-cover"
+              />
+           </div>
         </div>
+
         <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">Create Account</h2>
         <p class="text-xs text-gray-500 font-medium">
           Already have an account?
@@ -45,11 +52,12 @@
             </div>
             <p v-if="errors.firstName" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.firstName }}</p>
           </div>
+
           <div class="group relative">
             <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Last Name <span class="text-red-500">*</span></label>
             <div class="relative flex items-center">
               <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
-                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
               </div>
               <input
                 id="lastName"
@@ -108,6 +116,7 @@
           </div>
           <p v-if="errors.contact" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.contact }}</p>
         </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
            <div class="group relative">
             <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Street Address <span class="text-red-500">*</span></label>
@@ -266,6 +275,7 @@
             Passwords do not match
           </p>
         </div>
+
         <div class="flex items-start px-1 py-1">
           <div class="flex items-center h-4">
             <input
@@ -288,6 +298,7 @@
             </p>
           </div>
         </div>
+
         <div class="pt-1">
           <button
             type="submit"
