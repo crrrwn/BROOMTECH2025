@@ -1,712 +1,569 @@
 <template>
-  <div class="p-6 space-y-6">
-    <!-- Header -->
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Book a Service</h1>
-      <p class="text-gray-600">Choose your delivery service and get instant quotes</p>
-    </div>
-
-    <!-- Bad Weather Warning Banner -->
-    <div v-if="isBadWeather && badWeatherFeeEnabled" class="bg-yellow-100 border-l-4 border-yellow-500 p-6 shadow-lg">
-      <div class="flex items-start">
-        <div class="flex-shrink-0">
-          <svg class="h-8 w-8 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-4 flex-1">
-          <h3 class="text-lg font-bold text-yellow-800 mb-2">⚠️ Bad Weather Alert</h3>
-          <p class="text-base text-yellow-800">
-            Due to current weather conditions (<strong>{{ currentWeather }}</strong>), a <strong class="text-xl">₱5 surcharge</strong> will be automatically added to your delivery fee for safety and driver compensation.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Booking Restriction Warning Banner -->
-    <div v-if="isBookingRestricted" class="bg-red-100 border-l-4 border-red-500 p-6 shadow-lg">
-      <div class="flex items-start">
-        <div class="flex-shrink-0">
-          <svg class="h-8 w-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-4 flex-1">
-          <h3 class="text-lg font-bold text-red-800 mb-2">🚫 Booking Restricted</h3>
-          <p class="text-base text-red-800 mb-2">
-            <span v-if="restrictionType === 'banned'">
-              Your account has been banned. You are permanently restricted from booking services. Please contact support for more information.
-            </span>
-            <span v-else-if="restrictionType === 'flagged'">
-              Your account has been flagged. You are unable to book services until <strong>{{ restrictionEndTime }}</strong>.
-            </span>
-          </p>
-          <p v-if="restrictionReason" class="text-sm text-red-700 italic">
-            Reason: {{ restrictionReason }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Service Selection -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Select Service Type</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          v-for="service in services"
-          :key="service.id"
-          @click="onSelectService(service)"
-          :class="selectedService?.id === service.id ? 'ring-2 ring-green-500 bg-green-50' : 'hover:bg-gray-50'"
-          class="p-4 border rounded-lg cursor-pointer transition-all"
-          role="button"
-          tabindex="0"
-          @keydown.enter.prevent="onSelectService(service)"
-          @keydown.space.prevent="onSelectService(service)"
-        >
-          <div class="flex items-center space-x-3">
-            <div class="p-2 bg-green-100 rounded-lg">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="service.icon"></path>
-              </svg>
+  <div class="min-h-screen w-full bg-gray-50/50 overflow-x-hidden font-sans pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 md:space-y-8">
+      
+      <div class="relative overflow-hidden bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg text-white transform transition hover:scale-[1.005] duration-500">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 md:w-64 md:h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+          <div class="flex flex-col md:flex-row md:items-center md:space-x-3 mb-2">
+            <div class="w-fit p-2 bg-white/20 rounded-lg backdrop-blur-sm mb-2 md:mb-0">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             </div>
-            <div class="flex-1">
-              <h3 class="font-medium text-gray-900">{{ service.name }}</h3>
-              <p class="text-sm text-gray-600">{{ service.description }}</p>
-              <p class="text-sm font-semibold text-green-600 mt-1">Starting at ₱{{ baseFee.toFixed(2) }}</p>
-            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Book a Service</h1>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Booking Form -->
-    <div v-if="selectedService" class="bg-white p-6 rounded-lg shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Booking Details</h2>
-
-      <!-- Map & route -->
-      <div class="mb-6">
-        <h3 class="text-md font-medium text-gray-800 mb-3">Route & Distance</h3>
-        <div class="bg-gray-100 rounded-lg p-4">
-          <div id="map" class="w-full h-96 rounded-lg mb-3 overflow-hidden" style="min-height: 384px; position: relative;"></div>
-          <div class="flex justify-between items-center text-sm">
-            <div class="flex items-center space-x-4">
-              <span class="text-gray-600">Distance: <strong>{{ routeInfo.distance }}</strong></span>
-              <span class="text-gray-600">ETA: <strong>{{ routeInfo.duration }}</strong></span>
-            </div>
-            <button
-              @click="getCurrentLocation"
-              class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-              type="button"
-            >
-              Use Current Location
-            </button>
-          </div>
+          <p class="text-[#e6ffcc] text-base md:text-lg font-medium ml-0 md:ml-1">Choose your delivery service and get instant quotes.</p>
         </div>
       </div>
 
-      <!-- Dynamically display calculated price -->
-      <div v-if="selectedService && routeInfo.distanceValue > 0" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <h3 class="text-md font-medium text-green-800 mb-3">Estimated Delivery Fee</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p class="text-sm text-gray-600">Base Charge (First 3km):<span class="font-medium ml-1">₱{{ calculatedPrice.baseCharge }}</span></p>
-            <p class="text-sm text-gray-600">Distance Fee (After 3km):<span class="font-medium ml-1">₱{{ calculatedPrice.distanceFee }}</span></p>
-            <p class="text-sm text-gray-600">Bad Weather Surcharge:<span class="font-medium ml-1">₱{{ calculatedPrice.badWeatherFee }}</span></p>
-          </div>
-          <div>
-            <p v-if="bookingForm.paymentMethod === 'GCASH'" class="text-sm text-gray-600">GCash Fee:<span class="font-medium ml-1">₱{{ calculatedPrice.gcashFee }}</span></p>
-            <p v-if="bookingForm.paymentMethod === 'GCASH'" class="text-xs text-gray-500 mt-1">{{ getGcashFeeDescription() }}</p>
-            <hr class="my-2">
-            <p class="text-lg font-bold text-gray-800">Subtotal:<span class="ml-2">₱{{ calculatedPrice.subtotal }}</span></p>
-            <p class="text-xl font-extrabold text-green-700">Estimated Total:<span class="ml-2">₱{{ calculatedPrice.total }}</span></p>
-          </div>
-        </div>
-      </div>
-
-      <form @submit.prevent="submitBooking" class="space-y-6">
-        <!-- FOOD DELIVERY -->
-        <div v-if="selectedService.id === 'food-delivery'" class="space-y-4">
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Restaurant / Order Info</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant/Store Name *</label>
-              <input 
-                type="text" 
-                v-model.trim="bookingForm.restaurantName" 
-                required 
-                @input="onRestaurantNameInput"
-                @blur="validateRestaurantName"
-                :class="[
-                  'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                  restaurantNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
-                ]"
-              />
-              <p v-if="restaurantNameWarning" class="text-xs text-yellow-600 mt-1 flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                {{ restaurantNameWarning }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Restaurant Address *</label>
-              <input
-                type="text"
-                v-model.trim="bookingForm.restaurantAddress"
-                required
-                ref="restaurantAddressInput"
-                @input="onAddressManualInput"
-                @focus="onRestaurantAddressFocus"
-                :class="[
-                  'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                  restaurantAddressWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
-                ]"
-              />
-              <p v-if="restaurantAddressWarning" class="text-xs text-yellow-600 mt-1 flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                {{ restaurantAddressWarning }}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Food Order Details *</label>
-            <textarea v-model.trim="bookingForm.foodOrderDetails" rows="3" required placeholder="List what you want to order..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions (Optional)</label>
-            <textarea v-model.trim="bookingForm.specialInstructions" rows="2" placeholder="Any special instructions..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-            <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              <option value="">Select budget range</option>
-              <option value="P1-P499">₱1 - ₱499</option>
-              <option value="P500-P999">₱500 - ₱999</option>
-              <option value="P1000-P1500">₱1,000 - ₱1,500</option>
-              <option value="P2000+">₱2,000+</option>
-            </select>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Delivery To</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Full Name *</label>
-              <input type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Contact Number *</label>
-              <input type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
-            <input
-              type="text"
-              v-model.trim="bookingForm.deliveryAddress"
-              required
-              ref="deliveryAddressInput"
-              @input="onAddressManualInput"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark / Notes (Optional)</label>
-              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
-              <input type="time" v-model="bookingForm.preferredTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-        </div>
-
-        <!-- BILL PAYMENTS -->
-        <div v-if="selectedService.id === 'bill-payments'" class="space-y-4">
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Biller Details</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Biller Name *</label>
-              <input 
-                type="text" 
-                v-model.trim="bookingForm.billerName" 
-                required 
-                ref="billerNameInput"
-                @input="onBillerNameInput"
-                @focus="onBillerNameFocus"
-                placeholder="e.g., MERALCO, GLOBE, PLDT" 
-                :class="[
-                  'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                  billerNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
-                ]"
-              />
-              <p v-if="billerNameWarning" class="text-xs text-yellow-600 mt-1 flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                {{ billerNameWarning }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Account Name *</label>
-              <input type="text" v-model.trim="bookingForm.accountName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
-              <input type="text" v-model.trim="bookingForm.accountNumber" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Amount to Pay *</label>
-              <input type="number" v-model.number="bookingForm.amountToPay" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Due Date (Optional)</label>
-              <input type="date" v-model="bookingForm.dueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <option value="">Select budget range</option>
-                <option value="P1-P499">₱1 - ₱499</option>
-                <option value="P500-P999">₱500 - ₱999</option>
-                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
-                <option value="P2000+">₱2,000+</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Receipt / Reference Upload (REQUIRED) -->
-          <div class="grid grid-cols-1 gap-2">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Receipt / Reference (image/PDF) *
-              </label>
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                @change="handleBillReceiptSelect"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-              <p class="text-xs text-gray-500 mt-1">Max 5MB · Allowed: JPG/PNG/PDF</p>
-
-              <div v-if="uploadingBillReceipt" class="text-xs text-gray-600 mt-1">
-                Uploading... {{ billReceiptProgress }}%
-              </div>
-
-              <div v-if="bookingForm.billReceiptUrl" class="text-xs text-green-600 mt-1">
-                Uploaded ✓
-                <a :href="bookingForm.billReceiptUrl" target="_blank" class="underline">View file</a>
-              </div>
-
-              <p v-if="selectedService.id==='bill-payments' && !bookingForm.billReceiptUrl && !uploadingBillReceipt" class="text-xs text-red-600 mt-1">
-                Receipt/reference is required.
-              </p>
-            </div>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Pickup & Delivery</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Address *</label>
-              <input type="text" v-model.trim="bookingForm.pickupAddress" required ref="pickupAddressInput" @input="onAddressManualInput" placeholder="Where to collect payment/bill" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Return Address *</label>
-              <input type="text" v-model.trim="bookingForm.returnAddress" required ref="returnAddressInput" @input="onAddressManualInput" placeholder="Where to return receipt" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Schedule (Optional)</label>
-            <input type="datetime-local" v-model="bookingForm.preferredSchedule" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-          </div>
-        </div>
-
-        <!-- GROCERY SHOPPING -->
-        <div v-if="selectedService.id === 'grocery-shopping'" class="space-y-4">
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Shopping List</h3>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">List of Items to Buy *</label>
-            <textarea v-model.trim="bookingForm.shoppingList" rows="4" required placeholder="List all items you need..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Store Preference (Optional)</label>
-              <input
-                type="text"
-                v-model.trim="bookingForm.storePreference"
-                ref="storePreferenceInput"
-                placeholder="e.g., SM, Robinson's, Mercury Drug"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-              <p class="text-xs text-gray-500 mt-1">Start typing to search for stores</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <option value="">Select budget range</option>
-                <option value="P1-P499">₱1 - ₱499</option>
-                <option value="P500-P999">₱500 - ₱999</option>
-                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
-                <option value="P2000+">₱2,000+</option>
-              </select>
-            </div>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Delivery To</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Full Name *</label>
-              <input type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Contact Number *</label>
-              <input type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
-            <input type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark (Optional)</label>
-              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
-              <input type="time" v-model="bookingForm.preferredTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-        </div>
-
-        <!-- GIFT DELIVERY -->
-        <div v-if="selectedService.id === 'gift-delivery'" class="space-y-4">
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Gift Details</h3>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Type of Gift / Item *</label>
-            <input type="text" v-model.trim="bookingForm.giftType" required placeholder="e.g., Flowers, Cake, Jewelry" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Store Name *</label>
-              <input type="text" v-model.trim="bookingForm.storeName" required placeholder="e.g., Flower Shop, Bakery" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Store Address *</label>
-              <input
-                type="text"
-                v-model.trim="bookingForm.storeAddress"
-                required
-                ref="storeAddressInput"
-                @input="onAddressManualInput"
-                placeholder="Store location"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
-              <textarea v-model.trim="bookingForm.specialInstructions" rows="3" placeholder="e.g., Wrap with ribbon, Include card" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <option value="">Select budget range</option>
-                <option value="P1-P499">₱1 - ₱499</option>
-                <option value="P500-P999">₱500 - ₱999</option>
-                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
-                <option value="P2000+">₱2,000+</option>
-              </select>
-            </div>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Receiver Info</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Full Name *</label>
-              <input type="text" v-model.trim="bookingForm.recipientName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Contact Number *</label>
-              <input type="tel" v-model.trim="bookingForm.recipientContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
-            <input type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark (Optional)</label>
-              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Date/Time (Optional)</label>
-              <input type="datetime-local" v-model="bookingForm.preferredDateTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-        </div>
-
-        <!-- MEDICINE DELIVERY -->
-        <div v-if="selectedService.id === 'medicine-delivery'" class="space-y-4">
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Medicine Details</h3>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Medicine Name(s) *</label>
-            <textarea v-model.trim="bookingForm.medicineNames" rows="3" required placeholder="List all medicines needed..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Prescription Upload (Optional)</label>
-              <input type="file" @change="handleFileUpload" accept="image/*,.pdf" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-              <p class="text-xs text-gray-500 mt-1">Upload if prescription is required</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
-              <input type="text" v-model.trim="bookingForm.quantity" required placeholder="e.g., 1 box, 2 bottles" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-            <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              <option value="">Select budget range</option>
-              <option value="P1-P499">₱1 - ₱499</option>
-              <option value="P500-P999">₱500 - ₱999</option>
-              <option value="P1000-P1500">₱1,000 - ₱1,500</option>
-              <option value="P2000+">₱2,000+</option>
-            </select>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Delivery To</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Full Name *</label>
-              <input type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Contact Number *</label>
-              <input type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
-            <input type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Landmark (Optional)</label>
-              <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
-              <input type="time" v-model="bookingForm.preferredTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-        </div>
-
-        <!-- PICK-UP & DROP -->
-        <div v-if="selectedService.id === 'pickup-drop'" class="space-y-4">
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2">Pick-up Info</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Pick-up Address *</label>
-              <input type="text" v-model.trim="bookingForm.pickupAddress" required ref="pickupAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Contact Person & Number (Pick-up) *</label>
-              <input type="text" v-model.trim="bookingForm.pickupContact" required placeholder="Name - Phone Number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Item Details</h3>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Item Description *</label>
-            <textarea v-model.trim="bookingForm.itemDescription" rows="3" required placeholder="Describe the item(s) to be picked up..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Item Type *</label>
-              <select v-model="bookingForm.itemType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <option value="">Select item type</option>
-                <option value="LAUNDRY">Laundry</option>
-                <option value="PET_FOOD">Pet Food</option>
-                <option value="GAS_DELIVERY">Gas Delivery</option>
-                <option value="SACK_OF_RICE">Sack of Rice Delivery</option>
-                <option value="DOCUMENT_DELIVERY">Document Delivery</option>
-                <option value="SHOPPING_DELIVERY">Shopping Delivery</option>
-                <option value="BOXES_OR_ITEMS">Boxes or Items Delivery</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-              <select v-model="bookingForm.budgetRange" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <option value="">Select budget range</option>
-                <option value="P1-P499">₱1 - ₱499</option>
-                <option value="P500-P999">₱500 - ₱999</option>
-                <option value="P1000-P1500">₱1,000 - ₱1,500</option>
-                <option value="P2000+">₱2,000+</option>
-              </select>
-            </div>
-          </div>
-
-          <h3 class="text-md font-medium text-gray-800 border-b pb-2 mt-6">Drop-off Info</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Drop-off Address *</label>
-              <input type="text" v-model.trim="bookingForm.dropoffAddress" required ref="dropoffAddressInput" @input="onAddressManualInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-            <div>
-              <label class="block text sm font-medium text-gray-700 mb-2">Receiver Name & Contact *</label>
-              <input type="text" v-model.trim="bookingForm.receiverContact" required placeholder="Name - Phone Number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"/>
-            </div>
-          </div>
-        </div>
-
-        <!-- Payment Method -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <h3 class="text-md font-medium text-gray-800 mb-3">Payment Method</h3>
-          <div class="space-y-2">
-            <label class="flex items-center">
-              <input type="radio" v-model="bookingForm.paymentMethod" value="GCASH" class="text-green-600 focus:ring-green-500" />
-              <span class="ml-2 text-sm text-gray-700">GCash</span>
-            </label>
-            <label class="flex items-center">
-              <input type="radio" v-model="bookingForm.paymentMethod" value="COD" class="text-green-600 focus:ring-green-500" />
-              <span class="ml-2 text-sm text-gray-700">Cash on Delivery (COD)</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Submit -->
-        <div class="flex flex-col gap-2">
-          <button
-            type="submit"
-            :disabled="!canSubmitBooking || submitting || (selectedService?.id==='bill-payments' && uploadingBillReceipt)"
-            class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {{ submitting ? 'Booking...' : 'Submit Booking' }}
-          </button>
-          <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
-        </div>
-      </form>
-    </div>
-
-    <!-- Notification Modal -->
-    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="closeNotificationModal">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
-        <div class="flex items-center mb-4">
-          <div :class="[
-            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
-            notificationType === 'success' ? 'bg-green-100' : 
-            notificationType === 'error' ? 'bg-red-100' : 
-            notificationType === 'warning' ? 'bg-yellow-100' :
-            'bg-blue-100'
-          ]">
-            <svg 
-              v-if="notificationType === 'success'"
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <svg 
-              v-else-if="notificationType === 'error'"
-              class="w-6 h-6 text-red-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            <svg 
-              v-else-if="notificationType === 'warning'"
-              class="w-6 h-6 text-yellow-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-            <svg 
-              v-else
-              class="w-6 h-6 text-blue-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      <div class="space-y-4">
+        <div v-if="isBadWeather && badWeatherFeeEnabled" class="bg-yellow-50 border-l-4 border-yellow-500 p-4 md:p-6 rounded-r-xl shadow-sm flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 animate-pulse border border-yellow-100">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </div>
-          <h3 :class="[
-            'text-lg font-semibold',
-            notificationType === 'success' ? 'text-green-900' : 
-            notificationType === 'error' ? 'text-red-900' : 
-            notificationType === 'warning' ? 'text-yellow-900' :
-            'text-blue-900'
-          ]">
-            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : notificationType === 'warning' ? 'Warning' : 'Information' }}
-          </h3>
+          <div class="flex-1">
+            <h3 class="text-sm md:text-base font-bold text-yellow-800">⚠️ Bad Weather Alert</h3>
+            <p class="text-xs md:text-sm text-yellow-700 mt-1">
+              Current weather: <strong>{{ currentWeather }}</strong>. A <strong class="bg-yellow-200 px-1 rounded">₱5 surcharge</strong> applies.
+            </p>
+          </div>
         </div>
-        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
-        <div class="flex justify-end">
-          <button
-            @click="closeNotificationModal"
+
+        <div v-if="isBookingRestricted" class="bg-red-50 border-l-4 border-red-500 p-4 md:p-6 rounded-r-xl shadow-sm flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 border border-red-100">
+          <div class="flex-shrink-0">
+             <svg class="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-sm md:text-base font-bold text-red-800">🚫 Booking Restricted</h3>
+            <p class="text-xs md:text-sm text-red-700 mt-1">
+              <span v-if="restrictionType === 'banned'">Account banned. Contact support.</span>
+              <span v-else-if="restrictionType === 'flagged'">Restricted until <strong>{{ restrictionEndTime }}</strong>.</span>
+            </p>
+             <p v-if="restrictionReason" class="text-xs text-red-600 italic mt-1">Reason: {{ restrictionReason }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg md:text-xl font-bold text-gray-800 mb-4 flex items-center px-1">
+          <span class="w-1.5 h-6 md:h-8 bg-[#3ED400] rounded-full mr-3"></span>
+          Select Service Type
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="service in services"
+            :key="service.id"
+            @click="onSelectService(service)"
             :class="[
-              'px-4 py-2 rounded-lg transition-colors',
-              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
-              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
-              notificationType === 'warning' ? 'bg-yellow-600 text-white hover:bg-yellow-700' :
-              'bg-blue-600 text-white hover:bg-blue-700'
+              'relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border-2 group',
+              selectedService?.id === service.id 
+                ? 'border-[#3ED400] bg-[#f9fff0] shadow-md -translate-y-1' 
+                : 'border-transparent bg-white hover:border-gray-200 hover:shadow-lg hover:-translate-y-1'
             ]"
           >
-            OK
+            <div v-if="selectedService?.id === service.id" class="absolute top-3 right-3 text-[#3ED400]">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            </div>
+
+            <div class="flex items-start space-x-4">
+              <div :class="[
+                'flex-shrink-0 p-3 rounded-xl transition-colors duration-300 shadow-sm flex items-center justify-center w-14 h-14',
+                service.id === 'medicine-delivery' ? 'bg-teal-100 text-teal-600' : 
+                service.id === 'food-delivery' ? 'bg-orange-100 text-orange-600' :
+                service.id === 'bill-payments' ? 'bg-blue-100 text-blue-600' :
+                service.id === 'grocery-shopping' ? 'bg-green-100 text-green-600' :
+                service.id === 'gift-delivery' ? 'bg-pink-100 text-pink-600' :
+                'bg-indigo-100 text-indigo-600'
+              ]">
+                <svg v-if="service.id === 'medicine-delivery'" class="w-8 h-8" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><mask id="medMask"><g fill="none"><rect width="38" height="26" x="5" y="16" fill="#fff" stroke="#fff" stroke-linejoin="round" stroke-width="4" rx="3"/><path fill="#fff" d="M19 8h10V4H19zm11 1v7h4V9zm-12 7V9h-4v7zm11-8a1 1 0 0 1 1 1h4a5 5 0 0 0-5-5zM19 4a5 5 0 0 0-5 5h4a1 1 0 0 1 1-1z"/><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M18 29h12m-6-6v12"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#medMask)"/></svg>
+                <svg v-else-if="service.id === 'food-delivery'" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26c1.44 1.42 2.43 2.89 2.43 5.29zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1m15.03-7c0-8-15.03-8-15.03 0zM1.02 17h15v2h-15z"/></svg>
+                <svg v-else-if="service.id === 'bill-payments'" class="w-8 h-8" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6a2 2 0 0 1 2-2h24a2 2 0 0 1 2 2v38l-7-5l-7 5l-7-5l-7 5zm8 16h12m-12 8h12M18 14h12"/></svg>
+                <svg v-else-if="service.id === 'grocery-shopping'" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2s-.9-2-2-2M2 4h1l3.6 7.59l-1.35 2.44C4.52 15.37 5.48 17 7 17h11c.55 0 1-.45 1-1s-.45-1-1-1H7l1.1-2h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A.996.996 0 0 0 20.01 4H5.21l-.67-1.43a.99.99 0 0 0-.9-.57H2c-.55 0-1 .45-1 1s.45 1 1 1m15 14c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2s2-.9 2-2s-.9-2-2-2"/></svg>
+                <svg v-else-if="service.id === 'gift-delivery'" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M9.06 1.93C7.17 1.92 5.33 3.74 6.17 6H3a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h9V8h2v3h9a1 1 0 0 0 1-1V8a2 2 0 0 0-2-2h-3.17C19 2.73 14.6.42 12.57 3.24L12 4l-.57-.78c-.63-.89-1.5-1.28-2.37-1.29M9 4c.89 0 1.34 1.08.71 1.71S8 5.89 8 5a1 1 0 0 1 1-1m6 0c.89 0 1.34 1.08.71 1.71S14 5.89 14 5a1 1 0 0 1 1-1M2 12v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8h-9v8h-2v-8z"/></svg>
+                <svg v-else class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="m223.68 66.15l-88-48.15a15.88 15.88 0 0 0-15.36 0l-88 48.17a16 16 0 0 0-8.32 14v95.64a16 16 0 0 0 8.32 14l88 48.17a15.88 15.88 0 0 0 15.36 0l88-48.17a16 16 0 0 0 8.32-14V80.18a16 16 0 0 0-8.32-14.03M128 32l80.35 44l-29.78 16.29l-80.35-44Zm0 88L47.65 76l33.91-18.57l80.35 44Zm88 55.85l-80 43.79v-85.81l32-17.51V152a8 8 0 0 0 16 0v-44.44l32-17.51v85.76Z"/></svg>
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-gray-900 text-lg leading-tight">{{ service.name }}</h3>
+                <p class="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{{ service.description }}</p>
+                <div class="mt-3">
+                  <span class="inline-block bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-md border border-gray-200 uppercase tracking-wide">
+                    Starts at ₱{{ baseFee.toFixed(2) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="selectedService" class="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        <div class="lg:col-span-1 order-1 lg:order-1 space-y-6">
+          <div class="lg:sticky lg:top-6 space-y-6">
+            
+            <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+              <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-700 text-xs md:text-sm uppercase tracking-wide">Route Map</h3>
+                <button @click="getCurrentLocation" type="button" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-full font-bold text-gray-600 hover:text-[#3ED400] hover:border-[#3ED400] transition-colors flex items-center shadow-sm">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  Locate Me
+                </button>
+              </div>
+              <div class="relative">
+                 <div id="map" class="w-full h-56 md:h-64 bg-gray-200"></div>
+              </div>
+              <div class="p-4 flex divide-x divide-gray-200 bg-white">
+                <div class="flex-1 text-center">
+                  <p class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Distance</p>
+                  <p class="text-lg font-bold text-gray-800">{{ routeInfo.distance }}</p>
+                </div>
+                <div class="flex-1 text-center">
+                  <p class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Time</p>
+                  <p class="text-lg font-bold text-gray-800">{{ routeInfo.duration }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="routeInfo.distanceValue > 0" class="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 p-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+              <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#f0fce6] to-transparent rounded-bl-full"></div>
+              <h3 class="text-lg font-bold text-gray-800 mb-4 relative z-10">Fee Breakdown</h3>
+              
+              <div class="space-y-3 text-sm relative z-10">
+                <div class="flex justify-between text-gray-600">
+                  <span>Base Charge</span>
+                  <span class="font-medium">₱{{ calculatedPrice.baseCharge }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                  <span>Distance Fee</span>
+                  <span class="font-medium">₱{{ calculatedPrice.distanceFee }}</span>
+                </div>
+                <div v-if="calculatedPrice.badWeatherFee > 0" class="flex justify-between text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                  <span>Weather Fee</span>
+                  <span class="font-medium">₱{{ calculatedPrice.badWeatherFee }}</span>
+                </div>
+                <div v-if="bookingForm.paymentMethod === 'GCASH'" class="flex justify-between text-blue-600">
+                  <span>GCash Fee</span>
+                  <span class="font-medium">₱{{ calculatedPrice.gcashFee }}</span>
+                </div>
+                <p v-if="bookingForm.paymentMethod === 'GCASH'" class="text-[10px] text-gray-400 text-right">{{ getGcashFeeDescription() }}</p>
+              </div>
+
+              <div class="my-4 border-t-2 border-dashed border-gray-200"></div>
+
+              <div class="flex justify-between items-end">
+                <span class="text-gray-500 font-medium text-sm">Total Estimate</span>
+                <span class="text-3xl font-extrabold text-[#3ED400]">₱{{ calculatedPrice.total }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 order-2 lg:order-2">
+          <form @submit.prevent="submitBooking" class="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 relative">
+            
+            <div class="flex items-center mb-6 pb-4 border-b border-gray-100">
+              <span class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-[#74E600] to-[#00C851] text-white flex items-center justify-center font-bold mr-3 shadow-sm text-sm md:text-base">1</span>
+              <h2 class="text-lg md:text-xl font-bold text-gray-800">Booking Details</h2>
+            </div>
+
+            <div class="space-y-6 md:space-y-8">
+              
+              <div v-if="selectedService.id === 'food-delivery'" class="space-y-6">
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Restaurant Info</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Restaurant Name *</label>
+                      <input type="text" v-model.trim="bookingForm.restaurantName" @input="onRestaurantNameInput" @blur="validateRestaurantName" required class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="restaurantNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'" placeholder="Where should we buy?"/>
+                      <p v-if="restaurantNameWarning" class="text-yellow-500 text-xs mt-1">{{ restaurantNameWarning }}</p>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Restaurant Address *</label>
+                      <input type="text" v-model.trim="bookingForm.restaurantAddress" ref="restaurantAddressInput" @input="onAddressManualInput" @focus="onRestaurantAddressFocus" required class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="restaurantAddressWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'" placeholder="Restaurant location"/>
+                       <p v-if="restaurantAddressWarning" class="text-yellow-500 text-xs mt-1">{{ restaurantAddressWarning }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Order Details</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">What to buy? *</label>
+                      <textarea v-model.trim="bookingForm.foodOrderDetails" rows="3" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" placeholder="e.g. 2pcs Fried Chicken..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Budget Range *</label>
+                        <select v-model="bookingForm.budgetRange" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                          <option value="">Select Range</option>
+                          <option value="P1-P499">₱1 - ₱499</option>
+                          <option value="P500-P999">₱500 - ₱999</option>
+                          <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                          <option value="P2000+">₱2,000+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Special Instructions</label>
+                        <input type="text" v-model.trim="bookingForm.specialInstructions" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" placeholder="Optional"/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedService.id === 'bill-payments'" class="space-y-6">
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Bill Information</label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Biller Name *</label>
+                      <input type="text" v-model.trim="bookingForm.billerName" ref="billerNameInput" @input="onBillerNameInput" @focus="onBillerNameFocus" required placeholder="e.g. MERALCO" class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="billerNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'"/>
+                       <p v-if="billerNameWarning" class="text-yellow-500 text-xs mt-1">{{ billerNameWarning }}</p>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Account Name *</label>
+                      <input type="text" v-model.trim="bookingForm.accountName" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Account Number *</label>
+                      <input type="text" v-model.trim="bookingForm.accountNumber" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Amount *</label>
+                      <input type="number" v-model.number="bookingForm.amountToPay" min="1" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Due Date</label>
+                       <input type="date" v-model="bookingForm.dueDate" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Budget Range *</label>
+                      <select v-model="bookingForm.budgetRange" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                        <option value="">Select Range</option>
+                        <option value="P1-P499">₱1 - ₱499</option>
+                        <option value="P500-P999">₱500 - ₱999</option>
+                        <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                        <option value="P2000+">₱2,000+</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="bg-white p-5 rounded-2xl border-2 border-dashed hover:border-[#3ED400] hover:bg-green-50/30 transition-all text-center" :class="(!bookingForm.billReceiptUrl && !uploadingBillReceipt) ? 'border-gray-300' : 'border-[#3ED400]'">
+                  <label class="cursor-pointer block">
+                    <span class="block text-sm font-bold text-gray-600 mb-2">Upload Bill Receipt / Reference *</span>
+                    <input type="file" accept="image/*,.pdf" @change="handleBillReceiptSelect" class="hidden"/>
+                    <span class="inline-block px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-[#3ED400] hover:text-white transition-colors">Choose File</span>
+                  </label>
+                  <div v-if="uploadingBillReceipt" class="mt-3 h-1 w-1/2 mx-auto bg-gray-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-[#3ED400] transition-all duration-300" :style="{ width: billReceiptProgress + '%' }"></div>
+                  </div>
+                  <p v-if="bookingForm.billReceiptUrl" class="mt-2 text-xs text-green-600 font-bold">✓ Uploaded Successfully</p>
+                  <p v-if="selectedService.id==='bill-payments' && !bookingForm.billReceiptUrl && !uploadingBillReceipt" class="text-red-500 text-xs mt-2">Receipt is required</p>
+                </div>
+                
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Logistics</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Pickup Address (Payment) *</label>
+                      <input type="text" v-model.trim="bookingForm.pickupAddress" required ref="pickupAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Return Address (Receipt) *</label>
+                      <input type="text" v-model.trim="bookingForm.returnAddress" required ref="returnAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedService.id === 'grocery-shopping'" class="space-y-6">
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Store Info</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Store Preference (Optional)</label>
+                      <input type="text" v-model.trim="bookingForm.storePreference" ref="storePreferenceInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" placeholder="e.g. SM Supermarket"/>
+                      <p class="text-xs text-gray-500 mt-1">Start typing to search for stores</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Shopping Details</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Shopping List *</label>
+                      <textarea v-model.trim="bookingForm.shoppingList" rows="5" required placeholder="- Item 1&#10;- Item 2" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"></textarea>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Budget Range *</label>
+                      <select v-model="bookingForm.budgetRange" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                        <option value="">Select Range</option>
+                        <option value="P1-P499">₱1 - ₱499</option>
+                        <option value="P500-P999">₱500 - ₱999</option>
+                        <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                        <option value="P2000+">₱2,000+</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedService.id === 'gift-delivery'" class="space-y-6">
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Gift Info</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Gift Type *</label>
+                      <input type="text" v-model.trim="bookingForm.giftType" required placeholder="e.g. Cake, Flowers" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Store Name *</label>
+                        <input type="text" v-model.trim="bookingForm.storeName" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Store Address *</label>
+                        <input type="text" v-model.trim="bookingForm.storeAddress" required ref="storeAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                         <label class="block text-sm font-semibold text-gray-700 mb-1">Special Instructions</label>
+                         <textarea v-model.trim="bookingForm.specialInstructions" rows="2" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"></textarea>
+                       </div>
+                       <div>
+                         <label class="block text-sm font-semibold text-gray-700 mb-1">Budget Range *</label>
+                         <select v-model="bookingForm.budgetRange" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                           <option value="">Select Range</option>
+                           <option value="P1-P499">₱1 - ₱499</option>
+                           <option value="P500-P999">₱500 - ₱999</option>
+                           <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                           <option value="P2000+">₱2,000+</option>
+                         </select>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedService.id === 'medicine-delivery'" class="space-y-6">
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Medicine Info</label>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Medicine List *</label>
+                      <textarea v-model.trim="bookingForm.medicineNames" rows="3" required placeholder="List medicines..." class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"></textarea>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-2">Upload Prescription (Optional)</label>
+                      <input type="file" @change="handleFileUpload" accept="image/*,.pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#f0fce6] file:text-[#3ED400] hover:file:bg-[#e6ffcc]"/>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Quantity *</label>
+                        <input type="text" v-model.trim="bookingForm.quantity" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Budget Range *</label>
+                        <select v-model="bookingForm.budgetRange" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                          <option value="">Select Range</option>
+                          <option value="P1-P499">₱1 - ₱499</option>
+                          <option value="P500-P999">₱500 - ₱999</option>
+                          <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                          <option value="P2000+">₱2,000+</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedService.id === 'pickup-drop'" class="space-y-6">
+                <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Pickup Logistics</label>
+                  <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Pickup Address *</label>
+                        <input type="text" v-model.trim="bookingForm.pickupAddress" required ref="pickupAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Pickup Contact *</label>
+                        <input type="text" v-model.trim="bookingForm.pickupContact" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Item Description *</label>
+                      <textarea v-model.trim="bookingForm.itemDescription" rows="2" required placeholder="What are we moving?" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Item Type *</label>
+                        <select v-model="bookingForm.itemType" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                          <option value="">Select Type</option>
+                          <option value="LAUNDRY">Laundry</option>
+                          <option value="PET_FOOD">Pet Food</option>
+                          <option value="GAS_DELIVERY">Gas</option>
+                          <option value="SACK_OF_RICE">Rice</option>
+                          <option value="DOCUMENT_DELIVERY">Documents</option>
+                          <option value="BOXES_OR_ITEMS">Boxes/Items</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Budget Range *</label>
+                        <select v-model="bookingForm.budgetRange" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm">
+                          <option value="">Select Range</option>
+                          <option value="P1-P499">₱1 - ₱499</option>
+                          <option value="P500-P999">₱500 - ₱999</option>
+                          <option value="P1000-P1500">₱1,000 - ₱1,500</option>
+                          <option value="P2000+">₱2,000+</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">
+                  {{ selectedService.id === 'pickup-drop' ? 'Drop-off Details' : 'Delivery Destination' }}
+                </label>
+                
+                <div class="space-y-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ selectedService.id === 'pickup-drop' ? 'Receiver Name' : (selectedService.id === 'gift-delivery' ? 'Recipient Name' : 'Receiver Name') }} *
+                      </label>
+                      <input 
+                        v-if="selectedService.id === 'gift-delivery'" 
+                        type="text" v-model.trim="bookingForm.recipientName" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                      />
+                      <input 
+                        v-else 
+                        type="text" v-model.trim="bookingForm.receiverName" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Contact Number *</label>
+                      <input 
+                        v-if="selectedService.id === 'gift-delivery'" 
+                        type="tel" v-model.trim="bookingForm.recipientContact" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                      />
+                      <input 
+                        v-else 
+                        type="tel" v-model.trim="bookingForm.receiverContact" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                      {{ selectedService.id === 'pickup-drop' ? 'Drop-off Address' : 'Delivery Address' }} *
+                    </label>
+                    <input 
+                      v-if="selectedService.id === 'pickup-drop'"
+                      type="text" v-model.trim="bookingForm.dropoffAddress" required ref="dropoffAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                    />
+                    <input 
+                      v-else
+                      type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4" v-if="selectedService.id !== 'pickup-drop'">
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Landmark</label>
+                      <input type="text" v-model.trim="bookingForm.landmark" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" placeholder="Optional"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-1">Preferred Time</label>
+                      <input v-if="selectedService.id === 'gift-delivery'" type="datetime-local" v-model="bookingForm.preferredDateTime" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      <input v-else type="time" v-model="bookingForm.preferredTime" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Payment</label>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <label class="flex-1 flex items-center p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:border-[#3ED400] transition-all shadow-sm group" :class="{'ring-2 ring-[#3ED400] border-transparent': bookingForm.paymentMethod === 'GCASH'}">
+                    <input type="radio" v-model="bookingForm.paymentMethod" value="GCASH" class="w-4 h-4 text-[#3ED400] focus:ring-[#3ED400]"/>
+                    <span class="ml-3 font-semibold text-gray-700 group-hover:text-[#3ED400] transition-colors">GCash</span>
+                  </label>
+                  <label class="flex-1 flex items-center p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:border-[#3ED400] transition-all shadow-sm group" :class="{'ring-2 ring-[#3ED400] border-transparent': bookingForm.paymentMethod === 'COD'}">
+                    <input type="radio" v-model="bookingForm.paymentMethod" value="COD" class="w-4 h-4 text-[#3ED400] focus:ring-[#3ED400]"/>
+                    <span class="ml-3 font-semibold text-gray-700 group-hover:text-[#3ED400] transition-colors">Cash on Delivery</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="pt-6 border-t border-gray-100 space-y-2">
+                <button
+                  type="submit"
+                  :disabled="!canSubmitBooking || submitting || (selectedService?.id==='bill-payments' && uploadingBillReceipt)"
+                  class="w-full py-4 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95"
+                >
+                  {{ submitting ? 'Processing Booking...' : 'Submit Booking' }}
+                </button>
+                 <p v-if="formError" class="text-sm text-red-500 text-center">{{ formError }}</p>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300" @click="closeNotificationModal">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-100" @click.stop>
+        <div class="text-center">
+          <div :class="[
+            'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-md',
+            notificationType === 'success' ? 'bg-green-100 text-green-600' : 
+            notificationType === 'error' ? 'bg-red-100 text-red-600' : 
+            notificationType === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+            'bg-blue-100 text-blue-600'
+          ]">
+            <svg v-if="notificationType === 'success'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <svg v-else-if="notificationType === 'error'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+             <svg v-else-if="notificationType === 'warning'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          
+          <h3 class="text-xl font-bold text-gray-900 mb-2">
+            {{ notificationType === 'success' ? 'Success!' : notificationType === 'error' ? 'Something went wrong' : 'Notice' }}
+          </h3>
+          <p class="text-gray-600 mb-6 leading-relaxed text-sm">{{ notificationMessage }}</p>
+          
+          <button 
+            @click="closeNotificationModal"
+            class="w-full py-3 rounded-xl font-bold text-white transition-colors shadow-md transform active:scale-95"
+            :class="notificationType === 'success' ? 'bg-[#3ED400] hover:bg-[#32b000]' : 'bg-gray-800 hover:bg-gray-900'"
+          >
+            Okay, Got it
           </button>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
+// --- WALANG GINALAW SA LOGIC MO, EXACTLY AS PROVIDED IN CODE 2 ---
 import { db } from '@/firebase/config'
 import { collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/auth'
@@ -2350,8 +2207,27 @@ export default {
 </script>
 
 <style scoped>
-#map { height: 300px !important; width: 100% !important; min-height: 300px; background-color: #f0f0f0; }
-.map-container { position: relative; overflow: hidden; }
-/* Ensure the Places Autocomplete dropdown isn't hidden behind anything */
-:deep(.pac-container) { z-index: 9999 !important; width: auto !important; min-width: 280px; }
+#map { 
+  height: 300px !important; 
+  width: 100% !important; 
+  min-height: 300px; 
+  background-color: #f0f0f0; 
+}
+:deep(.pac-container) { 
+  z-index: 9999 !important; 
+  width: auto !important; 
+  min-width: 280px; 
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f3f4f6;
+  margin-top: 4px;
+}
+:deep(.pac-item) {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+:deep(.pac-item:hover) {
+  background-color: #f0fce6;
+}
 </style>

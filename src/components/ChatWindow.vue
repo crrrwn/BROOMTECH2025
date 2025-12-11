@@ -1,264 +1,177 @@
 <template>
-  <div class="flex flex-col h-full bg-white rounded-lg shadow-sm border">
-    <!-- Chat Header -->
-    <div class="flex items-center justify-between p-4 border-b bg-gray-50">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-          <span class="text-white text-sm font-medium">
-            {{ chatPartner?.role === 'driver' ? 'D' : chatPartner?.role === 'user' ? 'U' : 'S' }}
-          </span>
+  <div class="flex flex-col h-full bg-gray-50 rounded-2xl shadow-xl overflow-hidden border border-gray-100 font-sans">
+    
+    <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10">
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <div class="w-11 h-11 bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-full flex items-center justify-center shadow-md text-white font-bold text-lg border-2 border-white">
+            <span v-if="!chatPartner?.avatar">{{ chatPartner?.role === 'driver' ? 'D' : chatPartner?.role === 'user' ? 'U' : 'S' }}</span>
+            <img v-else :src="chatPartner.avatar" class="w-full h-full rounded-full object-cover"/>
+          </div>
+          <div :class="['absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-white rounded-full shadow-sm', isOnline ? 'bg-[#3ED400]' : 'bg-gray-300']"></div>
         </div>
         <div>
-          <h3 class="font-semibold text-gray-900">
+          <h3 class="font-bold text-gray-900 text-lg leading-tight">
             {{ getPartnerDisplayName() }}
           </h3>
-          <p class="text-sm text-gray-600">
-            {{ getPartnerRole() }}
+          <p class="text-xs font-medium text-gray-500 flex items-center gap-1">
+             <span v-if="isOnline" class="w-1.5 h-1.5 rounded-full bg-[#3ED400] animate-pulse"></span>
+             {{ isOnline ? 'Active Now' : 'Offline' }}
+             <span v-if="getPartnerRole()" class="text-gray-300">•</span>
+             {{ getPartnerRole() }}
           </p>
         </div>
       </div>
-      <div class="flex items-center space-x-2">
-        <div :class="[
-          'w-3 h-3 rounded-full',
-          isOnline ? 'bg-green-500' : 'bg-gray-400'
-        ]"></div>
-        <span class="text-sm text-gray-600">{{ isOnline ? 'Online' : 'Offline' }}</span>
-      </div>
     </div>
 
-    <!-- Messages Container -->
     <div 
       ref="messagesContainer" 
-      class="flex-1 overflow-y-auto p-4 space-y-4"
-      style="max-height: 400px; scroll-behavior: smooth;"
+      class="flex-1 overflow-y-auto p-4 space-y-6 bg-[#f8fafc] custom-scrollbar"
+      style="scroll-behavior: smooth;"
       @scroll="handleScroll"
     >
-      <div v-if="loading" class="flex justify-center py-4">
-        <div class="flex items-center space-x-2">
-          <div class="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-          <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+      <div v-if="loading" class="flex justify-center py-6">
+        <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
+          <div class="w-2 h-2 bg-[#3ED400] rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-[#3ED400] rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-[#3ED400] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
         </div>
       </div>
 
-      <!-- Messages -->
-      <div v-for="message in visibleMessages" :key="message.id" class="flex" :class="getMessageAlignment(message)">
-        <div class="max-w-xs lg:max-w-md">
-          <!-- Message Bubble -->
-          <div :class="getMessageBubbleClass(message)" class="px-4 py-2 rounded-lg relative group">
-            <!-- Delete Button (only for own messages that are not deleted) -->
+      <div v-for="message in visibleMessages" :key="message.id" class="flex w-full group" :class="getMessageAlignment(message)">
+        <div class="flex flex-col max-w-[85%] lg:max-w-[75%] relative" :class="message.senderId === currentUserId ? 'items-end' : 'items-start'">
+          
+          <div 
+            class="px-5 py-3 shadow-sm relative text-sm md:text-base transition-all duration-200"
+            :class="getMessageBubbleClass(message)"
+          >
             <button
               v-if="message.senderId === currentUserId && !message.deleted"
               @click="showDeleteConfirm(message.id)"
-              class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+              class="absolute -top-2 -right-2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white hover:scale-110 z-20 shadow-sm border border-red-50"
               title="Delete message"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             
-            <!-- Image Message -->
-            <div v-if="message.messageType === 'image' && message.imageUrl" class="mb-2">
+            <div v-if="message.messageType === 'image' && message.imageUrl" class="-mx-2 -mt-2 mb-2">
               <img
                 :src="message.imageUrl"
                 alt="Chat image"
-                class="max-w-full h-auto rounded-lg cursor-pointer"
+                class="rounded-lg cursor-pointer hover:opacity-95 transition-opacity max-h-64 object-cover w-full border border-black/5"
                 @click="openImagePreview(message.imageUrl)"
               />
             </div>
             
-            <!-- Text Message -->
-            <p v-if="message.message" class="text-sm">{{ message.message }}</p>
+            <p v-if="message.message" class="leading-relaxed whitespace-pre-wrap">{{ message.message }}</p>
             
-            <!-- Message Status -->
-            <div class="flex items-center justify-end mt-1 space-x-1">
-              <span class="text-xs" :class="message.senderId === currentUserId ? 'text-white opacity-80' : 'text-gray-500'">
+            <div class="flex items-center justify-end mt-1 space-x-1 select-none">
+              <span class="text-[10px] font-medium opacity-70">
                 {{ formatTime(message.timestamp) }}
               </span>
-              <div v-if="message.senderId === currentUserId" class="flex">
-                <svg v-if="message.read" class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                </svg>
-                <svg v-else class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                </svg>
+              <div v-if="message.senderId === currentUserId" class="flex ml-1">
+                <svg v-if="message.read" class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                <svg v-else class="w-3.5 h-3.5 text-green-100" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Typing Indicator -->
-      <div v-if="isTyping" class="flex">
-        <div class="max-w-xs lg:max-w-md">
-          <div class="bg-gray-100 px-4 py-2 rounded-lg">
-            <div class="flex items-center space-x-1">
-              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-            </div>
-          </div>
+      <div v-if="isTyping" class="flex justify-start animate-in fade-in slide-in-from-bottom-2">
+        <div class="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm flex items-center space-x-1.5">
+          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
+          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
         </div>
       </div>
     </div>
 
-    <!-- Message Input -->
-    <div class="p-4 border-t bg-gray-50">
-      <div class="flex items-center space-x-2">
-        <!-- Image Upload Button (Gallery) -->
-        <button
-          @click="triggerImageInput"
-          :disabled="uploadingImage"
-          class="px-3 py-2 text-gray-600 hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Upload image from gallery"
-        >
-          <svg v-if="uploadingImage" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </button>
-        
-        <!-- Camera Capture Button -->
-        <button
-          @click="triggerCameraInput"
-          :disabled="uploadingImage"
-          class="px-3 py-2 text-gray-600 hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Capture photo with camera"
-        >
-          <svg v-if="uploadingImage" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
-        
-        <!-- Hidden file input for gallery (no capture attribute) -->
-        <input
-          ref="imageInput"
-          type="file"
-          accept="image/*"
-          @change="handleImageSelect"
-          class="hidden"
-        />
-        
-        <!-- Hidden file input for camera (with capture to open device camera directly) -->
-        <input
-          ref="cameraInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          @change="handleImageSelect"
-          class="hidden"
-        />
-        
-        <div class="flex-1">
-          <input
-            v-model="newMessage"
-            @keypress.enter="sendMessage"
-            @input="handleTyping"
-            type="text"
-            placeholder="Type your message..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
+    <div v-if="!isDriver && quickActions.length > 0" class="px-4 py-2 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-2 justify-center">
+      <button
+        v-for="quickAction in quickActions"
+        :key="quickAction.text"
+        @click="sendQuickMessage(quickAction.text)"
+        class="px-4 py-1.5 text-xs font-bold text-[#3ED400] bg-white border border-[#3ED400] rounded-full hover:bg-[#3ED400] hover:text-white transition-all shadow-sm hover:shadow-md active:scale-95"
+      >
+        {{ quickAction.text }}
+      </button>
+    </div>
+
+    <div class="p-4 bg-white border-t border-gray-100">
+      
+      <div v-if="uploadingImage" class="mb-3 animate-in fade-in">
+        <div class="flex justify-between text-xs font-bold text-gray-500 mb-1">
+           <span>Uploading Image...</span>
+           <span>{{ imageUploadProgress }}%</span>
         </div>
+        <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-[#3ED400] h-full rounded-full transition-all duration-300" :style="{ width: imageUploadProgress + '%' }"></div>
+        </div>
+      </div>
+
+      <div class="flex items-end gap-3">
+        <div class="flex items-center gap-1 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+          <button @click="triggerImageInput" :disabled="uploadingImage" class="p-2 text-gray-400 hover:text-[#3ED400] hover:bg-white rounded-lg transition-all" title="Upload from Gallery">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </button>
+          
+          <button @click="triggerCameraInput" :disabled="uploadingImage" class="p-2 text-gray-400 hover:text-[#3ED400] hover:bg-white rounded-lg transition-all" title="Use Camera">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </button>
+        </div>
+
+        <input ref="imageInput" type="file" accept="image/*" @change="handleImageSelect" class="hidden" />
+        <input ref="cameraInput" type="file" accept="image/*" capture="environment" @change="handleImageSelect" class="hidden" />
+
+        <div class="flex-1 relative">
+          <textarea
+            v-model="newMessage"
+            @keypress.enter.prevent="sendMessage"
+            @input="handleTyping"
+            rows="1"
+            placeholder="Type a message..."
+            class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none resize-none text-gray-700 placeholder-gray-400 text-sm max-h-24 custom-scrollbar"
+            style="min-height: 48px;"
+          ></textarea>
+        </div>
+
         <button
           @click="sendMessage"
           :disabled="!newMessage.trim() || sending"
-          class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+          class="p-3 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:shadow-none transition-all hover:scale-105 active:scale-95"
         >
-          <svg v-if="sending" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Image Upload Progress -->
-      <div v-if="uploadingImage" class="mt-2">
-        <div class="w-full bg-gray-200 rounded-full h-2">
-          <div
-            class="bg-primary h-2 rounded-full transition-all duration-300"
-            :style="{ width: imageUploadProgress + '%' }"
-          ></div>
-        </div>
-        <p class="text-xs text-gray-500 mt-1">Uploading image... {{ imageUploadProgress }}%</p>
-      </div>
-      
-      <!-- Quick Actions for different user types -->
-      <div v-if="!isDriver" class="flex flex-wrap gap-2 mt-3">
-        <button
-          v-for="quickAction in quickActions"
-          :key="quickAction.text"
-          @click="sendQuickMessage(quickAction.text)"
-          class="px-3 py-1 text-sm bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
-        >
-          {{ quickAction.text }}
+          <svg v-if="sending" class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <svg v-else class="w-6 h-6 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
         </button>
       </div>
     </div>
 
-    <!-- Image Preview Modal -->
-    <div
-      v-if="showImagePreview"
-      class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-      @click="closeImagePreview"
-    >
-      <div class="max-w-4xl max-h-[90vh] relative" @click.stop>
-        <button
-          @click="closeImagePreview"
-          class="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors z-10"
-        >
-          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+    <transition name="fade">
+      <div v-if="showImagePreview" class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] p-4" @click="closeImagePreview">
+        <button @click="closeImagePreview" class="absolute top-6 right-6 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-all z-10">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
-        <img
-          :src="previewImageUrl"
-          alt="Preview"
-          class="max-w-full max-h-[90vh] rounded-lg"
-        />
+        <img :src="previewImageUrl" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl animate-in zoom-in-95" @click.stop />
       </div>
-    </div>
+    </transition>
 
-    <!-- Delete Confirmation Modal -->
-    <div
-      v-if="showDeleteConfirmModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      @click="closeDeleteConfirm"
-    >
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
-        <div class="flex items-center mb-4">
-          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+    <div v-if="showDeleteConfirmModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[110] p-4" @click="closeDeleteConfirm">
+      <div class="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 animate-in zoom-in-95" @click.stop>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900">Delete Message</h3>
-        </div>
-        <p class="text-gray-700 mb-6">Are you sure you want to delete this message? This action cannot be undone.</p>
-        <div class="flex justify-end space-x-3">
-          <button
-            @click="closeDeleteConfirm"
-            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            @click="confirmDelete"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Delete
-          </button>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Delete Message?</h3>
+          <p class="text-sm text-gray-500 mb-6">This message will be removed for everyone.</p>
+          <div class="flex gap-3">
+            <button @click="closeDeleteConfirm" class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Cancel</button>
+            <button @click="confirmDelete" class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-md transition-colors">Delete</button>
+          </div>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -454,9 +367,9 @@ export default {
 
     getMessageBubbleClass(message) {
       if (message.senderId === this.currentUserId) {
-        return 'bg-primary text-white'
+        return 'bg-gradient-to-r from-[#74E600] to-[#00C851] text-white rounded-2xl rounded-br-none'
       } else {
-        return 'bg-gray-100 text-gray-900'
+        return 'bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-bl-none'
       }
     },
 
@@ -642,3 +555,12 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+.custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

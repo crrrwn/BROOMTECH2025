@@ -1,278 +1,192 @@
 <template>
-  <div class="h-screen flex flex-col relative overflow-hidden">
-    <!-- Map Section - Takes most of the screen -->
-    <div class="flex-1 relative" id="deliveryMap">
-      <!-- Fullscreen button -->
+  <div class="h-screen flex flex-col relative overflow-hidden bg-gray-100">
+    
+    <div class="flex-1 relative z-0" id="deliveryMap">
       <button
         @click="toggleFullscreen"
-        class="absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+        class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-xl hover:bg-white text-gray-600 hover:text-[#3ED400] transition-all transform hover:scale-105 border border-white/50"
         title="Toggle Fullscreen"
       >
-        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
         </svg>
       </button>
       
-      <!-- Map will be rendered here -->
       <div class="w-full h-full" ref="mapContainer"></div>
       
-      <!-- Map Error Display -->
-      <div v-if="mapError" class="absolute inset-0 bg-white flex items-center justify-center z-20">
-        <div class="text-center p-6 max-w-md">
-          <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Map Loading Error</h3>
-          <p class="text-gray-600 mb-4">{{ mapError }}</p>
+      <div v-if="mapError" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
+        <div class="text-center p-8 max-w-md bg-white rounded-3xl shadow-2xl border border-red-100">
+          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-black text-gray-900 mb-2">Map Error</h3>
+          <p class="text-gray-500 mb-6 font-medium">{{ mapError }}</p>
           <button
             @click="retryMapInitialization"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+            class="px-6 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-colors shadow-lg"
           >
-            Retry
+            Retry Loading
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Driver/Order Details Card - Fixed at bottom -->
-    <div class="bg-white rounded-t-3xl shadow-2xl border-t border-gray-200 p-6 max-h-[40vh] overflow-y-auto">
-      <!-- Driver Information Section -->
-      <div class="flex items-center justify-between mb-6">
+    <div class="bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-white/50 p-6 max-h-[45vh] overflow-y-auto z-10 relative">
+      
+      <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+
+      <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
-          <!-- Driver Profile Picture -->
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xl font-bold shadow-lg">
-            <span v-if="!driverProfile?.profilePicture">
-              {{ driverInitials }}
-            </span>
-            <img
-              v-else
-              :src="driverProfile.profilePicture"
-              :alt="driverName"
-              class="w-full h-full rounded-full object-cover"
-            />
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#74E600] to-[#00C851] p-0.5 shadow-lg shadow-green-200">
+            <div class="w-full h-full bg-white rounded-2xl overflow-hidden flex items-center justify-center text-[#00C851] text-xl font-black border-2 border-white">
+              <span v-if="!driverProfile?.profilePicture">
+                {{ driverInitials }}
+              </span>
+              <img
+                v-else
+                :src="driverProfile.profilePicture"
+                :alt="driverName"
+                class="w-full h-full object-cover"
+              />
+            </div>
           </div>
           
-          <!-- Driver Name and Role -->
           <div>
-            <h3 class="text-lg font-semibold text-gray-900">{{ driverName }}</h3>
-            <p class="text-sm text-gray-600">Courier Boy</p>
+            <h3 class="text-xl font-black text-gray-800 leading-tight">{{ driverName }}</h3>
+            <span class="inline-block px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-wider rounded-md mt-1 border border-green-100">
+              Courier
+            </span>
           </div>
         </div>
 
-        <!-- Contact Icons -->
         <div class="flex items-center gap-3">
-          <!-- Order Details/History Icon -->
-          <button
-            @click="viewOrderDetails"
-            class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center hover:bg-orange-200 transition-colors"
-            title="Order Details"
-          >
-            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+          <button @click="viewOrderDetails" class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center group" title="Order Details">
+            <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
 
-          <!-- Chat Icon -->
-          <button
-            @click="openChat"
-            class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center hover:bg-blue-200 transition-colors"
-            title="Chat"
-          >
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
+          <button @click="openChat" class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-200 transition-all flex items-center justify-center group" title="Chat">
+            <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
           </button>
 
-          <!-- Phone Icon -->
-          <button
-            @click="callCustomer"
-            class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 transition-colors"
-            title="Call Customer"
-          >
-            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
+          <button @click="callCustomer" class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 hover:bg-[#00C851] hover:text-white hover:shadow-lg hover:shadow-green-200 transition-all flex items-center justify-center group" title="Call Customer">
+            <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
           </button>
         </div>
       </div>
 
-      <!-- Location Details -->
-      <div class="space-y-4 mb-6">
-        <!-- Pickup Location -->
-        <div class="flex items-start gap-3">
-          <div class="w-3 h-3 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
-          <div class="flex-1">
-            <p class="text-sm font-medium text-gray-900">Street: {{ pickupAddress }}</p>
+      <div class="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 mb-6">
+        <div class="relative pl-4 border-l-2 border-gray-200 space-y-6">
+          <div class="relative">
+            <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-4 border-orange-400 shadow-sm"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Pickup</p>
+            <p class="text-sm font-bold text-gray-800 leading-snug">{{ pickupAddress }}</p>
           </div>
-        </div>
 
-        <!-- Delivery Location -->
-        <div class="flex items-start gap-3">
-          <div class="w-3 h-3 rounded-full bg-gray-400 mt-1.5 flex-shrink-0"></div>
-          <div class="flex-1">
-            <p class="text-sm font-medium text-gray-900">Street: {{ deliveryAddress }}</p>
+          <div class="relative">
+            <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-4 border-gray-400 shadow-sm"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Drop-off</p>
+            <p class="text-sm font-bold text-gray-800 leading-snug">{{ deliveryAddress }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="space-y-3">
+      <div class="flex gap-3 mb-3">
         <button
           @click="showItemsTotalModal"
           :disabled="!order || order.status === 'delivered'"
-          class="w-full border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors font-medium disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+          class="flex-1 py-3 px-2 bg-blue-50 text-blue-600 font-bold text-sm rounded-xl border border-blue-100 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Set Items Total
+          Set Total
         </button>
         <button
           @click="showProofModal"
           :disabled="!order || order.status === 'delivered'"
-          class="w-full border border-purple-300 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors font-medium disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+          class="flex-1 py-3 px-2 bg-purple-50 text-purple-600 font-bold text-sm rounded-xl border border-purple-100 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Upload Proof of Delivery
-        </button>
-        <button
-          @click="finishDelivery"
-          class="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors font-medium text-lg shadow-lg"
-        >
-          Finish
+          Upload Proof
         </button>
       </div>
+      
+      <button
+        @click="finishDelivery"
+        class="w-full py-4 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-black text-lg rounded-xl shadow-lg shadow-green-200 hover:shadow-green-300 hover:-translate-y-0.5 transition-all active:scale-95"
+      >
+        FINISH DELIVERY
+      </button>
     </div>
 
-    <!-- Order Details Modal -->
-    <div v-if="showOrderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
-          <h2 class="text-xl font-semibold text-gray-900">Order Details</h2>
-          <button @click="showOrderDetailsModal = false" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+    <div v-if="showOrderDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 transform transition-all">
+        <div class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 p-6 flex items-center justify-between z-10">
+          <h2 class="text-xl font-black text-gray-900">Order Details</h2>
+          <button @click="showOrderDetailsModal = false" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
+        
         <div class="p-6 space-y-6" v-if="order">
-          <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Order Summary</h4>
-            <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100">
+            <h4 class="text-xs font-black text-blue-400 uppercase tracking-widest mb-4">Order Summary</h4>
+            <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div>
-                <p class="text-gray-600">Order ID</p>
-                <p class="font-medium">#{{ order.id?.substring(0, 8) || 'N/A' }}</p>
+                <p class="text-gray-500 text-xs">Order ID</p>
+                <p class="font-bold text-gray-800 font-mono text-xs">#{{ order.id?.substring(0, 8) || 'N/A' }}</p>
               </div>
               <div>
-                <p class="text-gray-600">Status</p>
-                <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                <p class="text-gray-500 text-xs">Status</p>
+                <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-md mt-0.5">
                   {{ order.status || 'N/A' }}
                 </span>
               </div>
               <div>
-                <p class="text-gray-600">Total Amount</p>
-                <p class="font-medium text-green-600">₱{{ (order.totalAmount || order.pricing?.total || 0).toFixed(2) }}</p>
+                <p class="text-gray-500 text-xs">Total Amount</p>
+                <p class="font-black text-[#00C851] text-lg">₱{{ (order.totalAmount || order.pricing?.total || 0).toFixed(2) }}</p>
               </div>
               <div>
-                <p class="text-gray-600">Payment Method</p>
-                <p class="font-medium">{{ order.paymentMethod || 'N/A' }}</p>
+                <p class="text-gray-500 text-xs">Payment</p>
+                <p class="font-bold text-gray-800">{{ order.paymentMethod || 'N/A' }}</p>
               </div>
             </div>
           </div>
-          <div class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Customer Information</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p class="text-gray-600">Name</p>
-                <p class="font-medium">
-                  {{ order.customerData?.fullName || 
-                     (order.customerData?.firstName && order.customerData?.lastName 
-                       ? `${order.customerData.firstName} ${order.customerData.lastName}`.trim()
-                       : order.customerData?.firstName || order.customerData?.lastName || order.customerData?.name || 'N/A') }}
-                </p>
+
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Customer</h4>
+            <div class="flex flex-col gap-3">
+              <div class="flex justify-between border-b border-gray-50 pb-2">
+                <span class="text-sm text-gray-500">Name</span>
+                <span class="text-sm font-bold text-gray-900">{{ order.customerData?.fullName || (order.customerData?.firstName ? `${order.customerData.firstName} ${order.customerData.lastName}` : 'N/A') }}</span>
               </div>
-              <div>
-                <p class="text-gray-600">Phone</p>
-                <p class="font-medium">{{ order.customerData?.phone || order.customerData?.contact || order.customerData?.phoneNumber || 'N/A' }}</p>
-              </div>
-              <div>
-                <p class="text-gray-600">Email</p>
-                <p class="font-medium">{{ order.customerData?.email || 'N/A' }}</p>
+              <div class="flex justify-between border-b border-gray-50 pb-2">
+                <span class="text-sm text-gray-500">Phone</span>
+                <a :href="`tel:${order.customerData?.phone || order.customerData?.contact}`" class="text-sm font-bold text-blue-600 hover:underline">
+                  {{ order.customerData?.phone || order.customerData?.contact || 'N/A' }}
+                </a>
               </div>
             </div>
           </div>
-          <div class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Location Information</h4>
-            <div class="space-y-3">
-              <div>
-                <p class="text-gray-600 text-sm">Pickup Location</p>
-                <p class="font-medium">{{ pickupAddress }}</p>
-              </div>
-              <div>
-                <p class="text-gray-600 text-sm">Delivery Location</p>
-                <p class="font-medium">{{ deliveryAddress }}</p>
-              </div>
-            </div>
-          </div>
-          <!-- Booking Details Section -->
-          <div v-if="order?.formData" class="bg-white p-4 rounded-lg border">
-            <h4 class="font-medium text-gray-900 mb-3">Booking Details</h4>
-            <div class="space-y-2 text-sm">
-              <div v-for="detail in getFilteredBookingDetails()" :key="detail.key" class="flex justify-between border-b pb-2">
-                <span class="text-gray-600">{{ detail.label }}:</span>
-                <span class="font-medium text-right max-w-xs truncate">{{ detail.value }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Additional Orders Section -->
-          <div v-if="order?.additionalOrders && order.additionalOrders.length > 0" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 class="font-medium text-gray-900 mb-3">Additional Orders ({{ order.additionalOrders.length }})</h4>
+
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Locations</h4>
             <div class="space-y-4">
-              <div v-for="(additionalOrder, index) in order.additionalOrders" :key="index" class="bg-white p-4 rounded-lg border border-blue-200">
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex-1">
-                    <h5 class="font-medium text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</h5>
-                    <p class="text-xs text-gray-500 mt-1">
-                      Added: {{ additionalOrder.createdAt ? formatAdditionalOrderDate(additionalOrder.createdAt) : 'N/A' }}
-                    </p>
-                  </div>
-                  <span class="px-2 py-1 text-xs font-medium rounded-full" :class="
-                    additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                    additionalOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  ">
-                    {{ additionalOrder.status || 'pending' }}
-                  </span>
-                </div>
-                
-                <div v-if="additionalOrder.pickupAddress || additionalOrder.deliveryAddress" class="mt-2 text-sm">
-                  <div v-if="additionalOrder.pickupAddress" class="text-gray-600 mb-1">
-                    <span class="font-medium">Pickup:</span> {{ additionalOrder.pickupAddress }}
-                  </div>
-                  <div v-if="additionalOrder.deliveryAddress" class="text-gray-600">
-                    <span class="font-medium">Delivery:</span> {{ additionalOrder.deliveryAddress }}
-                  </div>
-                </div>
-                
-                <div v-if="additionalOrder.routeInfo" class="mt-2 text-xs text-gray-500">
-                  <span>Distance: {{ additionalOrder.routeInfo.distance }}</span>
-                  <span class="ml-3">ETA: {{ additionalOrder.routeInfo.duration }}</span>
-                </div>
-                
-                <div v-if="additionalOrder.pricing || additionalOrder.totalAmount" class="mt-3 pt-3 border-t border-blue-200">
-                  <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">Order Total:</span>
-                    <span class="font-medium text-green-600">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing?.total || 55).toFixed(2) }}</span>
-                  </div>
-                </div>
-                
-                <!-- Additional Order Form Data -->
-                <div v-if="additionalOrder.formData" class="mt-3 pt-3 border-t border-blue-200">
-                  <h6 class="text-xs font-medium text-gray-700 mb-2">Order Details:</h6>
-                  <div class="space-y-1 text-xs">
-                    <div v-for="(value, key) in additionalOrder.formData" :key="key" v-if="value && typeof value === 'string' && value.trim()" class="flex justify-between">
-                      <span class="text-gray-600">{{ formatFieldLabel(key) }}:</span>
-                      <span class="font-medium text-right max-w-xs truncate">{{ value.length > 50 ? value.substring(0, 50) + '...' : value }}</span>
-                    </div>
-                  </div>
-                </div>
+              <div class="relative pl-3 border-l-2 border-green-400">
+                <p class="text-xs text-gray-500">Pickup</p>
+                <p class="text-sm font-bold text-gray-900">{{ pickupAddress }}</p>
+              </div>
+              <div class="relative pl-3 border-l-2 border-gray-400">
+                <p class="text-xs text-gray-500">Delivery</p>
+                <p class="text-sm font-bold text-gray-900">{{ deliveryAddress }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="order?.formData" class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Details</h4>
+            <div class="space-y-3">
+              <div v-for="detail in getFilteredBookingDetails()" :key="detail.key" class="flex flex-col gap-1 pb-3 border-b border-gray-50 last:border-0">
+                <span class="text-xs font-bold text-gray-500 uppercase">{{ detail.label }}</span>
+                <span class="text-sm font-medium text-gray-800">{{ detail.value }}</span>
               </div>
             </div>
           </div>
@@ -280,29 +194,23 @@
       </div>
     </div>
 
-
-    <!-- Chat Modal -->
-    <div v-if="showChatModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-medium">
-                {{ chatPartner?.role === 'user' ? 'U' : 'C' }}
-              </span>
+    <div v-if="showChatModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[80vh] flex flex-col overflow-hidden border border-gray-100">
+        <div class="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between shadow-sm z-10">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+              {{ chatPartner?.role === 'user' ? 'U' : 'C' }}
             </div>
             <div>
-              <h2 class="text-lg font-semibold text-gray-900">Chat with Customer</h2>
-              <p class="text-sm text-gray-600">{{ chatPartner?.name || 'Customer' }}</p>
+              <h2 class="text-lg font-black text-gray-800 leading-tight">Chat</h2>
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ chatPartner?.name || 'Customer' }}</p>
             </div>
           </div>
-          <button @click="showChatModal = false" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+          <button @click="showChatModal = false" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="flex-1 overflow-hidden">
+        <div class="flex-1 overflow-hidden bg-gray-50 relative">
           <ChatWindow
             v-if="chatId && orderId"
             :chat-id="chatId"
@@ -310,263 +218,139 @@
             :chat-partner="chatPartner"
             :is-driver="true"
             @notification="handleChatNotification"
+            class="h-full"
           />
-          <div v-else class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p class="text-gray-600">Loading chat...</p>
-            </div>
+          <div v-else class="flex flex-col items-center justify-center h-full text-gray-400">
+            <div class="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-500 mb-4"></div>
+            <p class="font-medium">Connecting...</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Call Customer Modal -->
-    <div v-if="showCallModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <div class="text-center">
-          <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
-          </div>
-          <h2 class="text-xl font-semibold text-gray-900 mb-2">Call Customer</h2>
-          <p class="text-gray-600 mb-6">Contact Number</p>
-          <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <p class="text-2xl font-bold text-gray-900">
-              {{ order?.customerData?.phone || 'N/A' }}
-            </p>
-          </div>
-          <div class="flex gap-3">
-            <button
-              @click="showCallModal = false"
-              class="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              @click="initiateCall"
-              :disabled="!order?.customerData?.phone"
-              class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Call Now
-            </button>
-          </div>
+    <div v-if="showCallModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all">
+        <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+          <svg class="w-10 h-10 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+        </div>
+        <h2 class="text-2xl font-black text-gray-900 mb-2">Call Customer</h2>
+        <div class="bg-gray-50 py-4 px-6 rounded-2xl mb-8 border border-gray-100">
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Number</p>
+          <p class="text-xl font-bold text-gray-800 font-mono">{{ order?.customerData?.phone || 'N/A' }}</p>
+        </div>
+        <div class="flex gap-4">
+          <button @click="showCallModal = false" class="flex-1 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+          <button @click="initiateCall" :disabled="!order?.customerData?.phone" class="flex-1 py-3 bg-[#00C851] text-white font-bold rounded-xl hover:bg-green-600 transition-colors shadow-lg disabled:opacity-50">Call Now</button>
         </div>
       </div>
     </div>
 
-    <!-- Set Items Total Modal -->
-    <div v-if="showItemsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-gray-900">Set Items Total</h2>
-          <button @click="showItemsModal = false" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+    <div v-if="showItemsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-black text-gray-900">Set Items Total</h2>
+          <button @click="showItemsModal = false" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
-        <div class="space-y-4" v-if="order">
+        
+        <div class="space-y-6" v-if="order">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Items Total (₱)
-            </label>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Enter Amount (₱)</label>
             <input
               v-model.number="itemsTotal"
               type="number"
               min="0"
               step="0.01"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-full text-2xl font-bold px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 outline-none transition-all placeholder-gray-300"
               placeholder="0.00"
             />
           </div>
-          <div class="bg-gray-50 rounded-lg p-4 space-y-2">
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">Base Charge:</span>
-              <span class="font-medium">₱{{ (order.pricing?.baseCharge || 0).toFixed(2) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">Distance Fee:</span>
-              <span class="font-medium">₱{{ (order.pricing?.distanceFee || 0).toFixed(2) }}</span>
-            </div>
-            <div v-if="order.pricing?.badWeatherFee" class="flex justify-between text-sm">
-              <span class="text-gray-600">Bad Weather Fee:</span>
-              <span class="font-medium">₱{{ (order.pricing.badWeatherFee || 0).toFixed(2) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">Items Total:</span>
-              <span class="font-medium">₱{{ (itemsTotal || 0).toFixed(2) }}</span>
-            </div>
-            <div class="border-t pt-2 mt-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Subtotal:</span>
-                <span class="font-medium">₱{{ calculateNewTotal().toFixed(2) }}</span>
-              </div>
-              <div v-if="order.paymentMethod?.toUpperCase() !== 'COD'" class="flex justify-between text-sm mt-1">
-                <span class="text-gray-600">GCash Fee:</span>
-                <span class="font-medium">₱{{ calculateGCashFee().toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
-                <span class="text-gray-900">Total:</span>
-                <span class="text-green-600">₱{{ (order.totalAmount || calculateNewTotalWithGCash()).toFixed(2) }}</span>
-              </div>
-              <div v-if="order.totalAmount" class="text-xs text-gray-500 mt-1 text-center">
-                (Current total from My Assignments)
+
+          <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-2 text-sm">
+            <div class="flex justify-between text-gray-500"><span>Base Charge</span> <span>₱{{ (order.pricing?.baseCharge || 0).toFixed(2) }}</span></div>
+            <div class="flex justify-between text-gray-500"><span>Distance Fee</span> <span>₱{{ (order.pricing?.distanceFee || 0).toFixed(2) }}</span></div>
+            <div v-if="order.pricing?.badWeatherFee" class="flex justify-between text-yellow-600"><span>Weather Fee</span> <span>₱{{ (order.pricing.badWeatherFee || 0).toFixed(2) }}</span></div>
+            <div class="flex justify-between text-blue-600 font-bold bg-blue-50 p-2 rounded-lg"><span>Items Total</span> <span>₱{{ (itemsTotal || 0).toFixed(2) }}</span></div>
+            
+            <div class="border-t border-gray-200 my-2 pt-2">
+              <div class="flex justify-between text-gray-600"><span>Subtotal</span> <span>₱{{ calculateNewTotal().toFixed(2) }}</span></div>
+              <div v-if="order.paymentMethod?.toUpperCase() !== 'COD'" class="flex justify-between text-gray-600"><span>GCash Fee</span> <span>₱{{ calculateGCashFee().toFixed(2) }}</span></div>
+              <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                <span class="font-bold text-gray-800 text-base">TOTAL</span>
+                <span class="font-black text-2xl text-[#00C851]">₱{{ (order.totalAmount || calculateNewTotalWithGCash()).toFixed(2) }}</span>
               </div>
             </div>
           </div>
-          <div class="flex gap-3">
-            <button
-              @click="showItemsModal = false"
-              class="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              @click="saveItemsTotal"
-              :disabled="savingItems || itemsTotal < 0"
-              class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              <span v-if="savingItems">Saving...</span>
-              <span v-else>Save</span>
-            </button>
-          </div>
+
+          <button @click="saveItemsTotal" :disabled="savingItems || itemsTotal < 0" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all disabled:opacity-50">
+            {{ savingItems ? 'Saving...' : 'Save & Notify User' }}
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Upload Proof of Delivery Modal -->
-    <div v-if="showProofOfDeliveryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-gray-900">Upload Proof of Delivery</h2>
-          <button @click="showProofOfDeliveryModal = false" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+    <div v-if="showProofOfDeliveryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-black text-gray-900">Upload Proof</h2>
+          <button @click="showProofOfDeliveryModal = false" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
+
         <div class="space-y-4">
           <div
             @drop.prevent="handleProofDrop"
             @dragover.prevent="dragOverProof = true"
             @dragleave.prevent="dragOverProof = false"
-            :class="[
-              'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
-              dragOverProof ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'
-            ]"
+            :class="['border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer', dragOverProof ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50']"
           >
-            <input
-              type="file"
-              accept="image/*"
-              @change="handleProofFileSelect"
-              class="hidden"
-              id="proofFileInput"
-              ref="proofFileInput"
-            />
-            <label for="proofFileInput" class="cursor-pointer">
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <p class="text-gray-600 mb-2">
-                <span class="text-blue-600 hover:text-blue-700 font-medium">Click to upload</span> or drag and drop
-              </p>
-              <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+            <input type="file" accept="image/*" @change="handleProofFileSelect" class="hidden" id="proofFileInput" ref="proofFileInput" />
+            <label for="proofFileInput" class="cursor-pointer block">
+              <div class="w-16 h-16 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              </div>
+              <p class="text-gray-600 font-medium">Click to upload or drag image</p>
+              <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
             </label>
           </div>
-          <div v-if="proofPreview" class="mt-4">
-            <img :src="proofPreview" alt="Proof preview" class="w-full h-48 object-cover rounded-lg border" />
-          </div>
-          <div class="flex gap-3">
-            <button
-              @click="showProofOfDeliveryModal = false; proofFile = null; proofPreview = null"
-              class="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              @click="uploadProofOfDelivery"
-              :disabled="!proofFile || uploadingProof"
-              class="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              <span v-if="uploadingProof">Uploading...</span>
-              <span v-else>Upload</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Notification Modal -->
-    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <div class="text-center">
-          <div 
-            :class="[
-              'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4',
-              notificationType === 'success' ? 'bg-green-100' : 
-              notificationType === 'error' ? 'bg-red-100' : 
-              'bg-blue-100'
-            ]"
-          >
-            <svg 
-              v-if="notificationType === 'success'"
-              class="w-10 h-10 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <svg 
-              v-else-if="notificationType === 'error'"
-              class="w-10 h-10 text-red-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            <svg 
-              v-else
-              class="w-10 h-10 text-blue-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <div v-if="proofPreview" class="relative rounded-xl overflow-hidden border border-gray-200">
+            <img :src="proofPreview" class="w-full h-48 object-cover" />
+            <button @click="proofPreview = null; proofFile = null" class="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-red-500 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
-          <h2 
-            :class="[
-              'text-xl font-semibold mb-2',
-              notificationType === 'success' ? 'text-green-900' : 
-              notificationType === 'error' ? 'text-red-900' : 
-              'text-blue-900'
-            ]"
-          >
-            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Information' }}
-          </h2>
-          <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
-          <button
-            @click="closeNotificationModal"
-            :class="[
-              'w-full px-4 py-2 rounded-lg font-medium transition-colors',
-              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
-              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
-              'bg-blue-600 text-white hover:bg-blue-700'
-            ]"
-          >
-            OK
+
+          <button @click="uploadProofOfDelivery" :disabled="!proofFile || uploadingProof" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50">
+            {{ uploadingProof ? 'Uploading...' : 'Upload & Confirm' }}
           </button>
         </div>
       </div>
     </div>
+
+    <div v-if="showNotificationModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" @click.self="closeNotificationModal">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-gray-100" @click.stop>
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"
+             :class="notificationType === 'success' ? 'bg-green-100 text-green-500' : notificationType === 'error' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'">
+          <svg v-if="notificationType === 'success'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+          <svg v-else-if="notificationType === 'error'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+          <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        
+        <h3 class="text-xl font-black text-gray-900 mb-2">
+          {{ notificationType === 'success' ? 'Success!' : notificationType === 'error' ? 'Oops!' : 'Notice' }}
+        </h3>
+        <p class="text-gray-600 mb-6 font-medium leading-relaxed">{{ notificationMessage }}</p>
+        
+        <button @click="closeNotificationModal"
+                class="w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95"
+                :class="notificationType === 'success' ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : notificationType === 'error' ? 'bg-red-500 hover:bg-red-600 shadow-red-200' : 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'">
+          Okay, Got it
+        </button>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
+// --- LOGIC MO (EXACTLY AS PROVIDED IN CODE 2) ---
 import { db, storage } from '@/firebase/config'
 import { doc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/auth'
@@ -712,16 +496,10 @@ export default {
         // Load customer data if needed
         if (this.order.userId) {
           try {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:708',message:'Loading customer data',data:{userId:this.order.userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-            // #endregion
             const userRef = doc(db, 'users', this.order.userId)
             const userSnap = await getDoc(userRef)
             if (userSnap.exists()) {
               const userData = userSnap.data()
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:713',message:'Customer data loaded',data:{userId:this.order.userId,hasFirstName:!!userData.firstName,hasLastName:!!userData.lastName,hasPhone:!!userData.phone,hasContact:!!userData.contact,hasEmail:!!userData.email,userDataKeys:Object.keys(userData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-              // #endregion
               // Map user data with fallbacks for different field names
               this.order.customerData = {
                 ...userData,
@@ -735,35 +513,18 @@ export default {
                 // Full name as fallback
                 fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.name || ''
               }
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:725',message:'Customer data mapped',data:{firstName:this.order.customerData.firstName,lastName:this.order.customerData.lastName,phone:this.order.customerData.phone,email:this.order.customerData.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-              // #endregion
             } else {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:728',message:'User document not found',data:{userId:this.order.userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-              // #endregion
               console.warn('[v0] User document not found:', this.order.userId)
             }
           } catch (userError) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:732',message:'Error loading customer data',data:{userId:this.order.userId,code:userError.code,message:userError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-            // #endregion
             console.warn('[v0] Error loading customer data:', userError)
             // Don't fail the entire load if customer data can't be loaded
           }
         } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:738',message:'No userId in order',data:{orderId:this.orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-          // #endregion
           console.warn('[v0] No userId in order, cannot load customer data')
         }
       } catch (error) {
         console.error('[v0] Error loading order:', error)
-        console.error('[v0] Error details:', {
-          code: error.code,
-          message: error.message,
-          orderId: this.orderId
-        })
         
         let errorMessage = 'Failed to load order data'
         if (error.code === 'permission-denied') {
@@ -881,15 +642,6 @@ export default {
         const errorMessage = error.message || 'Failed to load map. Please check your Google Maps API key and ensure the Maps JavaScript API is enabled.'
         this.mapError = errorMessage
         this.toast.error(errorMessage)
-        
-        // Show more detailed error in console for debugging
-        if (error.message && error.message.includes('API key')) {
-          console.error('[v0] Google Maps API Key Error:', {
-            envKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'Set' : 'Not Set',
-            fallbackKey: 'AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o',
-            error: error.message
-          })
-        }
       }
     },
     
@@ -1212,15 +964,9 @@ export default {
     // This opens a standalone chat modal for real-time communication with user
     // Real-time updates are handled by ChatWindow component using Firestore onSnapshot
     async openChat() {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1174',message:'openChat entry',data:{orderId:this.orderId,hasOrder:!!this.order},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
       console.log('[v0] Opening chat modal - orderId:', this.orderId, 'order:', this.order)
       
       if (!this.orderId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1178',message:'No orderId',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
-        // #endregion
         console.error('[v0] No orderId available')
         this.toast.error('Order ID is missing')
         return
@@ -1240,9 +986,6 @@ export default {
         // Get user and driver IDs
         const userId = this.order.userId
         const driverId = this.authStore.user?.uid
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1195',message:'Got user and driver IDs',data:{userId,driverId,currentAuthUid:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
-        // #endregion
         console.log('[v0] Chat participants - userId:', userId, 'driverId:', driverId)
         
         if (!userId) {
@@ -1277,13 +1020,7 @@ export default {
 
         // Get or create chat room for real-time communication
         console.log('[v0] Creating/getting chat room...')
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1231',message:'Before createChatRoom',data:{userId,driverId,orderId:this.orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         this.chatId = await chatService.createChatRoom(userId, driverId, this.orderId)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1233',message:'After createChatRoom',data:{chatId:this.chatId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         console.log('[v0] Chat room ID:', this.chatId)
         
         // Set chat partner info with fallback values
@@ -1300,14 +1037,8 @@ export default {
 
         // Show standalone chat modal (NOT navigating to Driver/Chat page)
         this.showChatModal = true
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1248',message:'Chat modal opened',data:{chatId:this.chatId,showChatModal:this.showChatModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         console.log('[v0] Chat modal opened successfully')
       } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1250',message:'Error opening chat',data:{code:error.code,message:error.message,orderId:this.orderId,userId:this.order?.userId,driverId:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         console.error('[v0] Error opening chat:', error)
         console.error('[v0] Error details:', {
           message: error.message,
@@ -1774,5 +1505,3 @@ export default {
   height: 100% !important;
 }
 </style>
-
-

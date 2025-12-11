@@ -1,40 +1,34 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-      <!-- Back Button -->
-      <div class="flex justify-start">
-        <router-link 
-          to="/" 
-          class="flex items-center text-gray-600 hover:text-primary transition-colors"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          <span class="text-sm font-medium">Back to Home</span>
-        </router-link>
-      </div>
+  <div class="min-h-screen relative flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden font-sans">
+    
+    <div class="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-[#A8EB12] rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 translate-x-1/3 translate-y-1/3 w-72 h-72 bg-[#3ED400] rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-pulse delay-1000"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#74E600] rounded-full mix-blend-multiply filter blur-[60px] opacity-40"></div>
+
+    <div class="relative w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 p-6 sm:p-8 z-10">
       
-      <div class="text-center">
-        <div class="flex justify-center">
-          <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold text-xl">B</span>
-          </div>
+      <div class="text-center space-y-1 mb-6">
+        <div class="inline-flex p-2.5 bg-gradient-to-br from-[#A8EB12] to-[#3ED400] rounded-xl shadow-lg shadow-green-200 mb-1 transform hover:scale-110 transition-transform duration-300">
+          <span class="text-white font-black text-2xl drop-shadow-sm px-2">B</span>
         </div>
-        <h2 class="mt-6 text-3xl font-bold text-gray-900">Create your account</h2>
-        <p class="mt-2 text-sm text-gray-600">
+        <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">Create Account</h2>
+        <p class="text-xs text-gray-500 font-medium">
           Already have an account?
-          <router-link to="/login" class="font-medium text-primary hover:text-green-600">
-            Sign in
+          <router-link to="/login" class="text-[#00C851] hover:text-[#3ED400] font-bold hover:underline transition-all">
+            Sign in here
           </router-link>
         </p>
       </div>
       
-      <form @submit.prevent="handleRegister" class="mt-8 space-y-6">
-        <div class="grid grid-cols-1 gap-4">
-          <!-- Name Fields -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="firstName" class="block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
+      <form @submit.prevent="handleRegister" class="space-y-3">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="group relative">
+            <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">First Name <span class="text-red-500">*</span></label>
+            <div class="relative flex items-center">
+              <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+              </div>
               <input
                 id="firstName"
                 v-model="form.firstName"
@@ -43,15 +37,20 @@
                 pattern="[A-Za-z\s\-]+"
                 @blur="validateField('firstName')"
                 :class="[
-                  'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                  errors.firstName ? 'border-red-500' : 'border-gray-300'
+                  'w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                  errors.firstName ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
                 ]"
                 placeholder="First name"
               />
-              <p v-if="errors.firstName" class="mt-1 text-xs text-red-600">{{ errors.firstName }}</p>
             </div>
-            <div>
-              <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label>
+            <p v-if="errors.firstName" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.firstName }}</p>
+          </div>
+          <div class="group relative">
+            <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Last Name <span class="text-red-500">*</span></label>
+            <div class="relative flex items-center">
+              <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+              </div>
               <input
                 id="lastName"
                 v-model="form.lastName"
@@ -60,30 +59,39 @@
                 pattern="[A-Za-z\s\-]+"
                 @blur="validateField('lastName')"
                 :class="[
-                  'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                  errors.lastName ? 'border-red-500' : 'border-gray-300'
+                  'w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                  errors.lastName ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
                 ]"
                 placeholder="Last name"
               />
-              <p v-if="errors.lastName" class="mt-1 text-xs text-red-600">{{ errors.lastName }}</p>
             </div>
+            <p v-if="errors.lastName" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.lastName }}</p>
           </div>
+        </div>
           
-          <div>
-            <label for="middleName" class="block text-sm font-medium text-gray-700">Middle Name (Optional)</label>
+        <div class="group relative">
+          <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Middle Name (Optional)</label>
+          <div class="relative flex items-center">
+             <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+             </div>
             <input
               id="middleName"
               v-model="form.middleName"
               type="text"
               pattern="[A-Za-z\s\-]*"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              class="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 border-transparent rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#3ED400] focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300"
               placeholder="Middle name"
             />
           </div>
+        </div>
 
-          <!-- Contact -->
-          <div>
-            <label for="contact" class="block text-sm font-medium text-gray-700">Contact Number <span class="text-red-500">*</span></label>
+        <div class="group relative">
+          <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Contact Number <span class="text-red-500">*</span></label>
+          <div class="relative flex items-center">
+            <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+            </div>
             <input
               id="contact"
               v-model="form.contact"
@@ -92,58 +100,72 @@
               pattern="^(09|\+639)\d{9}$"
               @blur="validateField('contact')"
               :class="[
-                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                errors.contact ? 'border-red-500' : 'border-gray-300'
+                'w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                errors.contact ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
               ]"
-              placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+              placeholder="09XXXXXXXXX"
             />
-            <p v-if="errors.contact" class="mt-1 text-xs text-red-600">{{ errors.contact }}</p>
-            <p v-else class="mt-1 text-xs text-gray-500">Format: 09XXXXXXXXX or +639XXXXXXXXX</p>
           </div>
-
-          <!-- Address -->
-          <div>
-            <label for="address" class="block text-sm font-medium text-gray-700">Home Street Address <span class="text-red-500">*</span></label>
-            <input
-              id="address"
-              v-model="form.address"
-              type="text"
-              required
-              minlength="10"
-              @blur="validateField('address')"
-              :class="[
-                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                errors.address ? 'border-red-500' : 'border-gray-300'
-              ]"
-              placeholder="Enter your complete address"
-            />
-            <p v-if="errors.address" class="mt-1 text-xs text-red-600">{{ errors.address }}</p>
+          <p v-if="errors.contact" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.contact }}</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+           <div class="group relative">
+            <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Street Address <span class="text-red-500">*</span></label>
+            <div class="relative flex items-center">
+               <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+               </div>
+              <input
+                id="address"
+                v-model="form.address"
+                type="text"
+                required
+                minlength="10"
+                @blur="validateField('address')"
+                :class="[
+                  'w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                  errors.address ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
+                ]"
+                placeholder="House No., Street"
+              />
+            </div>
+            <p v-if="errors.address" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.address }}</p>
           </div>
-
-          <!-- Barangay -->
-          <div>
-            <label for="barangay" class="block text-sm font-medium text-gray-700">Barangay <span class="text-red-500">*</span></label>
-            <select
-              id="barangay"
-              v-model="form.barangay"
-              required
-              @blur="validateField('barangay')"
-              :class="[
-                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                errors.barangay ? 'border-red-500' : 'border-gray-300'
-              ]"
-            >
-              <option value="">Select Barangay</option>
-              <option v-for="barangay in barangays" :key="barangay" :value="barangay">
-                {{ barangay }}
-              </option>
-            </select>
-            <p v-if="errors.barangay" class="mt-1 text-xs text-red-600">{{ errors.barangay }}</p>
+          <div class="group relative">
+            <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Barangay <span class="text-red-500">*</span></label>
+            <div class="relative flex items-center">
+               <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+               </div>
+              <select
+                id="barangay"
+                v-model="form.barangay"
+                required
+                @blur="validateField('barangay')"
+                :class="[
+                  'w-full pl-9 pr-8 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300 appearance-none cursor-pointer',
+                  errors.barangay ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
+                ]"
+              >
+                <option value="" disabled>Select</option>
+                <option v-for="barangay in barangays" :key="barangay" :value="barangay">
+                  {{ barangay }}
+                </option>
+              </select>
+               <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+               </div>
+            </div>
+            <p v-if="errors.barangay" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.barangay }}</p>
           </div>
+        </div>
 
-          <!-- Email -->
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email address <span class="text-red-500">*</span></label>
+        <div class="group relative">
+          <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Email address <span class="text-red-500">*</span></label>
+          <div class="relative flex items-center">
+             <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg>
+             </div>
             <input
               id="email"
               v-model="form.email"
@@ -151,149 +173,139 @@
               required
               @blur="validateField('email')"
               :class="[
-                'mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                errors.email ? 'border-red-500' : 'border-gray-300'
+                'w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                errors.email ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
               ]"
               placeholder="Enter your email"
             />
-            <p v-if="errors.email" class="mt-1 text-xs text-red-600">{{ errors.email }}</p>
           </div>
-
-          <!-- Password -->
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password <span class="text-red-500">*</span></label>
-            <div class="mt-1 relative">
-              <input
-                id="password"
-                v-model="form.password"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                @input="checkPasswordStrength"
-                @blur="validateField('password')"
-                :class="[
-                  'block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                ]"
-                placeholder="Create a strong password"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <svg v-if="showPassword" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-                <svg v-else class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
-                </svg>
-              </button>
-            </div>
-            <p v-if="errors.password" class="mt-1 text-xs text-red-600">{{ errors.password }}</p>
-            
-            <!-- Password Strength Meter -->
-            <div class="mt-2">
-              <div class="flex space-x-1">
-                <div v-for="i in 4" :key="i" :class="[
-                  'h-1 flex-1 rounded',
-                  passwordStrength >= i ? getStrengthColor(passwordStrength) : 'bg-gray-200'
-                ]"></div>
-              </div>
-              <p class="text-xs mt-1" :class="getStrengthTextColor(passwordStrength)">
-                {{ getStrengthText(passwordStrength) }}
-              </p>
-            </div>
-            
-            <div class="mt-2 text-xs text-gray-500">
-              <p>Password must contain:</p>
-              <ul class="list-disc list-inside space-y-1">
-                <li :class="passwordChecks.length ? 'text-green-600' : 'text-gray-500'">8-12 characters</li>
-                <li :class="passwordChecks.uppercase ? 'text-green-600' : 'text-gray-500'">One uppercase letter</li>
-                <li :class="passwordChecks.lowercase ? 'text-green-600' : 'text-gray-500'">One lowercase letter</li>
-                <li :class="passwordChecks.number ? 'text-green-600' : 'text-gray-500'">One number</li>
-                <li :class="passwordChecks.special ? 'text-green-600' : 'text-gray-500'">One special character</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Confirm Password -->
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password <span class="text-red-500">*</span></label>
-            <div class="mt-1 relative">
-              <input
-                id="confirmPassword"
-                v-model="form.confirmPassword"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                required
-                @blur="validateField('confirmPassword')"
-                :class="[
-                  'block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
-                  errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                ]"
-                placeholder="Confirm your password"
-              />
-              <button
-                type="button"
-                @click="showConfirmPassword = !showConfirmPassword"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <svg v-if="showConfirmPassword" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-                <svg v-else class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
-                </svg>
-              </button>
-            </div>
-            <p v-if="errors.confirmPassword" class="mt-1 text-xs text-red-600">{{ errors.confirmPassword }}</p>
-            <p v-else-if="form.confirmPassword && form.password !== form.confirmPassword" class="mt-1 text-xs text-red-600">
-              Passwords do not match
-            </p>
-          </div>
-
-          <!-- Terms and Conditions Checkbox -->
-          <div class="flex items-start">
-            <div class="flex items-center h-5">
-              <input
-                id="acceptTerms"
-                v-model="form.acceptTerms"
-                type="checkbox"
-                required
-                class="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
-              />
-            </div>
-            <div class="ml-3 text-sm">
-              <label for="acceptTerms" class="font-medium text-gray-700">
-                I agree to the 
-                <a href="#" class="text-primary hover:text-green-600 underline" @click.prevent>Terms of Service</a>
-                and 
-                <a href="#" class="text-primary hover:text-green-600 underline" @click.prevent>Privacy Policy</a>
-              </label>
-            </div>
-          </div>
-          <p v-if="form.acceptTerms === false && form.confirmPassword" class="text-xs text-red-600">
-            You must agree to the terms and conditions
-          </p>
+          <p v-if="errors.email" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.email }}</p>
         </div>
 
-        <div>
+        <div class="group relative">
+          <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Password <span class="text-red-500">*</span></label>
+          <div class="relative flex items-center">
+             <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+             </div>
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              @input="checkPasswordStrength"
+              @blur="validateField('password')"
+              :class="[
+                'w-full pl-9 pr-10 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                errors.password ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
+              ]"
+              placeholder="Create strong password"
+            />
+            <button
+              type="button"
+              @click="showPassword = !showPassword"
+              class="absolute right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-[#00C851] transition-colors focus:outline-none"
+            >
+              <svg v-if="showPassword" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+              <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path></svg>
+            </button>
+          </div>
+          <p v-if="errors.password" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.password }}</p>
+          
+          <div class="mt-2 px-3">
+            <div class="flex space-x-1 h-1 overflow-hidden rounded-full bg-gray-200">
+              <div v-for="i in 4" :key="i" :class="[
+                'flex-1 transition-all duration-500 ease-out',
+                passwordStrength >= i ? getStrengthColor(passwordStrength) : 'bg-transparent'
+              ]"></div>
+            </div>
+            <div class="flex justify-between items-start mt-1">
+               <p class="text-[10px] font-semibold" :class="getStrengthTextColor(passwordStrength)">
+                 {{ getStrengthText(passwordStrength) }}
+               </p>
+               <ul class="text-[9px] text-gray-500 space-y-0 text-right leading-tight">
+                 <li :class="passwordChecks.length ? 'text-green-600 font-bold' : ''">8-12 chars</li>
+                 <li :class="passwordChecks.uppercase ? 'text-green-600 font-bold' : ''">1 Uppercase</li>
+                 <li :class="passwordChecks.lowercase ? 'text-green-600 font-bold' : ''">1 Lowercase</li>
+                 <li :class="passwordChecks.number ? 'text-green-600 font-bold' : ''">1 Number</li>
+                 <li :class="passwordChecks.special ? 'text-green-600 font-bold' : ''">1 Special</li>
+               </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="group relative">
+          <label class="ml-3 block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Confirm Password <span class="text-red-500">*</span></label>
+          <div class="relative flex items-center">
+             <div class="absolute left-0 pl-3 pointer-events-none text-gray-400">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+             </div>
+            <input
+              id="confirmPassword"
+              v-model="form.confirmPassword"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              required
+              @blur="validateField('confirmPassword')"
+              :class="[
+                'w-full pl-9 pr-10 py-2.5 text-sm bg-gray-50 border-2 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300',
+                errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#3ED400]'
+              ]"
+              placeholder="Confirm password"
+            />
+            <button
+              type="button"
+              @click="showConfirmPassword = !showConfirmPassword"
+              class="absolute right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-[#00C851] transition-colors focus:outline-none"
+            >
+               <svg v-if="showConfirmPassword" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+               <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path></svg>
+            </button>
+          </div>
+          <p v-if="errors.confirmPassword" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">{{ errors.confirmPassword }}</p>
+          <p v-else-if="form.confirmPassword && form.password !== form.confirmPassword" class="ml-3 mt-0.5 text-[10px] text-red-500 font-medium">
+            Passwords do not match
+          </p>
+        </div>
+        <div class="flex items-start px-1 py-1">
+          <div class="flex items-center h-4">
+            <input
+              id="acceptTerms"
+              v-model="form.acceptTerms"
+              type="checkbox"
+              required
+              class="w-4 h-4 text-[#3ED400] focus:ring-[#3ED400] border-gray-300 rounded cursor-pointer transition-all"
+            />
+          </div>
+          <div class="ml-2 text-xs">
+            <label for="acceptTerms" class="font-medium text-gray-600 cursor-pointer select-none">
+              I agree to the 
+              <a href="#" class="text-[#00C851] hover:text-[#3ED400] underline font-bold" @click.prevent>Terms of Service</a>
+              and 
+              <a href="#" class="text-[#00C851] hover:text-[#3ED400] underline font-bold" @click.prevent>Privacy Policy</a>
+            </label>
+            <p v-if="form.acceptTerms === false && form.confirmPassword" class="mt-0.5 text-[10px] text-red-500">
+              Required
+            </p>
+          </div>
+        </div>
+        <div class="pt-1">
           <button
             type="submit"
             :disabled="loading || !isFormValid"
-            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-full text-white bg-gradient-to-r from-[#3ED400] to-[#00C851] hover:to-[#009e3f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3ED400] shadow-[0_10px_20px_rgba(62,212,0,0.4)] hover:shadow-[0_15px_25px_rgba(62,212,0,0.5)] transform transition-all duration-300 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
           >
-            <span v-if="loading" class="absolute left-0 inset-y-0 flex items-center pl-3">
-              <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <span v-if="loading" class="absolute left-0 inset-y-0 flex items-center pl-4">
+              <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </span>
-            {{ loading ? 'Creating Account...' : 'Create Account' }}
+            {{ loading ? 'Creating...' : 'Create Account' }}
+            <svg class="ml-2 -mr-1 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </button>
         </div>
-
       </form>
     </div>
   </div>
@@ -404,10 +416,10 @@ export default {
     }
 
     const getStrengthText = (strength) => {
-      if (strength <= 1) return 'Weak password'
-      if (strength <= 2) return 'Fair password'
-      if (strength <= 3) return 'Good password'
-      return 'Strong password'
+      if (strength <= 1) return 'Weak'
+      if (strength <= 2) return 'Fair'
+      if (strength <= 3) return 'Good'
+      return 'Strong'
     }
 
     const validateField = (fieldName) => {
@@ -513,6 +525,25 @@ export default {
       }
     }
 
+    const handleGoogleRegister = async () => {
+      loading.value = true
+      
+      try {
+        const result = await authStore.loginWithGoogle()
+        
+        if (result.success) {
+          toast.success('Account created successfully!')
+          toast.info('Your account is pending admin approval.')
+          router.push('/login')
+        } else {
+          toast.error(result.message)
+        }
+      } catch (error) {
+        toast.error('An error occurred during Google registration')
+      } finally {
+        loading.value = false
+      }
+    }
 
     return {
       form,
@@ -529,7 +560,8 @@ export default {
       getStrengthTextColor,
       getStrengthText,
       validateField,
-      handleRegister
+      handleRegister,
+      handleGoogleRegister
     }
   }
 }

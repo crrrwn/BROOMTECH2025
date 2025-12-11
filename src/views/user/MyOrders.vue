@@ -1,651 +1,501 @@
 <template>
-  <div class="p-6 space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">My Orders</h1>
-        <p class="text-gray-600">Track and manage your delivery orders</p>
-      </div>
-      <router-link :to="{ name: 'book-service' }"
-                   class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-        New Order
-      </router-link>
-    </div>
+  <div class="min-h-screen w-full bg-gray-50/50 overflow-x-hidden font-sans pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 md:space-y-8">
 
-    <!-- Filters -->
-    <div class="bg-white p-4 rounded-lg shadow-sm border">
-      <div class="flex flex-wrap gap-4">
-        <select v-model="selectedStatus" @change="filterOrders"
-                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="in_transit">In Transit</option>
-          <option value="on_the_way">On The Way</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-
-        <select v-model="selectedService" @change="filterOrders"
-                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-          <option value="">All Services</option>
-          <option value="Food Delivery">Food Delivery</option>
-          <option value="Bill Payments">Bill Payments</option>
-          <option value="Grocery Shopping">Grocery Shopping</option>
-          <option value="Gift Delivery">Gift Delivery</option>
-          <option value="Medicine Delivery">Medicine Delivery</option>
-          <option value="Pick-up & Drop">Pick-up & Drop</option>
-        </select>
-
-        <input type="text" v-model="searchQuery" @input="filterOrders"
-               placeholder="Search orders..."
-               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-      </div>
-    </div>
-
-    <!-- Orders List -->
-    <div class="space-y-4">
-      <div v-if="loading" class="text-center py-8">
-        <div class="inline-flex items-center space-x-2">
-          <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce"></div>
-          <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-        </div>
-        <p class="text-gray-600 mt-2">Loading orders...</p>
-      </div>
-
-      <div v-else-if="filteredOrders.length === 0" class="text-center py-8">
-        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002-2h2a2 2 0 002 2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-        </svg>
-        <p class="text-gray-600">No orders found</p>
-        <router-link :to="{ name: 'book-service' }"
-                     class="inline-block mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-          Create Your First Order
-        </router-link>
-      </div>
-
-      <div v-else class="space-y-4">
-        <div v-for="order in filteredOrders" :key="order.id"
-             class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center space-x-3 mb-2">
-                <h3 class="text-lg font-semibold text-gray-900">#{{ order.id }}</h3>
-                <span :class="getStatusClass(order.status)"
-                      class="px-2 py-1 text-xs font-medium rounded-full">
-                  {{ formatStatus(order.status) }}
-                </span>
+      <div class="relative overflow-hidden bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg text-white transform transition hover:scale-[1.005] duration-500">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 md:w-64 md:h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 flex justify-between items-end md:items-center flex-col md:flex-row gap-4">
+          <div>
+            <div class="flex items-center space-x-3 mb-2">
+              <div class="w-fit p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
               </div>
+              <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">My Orders</h1>
+            </div>
+            <p class="text-[#e6ffcc] text-base font-medium ml-1">Track and manage your delivery requests.</p>
+          </div>
+          
+          <router-link :to="{ name: 'book-service' }"
+            class="group flex items-center px-6 py-3 bg-white text-[#00C851] font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all transform hover:-translate-y-0.5"
+          >
+            <span class="mr-2">New Order</span>
+            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          </router-link>
+        </div>
+      </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white/80 backdrop-blur-md p-5 rounded-2xl shadow-lg border border-white/50">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="relative flex-1 min-w-[200px]">
+            <select v-model="selectedStatus" @change="filterOrders"
+                    class="w-full pl-4 pr-10 py-3 bg-gray-50 border-transparent focus:bg-white border-2 hover:border-gray-200 focus:border-[#3ED400] rounded-xl focus:ring-0 font-medium text-gray-700 transition-all appearance-none cursor-pointer">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="in_transit">In Transit</option>
+              <option value="on_the_way">On The Way</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          <div class="relative flex-1 min-w-[200px]">
+            <select v-model="selectedService" @change="filterOrders"
+                    class="w-full pl-4 pr-10 py-3 bg-gray-50 border-transparent focus:bg-white border-2 hover:border-gray-200 focus:border-[#3ED400] rounded-xl focus:ring-0 font-medium text-gray-700 transition-all appearance-none cursor-pointer">
+              <option value="">All Services</option>
+              <option value="Food Delivery">Food Delivery</option>
+              <option value="Bill Payments">Bill Payments</option>
+              <option value="Grocery Shopping">Grocery Shopping</option>
+              <option value="Gift Delivery">Gift Delivery</option>
+              <option value="Medicine Delivery">Medicine Delivery</option>
+              <option value="Pick-up & Drop">Pick-up & Drop</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          <div class="relative flex-[2]">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" v-model="searchQuery" @input="filterOrders"
+                   placeholder="Search by ID, Service, or Address..."
+                   class="w-full pl-11 pr-4 py-3 bg-gray-50 border-transparent focus:bg-white border-2 hover:border-gray-200 focus:border-[#3ED400] rounded-xl focus:ring-0 font-medium transition-all placeholder-gray-400">
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        
+        <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+          <div class="relative w-20 h-20">
+            <div class="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
+            <div class="absolute top-0 left-0 w-full h-full border-4 border-[#3ED400] rounded-full animate-spin border-t-transparent"></div>
+          </div>
+          <p class="text-gray-500 mt-6 font-bold animate-pulse">Loading orders...</p>
+        </div>
+
+        <div v-else-if="filteredOrders.length === 0" class="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-200">
+          <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002-2h2a2 2 0 002 2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">No orders found</h3>
+          <p class="text-gray-500 mb-6">Looks like you haven't placed any orders yet.</p>
+          <router-link :to="{ name: 'book-service' }"
+                       class="px-8 py-3 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-bold rounded-xl shadow-lg hover:shadow-green-200/50 hover:-translate-y-1 transition-all">
+            Create Your First Order
+          </router-link>
+        </div>
+
+        <div v-else class="grid gap-6">
+          <div v-for="order in filteredOrders" :key="order.id"
+               class="bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-300 group">
+            
+            <div class="h-2 w-full bg-gradient-to-r from-[#3ED400] to-[#A8EB12]"></div>
+
+            <div class="p-6 md:p-8">
+              <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
                 <div>
-                  <p class="text-sm text-gray-600">Service</p>
-                  <p class="font-medium text-gray-900">{{ order.serviceName }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600">Total Amount</p>
-                  <p class="font-medium text-gray-900">₱{{ order.pricing?.total || order.priceEstimate?.total || '0.00' }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600">From</p>
-                  <!-- Include storeAddress for gift delivery orders as a possible pickup location -->
-                  <p class="font-medium text-gray-900 truncate">
-                    {{ order.pickupAddress
-                       || order.formData?.pickupAddress
-                       || order.formData?.restaurantAddress
-                       || order.formData?.storeAddress }}
+                  <div class="flex items-center gap-3 mb-2">
+                    <span class="px-3 py-1 bg-gray-100 rounded-lg text-xs font-black text-gray-500 uppercase tracking-widest border border-gray-200">
+                      #{{ order.id.slice(0, 8) }}
+                    </span>
+                    <span :class="getStatusClass(order.status)"
+                          class="px-4 py-1 text-xs font-extrabold uppercase tracking-wider rounded-full shadow-sm border border-opacity-20">
+                      {{ formatStatus(order.status) }}
+                    </span>
+                  </div>
+                  <h3 class="text-2xl font-black text-gray-800">{{ order.serviceName }}</h3>
+                  <p class="text-sm text-gray-500 font-medium flex items-center mt-1">
+                    <svg class="w-4 h-4 mr-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    {{ formatDate(order.createdAt) }}
                   </p>
                 </div>
-                <div>
-                  <p class="text-sm text-gray-600">To</p>
-                  <p class="font-medium text-gray-900 truncate">
+                <div class="text-right">
+                  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
+                  <p class="text-3xl font-black text-[#3ED400]">₱{{ order.pricing?.total || order.priceEstimate?.total || '0.00' }}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-gray-50/80 rounded-2xl border border-gray-100 mb-6">
+                <div class="relative pl-4 border-l-2 border-green-200">
+                  <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-100 border-4 border-white shadow-sm"></div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">From</p>
+                  <p class="font-bold text-gray-800 line-clamp-2">
+                    {{ order.pickupAddress || order.formData?.pickupAddress || order.formData?.restaurantAddress || order.formData?.storeAddress }}
+                  </p>
+                </div>
+                <div class="relative pl-4 border-l-2 border-red-200">
+                  <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-red-100 border-4 border-white shadow-sm"></div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">To</p>
+                  <p class="font-bold text-gray-800 line-clamp-2">
                     {{ order.deliveryAddress || order.formData?.deliveryAddress || order.formData?.returnAddress }}
                   </p>
                 </div>
               </div>
 
-              <!-- Show chat button when driverId exists, not just when driver object exists -->
-              <div v-if="order.driverId || order.driver" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-4">
-                <img v-if="order.driver?.avatar" :src="order.driver.avatar" :alt="order.driver.name" class="w-10 h-10 rounded-full object-cover">
-                <div v-else class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
-                  D
+              <div v-if="order.driverId || order.driver" class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-white rounded-2xl border border-blue-100 mb-6">
+                <div class="flex items-center gap-4">
+                  <div class="relative">
+                    <img v-if="order.driver?.avatar" :src="order.driver.avatar" :alt="order.driver.name" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md">
+                    <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg border-2 border-white shadow-md">
+                      D
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-blue-500 uppercase tracking-wide">Your Driver</p>
+                    <p class="font-bold text-gray-900 text-lg">{{ order.driver?.name || 'Driver Assigned' }}</p>
+                  </div>
                 </div>
-                <div class="flex-1">
-                  <p class="font-medium text-gray-900">{{ order.driver?.name || 'Driver Assigned' }}</p>
-                </div>
-                <div class="flex space-x-2">
-                  <button 
-                    @click.stop="openChatWithDriver(order)"
-                    :disabled="!order.driverId && !order.driver"
-                    class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    title="Chat with driver">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                    </svg>
-                  </button>
-                </div>
+                <button 
+                  @click.stop="openChatWithDriver(order)"
+                  :disabled="!order.driverId && !order.driver"
+                  class="p-3 bg-white text-blue-600 rounded-xl shadow-sm hover:shadow-md border border-blue-100 hover:bg-blue-50 transition-all group-hover:scale-105"
+                  title="Chat with driver">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                </button>
               </div>
 
-              <!-- Live Tracking for orders with driver assigned -->
-              <div v-if="(order.status === 'in_transit' || order.status === 'on_the_way' || order.status === 'confirmed') && (order.driverId || order.driver)" class="mb-4">
+              <div v-if="(order.status === 'in_transit' || order.status === 'on_the_way' || order.status === 'confirmed') && (order.driverId || order.driver)" class="mb-6 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
                 <LiveTracking :order-id="order.id" />
               </div>
 
-              <!-- Order Feedback for delivered orders -->
-              <div v-if="order.status === 'delivered' && !order.feedback" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-lg font-semibold text-green-800">Order Completed!</h4>
-                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-                <p class="text-green-700 mb-3">Your order has been successfully delivered!</p>
-              </div>
-
-              <!-- Show existing feedback for delivered orders -->
-              <div v-if="order.status === 'delivered' && order.feedback" class="mb-4 p-4 bg-gray-50 border rounded-lg">
-                <h4 class="text-lg font-semibold text-gray-800 mb-2">Your Feedback</h4>
-                <div class="flex items-center mb-2">
-                  <div class="flex items-center">
-                    <svg v-for="i in 5" :key="i" 
-                         :class="i <= order.feedback.rating ? 'text-yellow-400' : 'text-gray-300'"
-                         class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <span class="ml-2 text-sm text-gray-600">{{ order.feedback.rating }}/5</span>
+              <div v-if="order.status === 'delivered'" class="mb-6">
+                <div v-if="!order.feedback" class="p-5 bg-green-50 rounded-2xl border border-green-200 flex items-center justify-between">
+                  <div>
+                    <h4 class="font-bold text-green-800 flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      Order Completed
+                    </h4>
+                    <p class="text-sm text-green-700 mt-1">Please rate your experience.</p>
                   </div>
-                </div>
-                <p v-if="order.feedback.comment" class="text-gray-700">{{ order.feedback.comment }}</p>
-                <p class="text-xs text-gray-500 mt-2">Submitted {{ formatDate(order.feedback.createdAt) }}</p>
-              </div>
-
-              <!-- DETAILS -->
-              <div v-if="expandedOrderId === order.id" class="mt-4 p-4 bg-gray-50 rounded-lg border">
-                <h4 class="text-lg font-semibold text-gray-900 mb-4">📋 Complete Order Details</h4>
-
-                <!-- Customer Information -->
-                <div class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">👤 Customer Information</h5>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div v-if="order.formData?.receiverName">
-                      <p class="text-sm text-gray-600">Name</p>
-                      <p class="font-medium">{{ order.formData.receiverName }}</p>
-                    </div>
-                    <div v-if="order.formData?.receiverContact">
-                      <p class="text-sm text-gray-600">Contact</p>
-                      <p class="font-medium">{{ order.formData.receiverContact }}</p>
-                    </div>
-                    <div v-if="order.formData?.recipientName">
-                      <p class="text-sm text-gray-600">Recipient Name</p>
-                      <p class="font-medium">{{ order.formData.recipientName }}</p>
-                    </div>
-                    <div v-if="order.formData?.recipientContact">
-                      <p class="text-sm text-gray-600">Recipient Contact</p>
-                      <p class="font-medium">{{ order.formData.recipientContact }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Pickup Details -->
-                <div class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">📍 Pickup Details</h5>
-                  <div class="space-y-3">
-                    <div v-if="order.formData?.pickupAddress">
-                      <p class="text-sm text-gray-600">Pickup Address</p>
-                      <p class="font-medium">{{ order.formData.pickupAddress }}</p>
-                    </div>
-                    <div v-if="order.formData?.restaurantAddress">
-                      <p class="text-sm text-gray-600">Restaurant Address</p>
-                      <p class="font-medium">{{ order.formData.restaurantAddress }}</p>
-                    </div>
-                    <div v-if="order.formData?.pickupContact">
-                      <p class="text-sm text-gray-600">Pickup Contact</p>
-                      <p class="font-medium">{{ order.formData.pickupContact }}</p>
-                    </div>
-                    <div v-if="order.formData?.preferredPickupDateTime">
-                      <p class="text-sm text-gray-600">Preferred Pickup Time</p>
-                      <p class="font-medium">{{ order.formData.preferredPickupDateTime }}</p>
-                    </div>
-                    <!-- Show store name and store address for gift delivery orders -->
-                    <div v-if="order.formData?.storeName">
-                      <p class="text-sm text-gray-600">Store Name</p>
-                      <p class="font-medium">{{ order.formData.storeName }}</p>
-                    </div>
-                    <div v-if="order.formData?.storeAddress">
-                      <p class="text-sm text-gray-600">Store Address</p>
-                      <p class="font-medium">{{ order.formData.storeAddress }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Delivery Details -->
-                <div class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">🚚 Delivery Details</h5>
-                  <div class="space-y-3">
-                    <div v-if="order.formData?.deliveryAddress">
-                      <p class="text-sm text-gray-600">Delivery Address</p>
-                      <p class="font-medium">{{ order.formData.deliveryAddress }}</p>
-                    </div>
-                    <div v-if="order.formData?.dropoffAddress">
-                      <p class="text-sm text-gray-600">Dropoff Address</p>
-                      <p class="font-medium">{{ order.formData.dropoffAddress }}</p>
-                    </div>
-                    <div v-if="order.formData?.returnAddress">
-                      <p class="text-sm text-gray-600">Return Address</p>
-                      <p class="font-medium">{{ order.formData.returnAddress }}</p>
-                    </div>
-                    <div v-if="order.formData?.landmark">
-                      <p class="text-sm text-gray-600">Landmark</p>
-                      <p class="font-medium">{{ order.formData.landmark }}</p>
-                    </div>
-                    <div v-if="order.formData?.preferredDateTime">
-                      <p class="text-sm text-gray-600">Preferred Delivery Time</p>
-                      <p class="font-medium">{{ order.formData.preferredDateTime }}</p>
-                    </div>
-                    <div v-if="order.formData?.preferredTime">
-                      <p class="text-sm text-gray-600">Preferred Time</p>
-                      <p class="font-medium">{{ order.formData.preferredTime }}</p>
-                    </div>
-                    <div v-if="order.formData?.dueDate">
-                      <p class="text-sm text-gray-600">Due Date</p>
-                      <p class="font-medium">{{ order.formData.dueDate }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Service Details -->
-                <div class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">🛍️ Service Details</h5>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p class="text-sm text-gray-600">Service Type</p>
-                      <p class="font-medium">{{ order.serviceName }}</p>
-                    </div>
-                    <div v-if="order.formData?.restaurantName">
-                      <p class="text-sm text-gray-600">Restaurant</p>
-                      <p class="font-medium">{{ order.formData.restaurantName }}</p>
-                    </div>
-                    <div v-if="order.formData?.foodOrderDetails">
-                      <p class="text-sm text-gray-600">Food Order Details</p>
-                      <p class="font-medium">{{ order.formData.foodOrderDetails }}</p>
-                    </div>
-                    <div v-if="order.formData?.itemType">
-                      <p class="text-sm text-gray-600">Item Type</p>
-                      <p class="font-medium">{{ order.formData.itemType }}</p>
-                    </div>
-                    <div v-if="order.formData?.itemDescription">
-                      <p class="text-sm text-gray-600">Item Description</p>
-                      <p class="font-medium">{{ order.formData.itemDescription }}</p>
-                    </div>
-                    <div v-if="order.formData?.quantity">
-                      <p class="text-sm text-gray-600">Quantity</p>
-                      <p class="font-medium">{{ order.formData.quantity }}</p>
-                    </div>
-                    <div v-if="order.formData?.giftType">
-                      <p class="text-sm text-gray-600">Gift Type</p>
-                      <p class="font-medium">{{ order.formData.giftType }}</p>
-                    </div>
-                    <div v-if="order.formData?.medicineNames">
-                      <p class="text-sm text-gray-600">Medicine Names</p>
-                      <p class="font-medium">{{ order.formData.medicineNames }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Payment & Shopping Details -->
-                <div class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">💳 Payment & Shopping Details</h5>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div v-if="order.formData?.paymentMethod">
-                      <p class="text-sm text-gray-600">Payment Method</p>
-                      <p class="font-medium">{{ order.formData.paymentMethod }}</p>
-                    </div>
-                    <div v-if="order.formData?.budgetRange">
-                      <p class="text-sm text-gray-600">Budget Range</p>
-                      <p class="font-medium">{{ order.formData.budgetRange }}</p>
-                    </div>
-                    <div v-if="order.formData?.amountToPay">
-                      <p class="text-sm text-gray-600">Amount to Pay</p>
-                      <p class="font-medium">₱{{ order.formData.amountToPay }}</p>
-                    </div>
-                    <div v-if="order.formData?.shoppingList">
-                      <p class="text-sm text-gray-600">Shopping List</p>
-                      <p class="font-medium whitespace-pre-line">{{ order.formData.shoppingList }}</p>
-                    </div>
-                    <div v-if="order.formData?.storePreference">
-                      <p class="text-sm text-gray-600">Store Preference</p>
-                      <p class="font-medium">{{ order.formData.storePreference }}</p>
-                    </div>
-                    <div v-if="order.formData?.billerName">
-                      <p class="text-sm text-gray-600">Biller Name</p>
-                      <p class="font-medium">{{ order.formData.billerName }}</p>
-                    </div>
-                    <div v-if="order.formData?.accountNumber">
-                      <p class="text-sm text-gray-600">Account Number</p>
-                      <p class="font-medium">{{ order.formData.accountNumber }}</p>
-                    </div>
-                    <div v-if="order.formData?.accountName">
-                      <p class="text-sm text-gray-600">Account Name</p>
-                      <p class="font-medium">{{ order.formData.accountName }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Attachments -->
-                <div v-if="order.formData?.billReceiptUrl || order.formData?.prescriptionUrl"
-                     class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">📎 Attachments</h5>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Bill Receipt -->
-                    <div v-if="order.formData?.billReceiptUrl">
-                      <p class="text-sm text-gray-600 mb-1">Bill Receipt / Reference</p>
-                      <div class="space-y-2">
-                        <a :href="order.formData.billReceiptUrl" target="_blank" rel="noopener"
-                           class="inline-flex items-center text-blue-600 underline">
-                          {{ fileNameFromUrl(order.formData.billReceiptUrl) || 'Open file' }}
-                        </a>
-                        <div v-if="isImageUrl(order.formData.billReceiptUrl)" class="mt-2">
-                          <img :src="order.formData.billReceiptUrl" alt="Bill receipt"
-                               class="max-w-xs w-full rounded-lg border" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Prescription -->
-                    <div v-if="order.formData?.prescriptionUrl">
-                      <p class="text-sm text-gray-600 mb-1">Prescription</p>
-                      <div class="space-y-2">
-                        <a :href="order.formData.prescriptionUrl" target="_blank" rel="noopener"
-                           class="inline-flex items-center text-blue-600 underline">
-                          {{ fileNameFromUrl(order.formData.prescriptionUrl) || 'Open file' }}
-                        </a>
-                        <div v-if="isImageUrl(order.formData.prescriptionUrl)" class="mt-2">
-                          <img :src="order.formData.prescriptionUrl" alt="Prescription"
-                               class="max-w-xs w-full rounded-lg border" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">ℹ️ Additional Information</h5>
-                  <div class="space-y-3">
-                    <div v-if="order.formData?.specialInstructions">
-                      <p class="text-sm text-gray-600">Special Instructions</p>
-                      <p class="font-medium whitespace-pre-line">{{ order.formData.specialInstructions }}</p>
-                    </div>
-                    <div v-if="order.formData?.preferredSchedule">
-                      <p class="text-sm text-gray-600">Preferred Schedule</p>
-                      <p class="font-medium">{{ order.formData.preferredSchedule }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Route Info -->
-                <div v-if="order.routeInfo" class="mb-6 p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">🗺️ Route Information</h5>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div v-if="order.routeInfo.distance">
-                      <p class="text-sm text-gray-600">Distance</p>
-                      <p class="font-medium">{{ order.routeInfo.distance }}</p>
-                    </div>
-                    <div v-if="order.routeInfo.duration">
-                      <p class="text-sm text-gray-600">Estimated Duration</p>
-                      <p class="font-medium">{{ order.routeInfo.duration }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Price Breakdown -->
-                <div v-if="order.pricing || order.priceEstimate" class="p-4 bg-white rounded-lg border">
-                  <h5 class="text-md font-semibold text-gray-800 mb-3">💰 Price Breakdown</h5>
-                  <div class="space-y-2">
-                    <div v-if="order.pricing?.baseCharge || order.priceEstimate?.base" class="flex justify-between">
-                      <span class="text-gray-600">Base Charge:</span>
-                      <span class="font-medium">₱{{ order.pricing?.baseCharge || order.priceEstimate?.base }}</span>
-                    </div>
-                    <div v-if="order.pricing?.distanceFee || order.priceEstimate?.distance" class="flex justify-between">
-                      <span class="text-gray-600">Distance Fee:</span>
-                      <span class="font-medium">₱{{ order.pricing?.distanceFee || order.priceEstimate?.distance }}</span>
-                    </div>
-                    <div v-if="order.pricing?.badWeatherFee" class="flex justify-between">
-                      <span class="text-gray-600">Bad Weather Surcharge:</span>
-                      <span class="font-medium">₱{{ order.pricing?.badWeatherFee }}</span>
-                    </div>
-                    <div v-if="order.pricing?.gcashFee || order.priceEstimate?.urgency" class="flex justify-between">
-                      <span class="text-gray-600">GCash Fee:</span>
-                      <span class="font-medium">₱{{ order.pricing?.gcashFee || order.priceEstimate?.urgency }}</span>
-                    </div>
-                    <div class="border-t pt-2 flex justify-between font-semibold">
-                      <span>Total:</span>
-                      <span>₱{{ order.pricing?.total || order.priceEstimate?.total }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Row actions -->
-              <div class="flex items-center justify-between text-sm text-gray-600">
-                <span>{{ formatDate(order.createdAt) }}</span>
-                <div class="flex items-center space-x-3">
-                  <button @click="viewOrder(order.id)"
-                          class="text-blue-600 hover:text-blue-800 font-medium">
-                    {{ expandedOrderId === order.id ? 'Hide Details' : 'View Details' }}
+                  <button @click="showFeedbackModal(order.id)" class="px-4 py-2 bg-white text-green-700 text-sm font-bold rounded-lg shadow-sm border border-green-200 hover:bg-green-100 transition-colors">
+                    Rate Now
                   </button>
+                </div>
+                <div v-else class="p-5 bg-gray-50 rounded-2xl border border-gray-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Your Feedback</h4>
+                    <span class="text-xs font-bold text-gray-400">{{ formatDate(order.feedback.createdAt) }}</span>
+                  </div>
+                  <div class="flex items-center gap-1 mb-2">
+                    <svg v-for="i in 5" :key="i" :class="i <= order.feedback.rating ? 'text-yellow-400' : 'text-gray-300'" class="w-5 h-5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    <span class="ml-2 font-bold text-gray-700">{{ order.feedback.rating }}.0</span>
+                  </div>
+                  <p v-if="order.feedback.comment" class="text-gray-600 text-sm italic">"{{ order.feedback.comment }}"</p>
+                </div>
+              </div>
 
-                  <!-- Cancel button with live timer -->
+              <div class="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-gray-100">
+                <button @click="viewOrder(order.id)"
+                        class="text-sm font-bold text-gray-500 hover:text-[#3ED400] transition-colors flex items-center group/btn">
+                  {{ expandedOrderId === order.id ? 'Hide Details' : 'View Full Details' }}
+                  <svg class="w-4 h-4 ml-1 transform transition-transform group-hover/btn:translate-x-1" :class="{'rotate-180': expandedOrderId === order.id}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                <div class="flex items-center space-x-3">
                   <template v-if="order.status === 'pending'">
                     <button
                       v-if="canCancel(order)"
                       @click="showCancelModal(order.id)"
-                      class="text-red-600 hover:text-red-800 font-medium disabled:text-gray-400"
+                      class="px-4 py-2 text-sm font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center"
                     >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                       Cancel ({{ cancelCountdowns[order.id] ?? 0 }}s)
                     </button>
-                    <span v-else class="text-gray-400 cursor-not-allowed select-none">
-                      Cancel (expired)
+                    <span v-else class="text-xs font-bold text-gray-300 uppercase tracking-widest select-none">
+                      Cancellation Expired
                     </span>
                   </template>
                 </div>
               </div>
 
+              <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
+                <div v-if="expandedOrderId === order.id" class="mt-6 pt-6 border-t-2 border-dashed border-gray-100">
+                  <h4 class="text-lg font-black text-gray-800 mb-6 flex items-center gap-2">
+                    <span class="w-1.5 h-6 bg-[#3ED400] rounded-full"></span>
+                    Order Breakdown
+                  </h4>
+
+                  <div class="grid md:grid-cols-2 gap-6">
+                    
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Contact Info</h5>
+                      <div class="space-y-3 text-sm">
+                        <div v-if="order.formData?.receiverName" class="flex justify-between"><span class="text-gray-500">Receiver</span> <span class="font-bold text-gray-800">{{ order.formData.receiverName }}</span></div>
+                        <div v-if="order.formData?.receiverContact" class="flex justify-between"><span class="text-gray-500">Contact</span> <span class="font-bold text-gray-800">{{ order.formData.receiverContact }}</span></div>
+                        <div v-if="order.formData?.recipientName" class="flex justify-between"><span class="text-gray-500">Recipient</span> <span class="font-bold text-gray-800">{{ order.formData.recipientName }}</span></div>
+                      </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Pickup Logistics</h5>
+                      <div class="space-y-3 text-sm">
+                        <div v-if="order.formData?.pickupAddress || order.formData?.restaurantAddress" class="flex flex-col gap-1">
+                          <span class="text-gray-500 text-xs">Address</span>
+                          <span class="font-bold text-gray-800">{{ order.formData.pickupAddress || order.formData.restaurantAddress }}</span>
+                        </div>
+                        <div v-if="order.formData?.restaurantName || order.formData?.storeName" class="flex justify-between mt-2">
+                          <span class="text-gray-500">Establishment</span>
+                          <span class="font-bold text-gray-800">{{ order.formData.restaurantName || order.formData.storeName }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Details</h5>
+                      <div class="space-y-3 text-sm">
+                        <div v-if="order.formData?.foodOrderDetails || order.formData?.shoppingList || order.formData?.itemDescription" class="flex flex-col gap-1">
+                          <span class="text-gray-500 text-xs">Items/Order</span>
+                          <span class="font-medium text-gray-800 whitespace-pre-line bg-white p-3 rounded-lg border border-gray-200">
+                            {{ order.formData.foodOrderDetails || order.formData.shoppingList || order.formData.itemDescription }}
+                          </span>
+                        </div>
+                        <div v-if="order.formData?.specialInstructions" class="flex flex-col gap-1 mt-2">
+                          <span class="text-gray-500 text-xs">Instructions</span>
+                          <span class="font-medium text-gray-800 italic">"{{ order.formData.specialInstructions }}"</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                      <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Pricing Breakdown</h5>
+                      <div class="space-y-2 text-sm">
+                        <div class="flex justify-between text-gray-500">
+                          <span>Base Charge</span>
+                          <span>₱{{ order.pricing?.baseCharge || order.priceEstimate?.base || 0 }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-500">
+                          <span>Distance Fee</span>
+                          <span>₱{{ order.pricing?.distanceFee || order.priceEstimate?.distance || 0 }}</span>
+                        </div>
+                        <div v-if="order.pricing?.badWeatherFee" class="flex justify-between text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                          <span>Weather Fee</span>
+                          <span>₱{{ order.pricing?.badWeatherFee }}</span>
+                        </div>
+                        <div v-if="order.pricing?.gcashFee" class="flex justify-between text-blue-500">
+                          <span>GCash Fee</span>
+                          <span>₱{{ order.pricing?.gcashFee }}</span>
+                        </div>
+                        <div class="border-t border-dashed border-gray-200 my-2"></div>
+                        <div class="flex justify-between items-center">
+                          <span class="font-bold text-gray-800">Total</span>
+                          <span class="text-xl font-black text-[#3ED400]">₱{{ order.pricing?.total || order.priceEstimate?.total }}</span>
+                        </div>
+                        <div v-if="order.formData?.paymentMethod" class="mt-2 text-right">
+                          <span class="text-xs font-bold px-2 py-1 bg-gray-100 rounded text-gray-600 border border-gray-200">
+                            {{ order.formData.paymentMethod }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div v-if="order.formData?.billReceiptUrl || order.formData?.prescriptionUrl" class="mt-6">
+                    <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Attachments</h5>
+                    <div class="flex gap-4 overflow-x-auto pb-2">
+                      <a v-if="order.formData.billReceiptUrl" :href="order.formData.billReceiptUrl" target="_blank" 
+                         class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-[#3ED400] transition-colors shadow-sm min-w-[200px]">
+                        <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-xs font-bold text-gray-500 uppercase">Receipt</p>
+                          <p class="text-sm font-bold text-gray-800 truncate">View File</p>
+                        </div>
+                      </a>
+                      
+                      <a v-if="order.formData.prescriptionUrl" :href="order.formData.prescriptionUrl" target="_blank"
+                         class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-[#3ED400] transition-colors shadow-sm min-w-[200px]">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-xs font-bold text-gray-500 uppercase">Prescription</p>
+                          <p class="text-sm font-bold text-gray-800 truncate">View File</p>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+
+                </div>
+              </transition>
+
             </div>
           </div>
         </div>
       </div>
+
+      <div v-if="totalPages > 1" class="flex justify-center mt-8">
+        <div class="flex items-center gap-2 p-2 bg-white rounded-xl shadow-md border border-gray-100">
+          <button @click="currentPage--" :disabled="currentPage === 1"
+                  class="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-transparent transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          </button>
+          <span class="px-4 py-1 text-sm font-bold text-gray-600">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button @click="currentPage++" :disabled="currentPage === totalPages"
+                  class="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-transparent transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex items-center justify-center space-x-2">
-      <button @click="currentPage--" :disabled="currentPage === 1"
-              class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
-        Previous
-      </button>
-      <span class="px-3 py-2 text-sm text-gray-600">
-        Page {{ currentPage }} of {{ totalPages }}
-      </span>
-      <button @click="currentPage++" :disabled="currentPage === totalPages"
-              class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
-        Next
-      </button>
-    </div>
+    <div v-if="showCancelDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 transform transition-all border border-gray-100">
+        <h3 class="text-xl font-black text-gray-900 mb-4">Cancel Order</h3>
 
-    <!-- Cancel Order Modal - timer now mirrors the button timer -->
-    <div v-if="showCancelDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Cancel Order</h3>
-
-        <div class="mb-4 p-3 rounded-lg"
-             :class="modalRemaining > 0 ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'">
-          <div class="flex items-center justify-between">
-            <span class="font-medium" :class="modalRemaining > 0 ? 'text-red-800' : 'text-gray-700'">
-              Cancellation Timer:
+        <div class="mb-6 p-4 rounded-2xl border transition-colors"
+             :class="modalRemaining > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider" :class="modalRemaining > 0 ? 'text-red-600' : 'text-gray-500'">
+              Time Remaining
             </span>
-            <span class="font-bold text-xl"
-                  :class="modalRemaining > 0 ? 'text-red-600' : 'text-gray-600'">
+            <span class="font-black text-2xl tabular-nums"
+                  :class="modalRemaining > 0 ? 'text-red-500' : 'text-gray-400'">
               {{ modalRemaining }}s
             </span>
           </div>
-          <div class="w-full rounded-full h-2 mt-2"
-               :class="modalRemaining > 0 ? 'bg-red-200' : 'bg-gray-200'">
-            <div class="h-2 rounded-full transition-all duration-300"
-                 :class="modalRemaining > 0 ? 'bg-red-600' : 'bg-gray-500'"
+          <div class="w-full rounded-full h-2 bg-gray-200 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-300 ease-linear"
+                 :class="modalRemaining > 0 ? 'bg-red-500' : 'bg-gray-400'"
                  :style="{ width: `${(modalRemaining / 30) * 100}%` }"></div>
           </div>
-          <p v-if="modalRemaining <= 0" class="text-xs text-gray-500 mt-2">
-            Cancellation window has expired. You can no longer cancel this order.
+          <p v-if="modalRemaining <= 0" class="text-xs font-bold text-gray-400 mt-2 text-center">
+            Cancellation window expired.
           </p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-3">
-            Reason for cancellation <span class="text-red-500">*</span>
-          </label>
-          <div class="space-y-2 mb-3">
+        <div class="mb-6">
+          <label class="block text-sm font-bold text-gray-700 mb-3">Reason for cancellation <span class="text-red-500">*</span></label>
+          <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
             <label v-for="reason in cancelReasons" :key="reason.value"
-                   class="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                   class="flex items-center p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
+                   :class="selectedCancelReason === reason.value ? 'border-red-500 bg-red-50' : 'border-gray-200'">
               <input type="radio" :value="reason.value" v-model="selectedCancelReason"
-                     class="mr-3 text-red-600 focus:ring-red-500 cursor-pointer">
-              <span class="text-sm text-gray-700">{{ reason.label }}</span>
+                     class="mr-3 text-red-600 focus:ring-red-500 cursor-pointer h-4 w-4 border-gray-300">
+              <span class="text-sm font-medium text-gray-700">{{ reason.label }}</span>
             </label>
           </div>
 
           <div v-if="selectedCancelReason === 'others'" class="mt-3">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Please specify your reason:</label>
             <textarea v-model="customCancelReason"
-                      placeholder="Please provide your specific reason for cancelling..."
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
-                      rows="3" required></textarea>
+                      placeholder="Please specify..."
+                      class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all text-sm resize-none bg-gray-50 focus:bg-white"
+                      rows="3"></textarea>
           </div>
-
-          <p v-if="!isReasonValid && selectedCancelReason" class="text-red-500 text-sm mt-2">
-            Please complete your reason for cancellation
-          </p>
         </div>
 
-        <div class="flex space-x-3">
+        <div class="flex gap-3">
+          <button @click="closeCancelModal" 
+                  class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+            Keep Order
+          </button>
           <button @click="confirmCancelOrder"
                   :disabled="!isReasonValid || cancelling || modalRemaining <= 0"
-                  class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
-            <span v-if="cancelling">Cancelling...</span>
-            <span v-else-if="modalRemaining <= 0">Time's up</span>
-            <span v-else-if="!isReasonValid">Select Reason</span>
-            <span v-else>Confirm Cancel</span>
-          </button>
-          <button @click="closeCancelModal" :disabled="cancelling"
-                  class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:cursor-not-allowed transition-colors">
-            Close
+                  class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-200">
+            {{ cancelling ? 'Cancelling...' : 'Confirm' }}
           </button>
         </div>
-
-        <p class="text-xs text-gray-500 mt-3 text-center">
-          You can only cancel within 30 seconds after placing the order.
-        </p>
       </div>
     </div>
 
-    <!-- Feedback Modal -->
-    <div v-if="showFeedbackDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Rate Your Experience</h3>
+    <div v-if="showFeedbackDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 transform transition-all border border-gray-100">
+        <div class="text-center mb-6">
+          <h3 class="text-2xl font-black text-gray-900">Rate Experience</h3>
+          <p class="text-sm text-gray-500">How was your delivery?</p>
+        </div>
         
-        <!-- Rating Stars -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Overall Rating</label>
-          <div class="flex items-center space-x-1">
+        <div class="flex flex-col items-center mb-8">
+          <div class="flex items-center space-x-2 mb-2">
             <button v-for="i in 5" :key="i"
                     @click="feedbackRating = i"
-                    :class="i <= feedbackRating ? 'text-yellow-400' : 'text-gray-300'"
-                    class="w-8 h-8 hover:text-yellow-400 transition-colors">
-              <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                    class="transition-transform hover:scale-110 focus:outline-none">
+              <svg :class="i <= feedbackRating ? 'text-yellow-400 fill-current' : 'text-gray-200'"
+                   class="w-10 h-10 drop-shadow-sm transition-colors" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
               </svg>
             </button>
           </div>
-          <p class="text-sm text-gray-600 mt-1">{{ getRatingText(feedbackRating) }}</p>
+          <span class="text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">{{ getRatingText(feedbackRating) }}</span>
         </div>
 
-        <!-- Service Categories -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Rate Service Aspects</label>
-          <div class="space-y-3">
-            <div v-for="aspect in serviceAspects" :key="aspect.key" class="flex items-center justify-between">
-              <span class="text-sm text-gray-700">{{ aspect.label }}</span>
-              <div class="flex items-center space-x-1">
-                <button v-for="i in 5" :key="i"
-                        @click="feedbackAspects[aspect.key] = i"
-                        :class="i <= (feedbackAspects[aspect.key] || 0) ? 'text-yellow-400' : 'text-gray-300'"
-                        class="w-5 h-5 hover:text-yellow-400 transition-colors">
-                  <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                  </svg>
-                </button>
-              </div>
+        <div class="space-y-3 mb-6 bg-gray-50 p-4 rounded-2xl">
+          <div v-for="aspect in serviceAspects" :key="aspect.key" class="flex items-center justify-between">
+            <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">{{ aspect.label }}</span>
+            <div class="flex space-x-1">
+              <button v-for="i in 5" :key="i"
+                      @click="feedbackAspects[aspect.key] = i"
+                      class="focus:outline-none">
+                <div class="w-2 h-6 rounded-full transition-colors"
+                     :class="i <= (feedbackAspects[aspect.key] || 0) ? 'bg-yellow-400' : 'bg-gray-200'"></div>
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- Comment -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Additional Comments (Optional)</label>
-          <textarea v-model="feedbackComment"
-                    placeholder="Tell us about your experience..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
-                    rows="3"></textarea>
-        </div>
-
-        <!-- Quick Feedback Tags -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Quick Tags (Optional)</label>
-          <div class="flex flex-wrap gap-2">
+        <div class="mb-6">
+          <div class="flex flex-wrap gap-2 justify-center">
             <button v-for="tag in feedbackTags" :key="tag"
                     @click="toggleFeedbackTag(tag)"
-                    :class="selectedTags.includes(tag) ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-700 border-gray-300'"
-                    class="px-3 py-1 text-sm border rounded-full hover:bg-green-50 transition-colors">
+                    class="px-3 py-1 text-xs font-bold rounded-lg border transition-all"
+                    :class="selectedTags.includes(tag) ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white text-gray-500 border-gray-200 hover:border-green-200'">
               {{ tag }}
             </button>
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex space-x-3">
+        <textarea v-model="feedbackComment"
+                  placeholder="Tell us more (optional)..."
+                  class="w-full px-4 py-3 mb-6 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all text-sm resize-none bg-gray-50 focus:bg-white"
+                  rows="3"></textarea>
+
+        <div class="flex gap-3">
+          <button @click="closeFeedbackModal" 
+                  class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+            Cancel
+          </button>
           <button @click="submitFeedback"
                   :disabled="!feedbackRating || submittingFeedback"
-                  class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
-            <span v-if="submittingFeedback">Submitting...</span>
-            <span v-else>Submit Feedback</span>
-          </button>
-          <button @click="closeFeedbackModal" :disabled="submittingFeedback"
-                  class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:cursor-not-allowed transition-colors">
-            Cancel
+                  class="flex-1 py-3 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-bold rounded-xl shadow-lg hover:shadow-green-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none transition-all">
+            {{ submittingFeedback ? 'Sending...' : 'Submit' }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Chat Modal -->
-    <div v-if="showChatModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-medium">D</span>
+    <div v-if="showChatModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[80vh] flex flex-col overflow-hidden border border-gray-100">
+        <div class="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between shadow-sm z-10">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+              D
             </div>
             <div>
-              <h2 class="text-lg font-semibold text-gray-900">Chat with Driver</h2>
-              <p class="text-sm text-gray-600">{{ chatPartner?.name || 'Driver' }}</p>
+              <h2 class="text-lg font-black text-gray-800 leading-tight">Chat with Driver</h2>
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ chatPartner?.name || 'Driver' }}</p>
             </div>
           </div>
-          <button @click="showChatModal = false" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+          <button @click="showChatModal = false" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="flex-1 overflow-hidden">
+        
+        <div class="flex-1 overflow-hidden bg-gray-50 relative">
           <ChatWindow
             v-if="chatId && chatOrderId"
             :chat-id="chatId"
@@ -653,93 +503,43 @@
             :chat-partner="chatPartner"
             :is-driver="false"
             @notification="handleChatNotification"
+            class="h-full"
           />
-          <div v-else class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p class="text-gray-600">Loading chat...</p>
-            </div>
+          <div v-else class="flex flex-col items-center justify-center h-full text-gray-400">
+            <div class="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-500 mb-4"></div>
+            <p class="font-medium">Connecting...</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Notification Modal -->
-    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" @click.self="closeNotificationModal" style="z-index: 9999 !important;">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative" @click.stop style="z-index: 10000 !important;">
-        <div class="flex items-center mb-4">
-          <div :class="[
-            'w-12 h-12 rounded-full flex items-center justify-center mr-4',
-            notificationType === 'success' ? 'bg-green-100' : 
-            notificationType === 'error' ? 'bg-red-100' : 
-            'bg-blue-100'
-          ]">
-            <svg 
-              v-if="notificationType === 'success'"
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <svg 
-              v-else-if="notificationType === 'error'"
-              class="w-6 h-6 text-red-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            <svg 
-              v-else-if="notificationType === 'warning'"
-              class="w-6 h-6 text-yellow-600"
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-            <svg 
-              v-else
-              class="w-6 h-6 text-blue-600"
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <h3 :class="[
-            'text-lg font-semibold',
-            notificationType === 'success' ? 'text-green-900' : 
-            notificationType === 'error' ? 'text-red-900' : 
-            'text-blue-900'
-          ]">
-            {{ notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Information' }}
-          </h3>
+    <div v-if="showNotificationModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" @click.self="closeNotificationModal">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-gray-100" @click.stop>
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"
+             :class="notificationType === 'success' ? 'bg-green-100 text-green-500' : notificationType === 'error' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'">
+          <svg v-if="notificationType === 'success'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+          <svg v-else-if="notificationType === 'error'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+          <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
-        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
-        <div class="flex justify-end">
-          <button
-            @click="closeNotificationModal"
-            :class="[
-              'px-4 py-2 rounded-lg transition-colors',
-              notificationType === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
-              notificationType === 'error' ? 'bg-red-600 text-white hover:bg-red-700' : 
-              'bg-blue-600 text-white hover:bg-blue-700'
-            ]"
-          >
-            OK
-          </button>
-        </div>
+        
+        <h3 class="text-xl font-black text-gray-900 mb-2">
+          {{ notificationType === 'success' ? 'Success!' : notificationType === 'error' ? 'Oops!' : 'Notice' }}
+        </h3>
+        <p class="text-gray-600 mb-6 font-medium leading-relaxed">{{ notificationMessage }}</p>
+        
+        <button @click="closeNotificationModal"
+                class="w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95"
+                :class="notificationType === 'success' ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : notificationType === 'error' ? 'bg-red-500 hover:bg-red-600 shadow-red-200' : 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'">
+          Okay, Got it
+        </button>
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
+// --- LOGIC MO (EXACTLY AS PROVIDED) ---
 import { realtimeService } from '@/services/realtime'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
@@ -1047,9 +847,6 @@ export default {
     // This opens a standalone chat modal for real-time communication with driver
     // Real-time updates are handled by ChatWindow component using Firestore onSnapshot
     async openChatWithDriver(order) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1049',message:'openChatWithDriver entry',data:{orderId:order?.id,driverId:order?.driverId,hasDriver:!!order?.driver,currentAuthUid:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
       console.log('[v0] Opening standalone chat modal for order:', order?.id, 'driverId:', order?.driverId, 'driver:', order?.driver)
       
       // Validate order
@@ -1084,9 +881,6 @@ export default {
         }
 
         console.log('[v0] Creating/getting chat room - userId:', this.authStore.user.uid, 'driverId:', driverId, 'orderId:', order.id)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1083',message:'Before createChatRoom',data:{userId:this.authStore.user.uid,driverId,orderId:order.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
 
         // Create or get chat room with driver (real-time enabled)
         const chatRoomId = await chatService.createChatRoom(
@@ -1094,9 +888,6 @@ export default {
           driverId,
           order.id
         )
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1090',message:'After createChatRoom',data:{chatRoomId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
 
         console.log('[v0] Chat room created/retrieved:', chatRoomId)
 
@@ -1120,14 +911,8 @@ export default {
 
         // Show standalone chat modal (NOT navigating to ChatMessages page)
         this.showChatModal = true
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1113',message:'Chat modal opened',data:{chatId:this.chatId,showChatModal:this.showChatModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         console.log('[v0] Chat modal opened successfully')
       } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1115',message:'Error opening chat',data:{code:error.code,message:error.message,orderId:order?.id,driverId:order?.driverId,userId:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         console.error('[v0] Error opening chat:', error)
         console.error('[v0] Error details:', {
           message: error.message,
@@ -1139,9 +924,6 @@ export default {
         this.showNotification('error', `Error opening chat: ${error.message || 'Please try again'}`)
       }
     },
-
-    // ====== ADD ORDER MODAL - REMOVED ======
-    // All methods related to "Add Another Order" have been removed
 
     loadGoogleMapsAPI() {
       return new Promise((resolve, reject) => {
@@ -1234,14 +1016,14 @@ export default {
 
     getStatusClass(status) {
       const m = {
-        pending: 'bg-orange-100 text-orange-800',
-        confirmed: 'bg-blue-100 text-blue-800',
-        in_transit: 'bg-purple-100 text-purple-800',
-        on_the_way: 'bg-indigo-100 text-indigo-800',
-        delivered: 'bg-green-100 text-green-800',
-        cancelled: 'bg-red-100 text-red-800'
+        pending: 'bg-orange-100 text-orange-700 border-orange-200',
+        confirmed: 'bg-blue-100 text-blue-700 border-blue-200',
+        in_transit: 'bg-purple-100 text-purple-700 border-purple-200',
+        on_the_way: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        delivered: 'bg-green-100 text-green-700 border-green-200',
+        cancelled: 'bg-red-100 text-red-700 border-red-200'
       }
-      return m[status] || 'bg-gray-100 text-gray-800'
+      return m[status] || 'bg-gray-100 text-gray-700 border-gray-200'
     },
     formatStatus(s) {
       const m = {
@@ -1298,3 +1080,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+</style>

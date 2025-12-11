@@ -1,283 +1,193 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-    <div class="max-w-4xl w-full space-y-8">
-      <div class="bg-white rounded-2xl shadow-xl p-8">
-        <div class="text-center mb-8">
-          <div class="mx-auto h-12 w-12 bg-green-600 rounded-full flex items-center justify-center mb-4">
-            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+  <div class="min-h-screen relative flex items-center justify-center p-4 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden font-sans">
+    
+    <div class="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#A8EB12] rounded-full mix-blend-multiply filter blur-[80px] opacity-60 animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 translate-x-1/3 translate-y-1/3 w-96 h-96 bg-[#3ED400] rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-pulse delay-1000"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#74E600] rounded-full mix-blend-multiply filter blur-[60px] opacity-40"></div>
+
+    <div class="relative w-full max-w-5xl bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,200,81,0.15)] border border-white/50 p-6 sm:p-10 z-10 transition-all duration-300">
+      
+      <div class="text-center space-y-4 mb-10">
+        <div class="relative inline-block group">
+          <div class="absolute inset-0 bg-gradient-to-r from-[#A8EB12] to-[#00C851] rounded-full blur opacity-40 group-hover:opacity-75 transition-opacity duration-500"></div>
+          <img 
+            src="https://scontent.fmnl7-2.fna.fbcdn.net/v/t1.15752-9/514071591_1252432816270252_1243204019946633211_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeEne1_QgvnzPimBbfxq_loR-tDfpI8SJXz60N-kjxIlfByb9W5QUiBtwAWWz58nuc7ZAQLaDdcR5XLMXSyYpi5e&_nc_ohc=22TieV_Z_voQ7kNvwEBjgNT&_nc_oc=AdmJoOb5TZPB2UkZ578pEyqjn4tdhSMxb3cDlReTD7jSlZjkBve5-yz6nF0muTBRlD4&_nc_zt=23&_nc_ht=scontent.fmnl7-2.fna&oh=03_Q7cD4AFN1-ZJ3iUsGG3W2txeNI23-eE-tCCECL3b4wKZE1CQAQ&oe=695CED92" 
+            alt="BroomTech Logo"
+            class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white ring-4 ring-[#74E600]/30 shadow-xl transform group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-black text-gray-800 tracking-tight">Join the Fleet</h2>
+          <p class="text-sm sm:text-base text-gray-500 font-medium mt-1">Register today and start earning on your terms.</p>
+        </div>
+      </div>
+
+      <form @submit.prevent="handleRegister" class="space-y-8">
+        
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 pb-2 border-b border-gray-100">
+             <div class="p-2 bg-[#A8EB12]/20 rounded-xl text-[#00C851]">
+               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+             </div>
+             <h3 class="text-xl font-extrabold text-gray-800">Personal Information</h3>
           </div>
-          <h2 class="text-3xl font-bold text-gray-900">Become a Driver</h2>
-          <p class="text-gray-600 mt-2">Apply to join our driver network</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="group relative">
+              <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Full Name</label>
+              <div class="relative flex items-center">
+                <div class="absolute left-0 pl-4 pointer-events-none text-gray-400 group-focus-within:text-[#00C851] transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <input v-model="formData.fullName" type="text" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="Juan Dela Cruz" />
+              </div>
+            </div>
+
+            <div class="group relative">
+              <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Contact Number</label>
+              <div class="relative flex items-center">
+                <div class="absolute left-0 pl-4 pointer-events-none text-gray-400 group-focus-within:text-[#00C851] transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg></div>
+                <input v-model="formData.contact" type="tel" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="0912 345 6789" />
+              </div>
+            </div>
+
+            <div class="group relative md:col-span-2">
+              <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Email Address</label>
+              <div class="relative flex items-center">
+                <div class="absolute left-0 pl-4 pointer-events-none text-gray-400 group-focus-within:text-[#00C851] transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg></div>
+                <input v-model="formData.email" type="email" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="rider@broomtech.com" />
+              </div>
+            </div>
+
+            <div class="group relative md:col-span-2">
+              <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Password</label>
+              <div class="relative flex items-center">
+                <div class="absolute left-0 pl-4 pointer-events-none text-gray-400 group-focus-within:text-[#00C851] transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
+                <input v-model="formData.password" :type="showPassword ? 'text' : 'password'" required class="w-full pl-11 pr-12 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="••••••••" />
+                <button type="button" @click="showPassword = !showPassword" class="absolute right-0 pr-4 flex items-center cursor-pointer text-gray-400 hover:text-[#00C851] transition-colors focus:outline-none h-full">
+                  <svg v-if="showPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <form @submit.prevent="handleRegister" class="space-y-8">
-          <!-- Personal Information -->
-          <div class="bg-gray-50 p-6 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="fullName" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                <input
-                  id="fullName"
-                  v-model="formData.fullName"
-                  type="text"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="Enter your full name"
-                />
-              </div>
-              <div>
-                <label for="contact" class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                <input
-                  id="contact"
-                  v-model="formData.contact"
-                  type="tel"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="Enter your contact number"
-                />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                <input
-                  id="email"
-                  v-model="formData.email"
-                  type="email"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="Enter your email"
-                />
-              </div>
-              <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <div class="relative">
-                  <input
-                    id="password"
-                    v-model="formData.password"
-                    :type="showPassword ? 'text' : 'password'"
-                    required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors pr-12"
-                    placeholder="Create a password"
-                  />
-                  <button
-                    type="button"
-                    @click="showPassword = !showPassword"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <svg v-if="showPassword" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <svg v-else class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 pb-2 border-b border-gray-100 mt-2">
+             <div class="p-2 bg-[#A8EB12]/20 rounded-xl text-[#00C851]">
+               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+             </div>
+             <h3 class="text-xl font-extrabold text-gray-800">Vehicle Information</h3>
           </div>
 
-          <!-- Motorcycle Information -->
-          <div class="bg-blue-50 p-6 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Motorcycle Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="motorcycleBrand" class="block text-sm font-medium text-gray-700 mb-2">Motorcycle Brand</label>
-                <input
-                  id="motorcycleBrand"
-                  v-model="formData.motorcycleInfo.brand"
-                  type="text"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="e.g., Honda, Yamaha, Kawasaki"
-                />
-              </div>
-              <div>
-                <label for="motorcycleModel" class="block text-sm font-medium text-gray-700 mb-2">Model</label>
-                <input
-                  id="motorcycleModel"
-                  v-model="formData.motorcycleInfo.model"
-                  type="text"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="e.g., Click 150i, Mio i125"
-                />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label for="plateNumber" class="block text-sm font-medium text-gray-700 mb-2">Plate Number</label>
-                <input
-                  id="plateNumber"
-                  v-model="formData.motorcycleInfo.plateNumber"
-                  type="text"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="Enter plate number"
-                />
-              </div>
-              <div>
-                <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                <input
-                  id="year"
-                  v-model="formData.motorcycleInfo.year"
-                  type="number"
-                  required
-                  min="2000"
-                  max="2024"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="e.g., 2020"
-                />
-              </div>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+             <div class="group relative">
+               <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Brand</label>
+               <input v-model="formData.motorcycleInfo.brand" type="text" required class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="e.g. Honda" />
+             </div>
+             <div class="group relative">
+               <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Model</label>
+               <input v-model="formData.motorcycleInfo.model" type="text" required class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="e.g. Click 150i" />
+             </div>
+             <div class="group relative">
+               <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Plate Number</label>
+               <input v-model="formData.motorcycleInfo.plateNumber" type="text" required class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="ABC 123" />
+             </div>
+             <div class="group relative">
+               <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Year</label>
+               <input v-model="formData.motorcycleInfo.year" type="number" required class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner" placeholder="2024" />
+             </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+           <div class="group relative">
+              <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Experience</label>
+              <select v-model="formData.experience" class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner">
+                 <option value="">Select years</option>
+                 <option value="1-2">1-2 years</option>
+                 <option value="3-5">3-5 years</option>
+                 <option value="6-10">6-10 years</option>
+                 <option value="10+">10+ years</option>
+              </select>
+           </div>
+           <div class="group relative">
+              <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Availability</label>
+              <select v-model="formData.availability" class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-gray-900 focus:outline-none focus:bg-white focus:border-[#74E600] focus:ring-4 focus:ring-[#74E600]/20 transition-all duration-300 shadow-inner">
+                 <option value="">Select type</option>
+                 <option value="full-time">Full Time</option>
+                 <option value="part-time">Part Time</option>
+                 <option value="weekends">Weekends Only</option>
+              </select>
+           </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 pb-2 border-b border-gray-100 mt-2">
+             <div class="p-2 bg-[#A8EB12]/20 rounded-xl text-[#00C851]">
+               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+             </div>
+             <h3 class="text-xl font-extrabold text-gray-800">Requirements</h3>
           </div>
 
-          <!-- Experience & Availability -->
-          <div class="bg-yellow-50 p-6 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Experience & Availability</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="experience" class="block text-sm font-medium text-gray-700 mb-2">Years of Driving Experience</label>
-                <select
-                  id="experience"
-                  v-model="formData.experience"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                >
-                  <option value="">Select experience</option>
-                  <option value="1-2">1-2 years</option>
-                  <option value="3-5">3-5 years</option>
-                  <option value="6-10">6-10 years</option>
-                  <option value="10+">10+ years</option>
-                </select>
-              </div>
-              <div>
-                <label for="availability" class="block text-sm font-medium text-gray-700 mb-2">Availability</label>
-                <select
-                  id="availability"
-                  v-model="formData.availability"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                >
-                  <option value="">Select availability</option>
-                  <option value="full-time">Full Time (8+ hours/day)</option>
-                  <option value="part-time">Part Time (4-8 hours/day)</option>
-                  <option value="weekends">Weekends Only</option>
-                  <option value="flexible">Flexible Schedule</option>
-                </select>
-              </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-for="(label, key) in {license: 'Driver\'s License', orcr: 'OR/CR', selfie: 'Selfie w/ License', profilePicture: 'Profile Picture'}" :key="key">
+               <label class="ml-3 block text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{{ label }}</label>
+               <div class="relative border-2 border-dashed border-[#74E600]/40 rounded-2xl hover:bg-[#A8EB12]/10 transition-all group h-28 flex items-center justify-center cursor-pointer bg-gray-50/50">
+                  <input type="file" :id="key" accept="image/*,.pdf" required @change="handleFileUpload($event, key)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                  <div class="text-center" v-if="!formData.documents[key]">
+                     <div class="bg-white p-2 rounded-full inline-block shadow-sm mb-1">
+                        <svg class="h-6 w-6 text-[#00C851] group-hover:scale-110 transition-transform" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                     </div>
+                     <p class="text-xs text-gray-500 font-medium">Tap to upload</p>
+                  </div>
+                  <div v-else class="flex flex-col items-center text-[#00C851]">
+                     <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                     <span class="text-xs font-bold truncate max-w-[150px] px-2">{{ formData.documents[key].name }}</span>
+                  </div>
+               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Document Uploads -->
-          <div class="bg-red-50 p-6 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Required Documents</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Added file upload fields for required documents -->
-              <div>
-                <label for="license" class="block text-sm font-medium text-gray-700 mb-2">Driver's License</label>
-                <input
-                  id="license"
-                  type="file"
-                  accept="image/*,.pdf"
-                  required
-                  @change="handleFileUpload($event, 'license')"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                />
-                <p class="text-xs text-gray-500 mt-1">Upload clear photo of your driver's license</p>
+        <div class="pt-4">
+           <div class="flex items-start mb-6 px-1">
+              <div class="flex items-center h-5">
+                <input id="terms" v-model="formData.acceptTerms" type="checkbox" required class="w-5 h-5 text-[#00C851] border-gray-300 rounded focus:ring-[#74E600] cursor-pointer transition duration-150" />
               </div>
-              <div>
-                <label for="orcr" class="block text-sm font-medium text-gray-700 mb-2">OR/CR (Official Receipt/Certificate of Registration)</label>
-                <input
-                  id="orcr"
-                  type="file"
-                  accept="image/*,.pdf"
-                  required
-                  @change="handleFileUpload($event, 'orcr')"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                />
-                <p class="text-xs text-gray-500 mt-1">Upload motorcycle OR/CR documents</p>
+              <div class="ml-3 text-sm">
+                <label for="terms" class="font-medium text-gray-600">I accept the <a href="#" class="text-[#00C851] hover:text-[#74E600] font-bold">Terms of Service</a> and <a href="#" class="text-[#00C851] hover:text-[#74E600] font-bold">Privacy Policy</a></label>
               </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label for="selfie" class="block text-sm font-medium text-gray-700 mb-2">Selfie with License</label>
-                <input
-                  id="selfie"
-                  type="file"
-                  accept="image/*"
-                  required
-                  @change="handleFileUpload($event, 'selfie')"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                />
-                <p class="text-xs text-gray-500 mt-1">Take a selfie holding your driver's license</p>
-              </div>
-              <div>
-                <label for="profilePicture" class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
-                <input
-                  id="profilePicture"
-                  type="file"
-                  accept="image/*"
-                  required
-                  @change="handleFileUpload($event, 'profilePicture')"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                />
-                <p class="text-xs text-gray-500 mt-1">Upload a clear profile photo</p>
-              </div>
-            </div>
-          </div>
+           </div>
 
-          <!-- Terms and Conditions -->
-          <div class="flex items-start">
-            <input
-              id="terms"
-              v-model="formData.acceptTerms"
-              type="checkbox"
-              required
-              class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1"
-            />
-            <label for="terms" class="ml-2 block text-sm text-gray-700">
-              I agree to the <a href="#" class="text-green-600 hover:text-green-500">Terms and Conditions</a> 
-              and <a href="#" class="text-green-600 hover:text-green-500">Privacy Policy</a>
-            </label>
-          </div>
-
-          <button
+           <button
             type="submit"
             :disabled="loading"
-            class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-black uppercase tracking-wider rounded-2xl text-white bg-gradient-to-r from-[#74E600] to-[#00C851] hover:to-[#009e3f] focus:outline-none focus:ring-4 focus:ring-[#3ED400]/40 shadow-[0_15px_30px_rgba(0,200,81,0.3)] hover:shadow-[0_20px_40px_rgba(0,200,81,0.4)] transform transition-all duration-300 hover:-translate-y-1 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <span v-if="loading" class="flex items-center justify-center">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Submitting Application...
+            <span v-if="loading" class="flex items-center gap-2">
+               <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+               Creating Account...
             </span>
-            <span v-else>Submit Driver Application</span>
+            <span v-else class="flex items-center gap-2">
+               Submit Application
+               <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </span>
           </button>
 
-          <div class="text-center">
-            <p class="text-sm text-gray-600">
-              Already have a driver account?
-              <router-link to="/driver/login" class="text-green-600 hover:text-green-500 font-medium">
-                Sign in here
-              </router-link>
-            </p>
-          </div>
+           <div class="mt-8 text-center border-t border-gray-100 pt-6">
+              <p class="text-sm text-gray-500">
+                 Already registered? 
+                 <router-link to="/driver/login" class="font-bold text-[#00C851] hover:text-[#74E600] transition-colors ml-1">Sign in to Dashboard</router-link>
+              </p>
+              <div class="mt-4">
+                 <router-link to="/register" class="text-xs font-bold text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 transition-colors group">
+                    <span class="group-hover:-translate-x-1 transition-transform">←</span> Back to Regular User Registration
+                 </router-link>
+              </div>
+           </div>
+        </div>
 
-          <div class="text-center">
-            <router-link to="/register" class="text-sm text-gray-500 hover:text-gray-700">
-              ← Register as regular user instead
-            </router-link>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
   </div>
 </template>
@@ -328,6 +238,7 @@ export default {
     }
 
     const handleRegister = async () => {
+      // Basic Validation
       if (!formData.fullName || !formData.contact || !formData.email || !formData.password || 
           !formData.motorcycleInfo.brand || !formData.motorcycleInfo.model || 
           !formData.motorcycleInfo.plateNumber || !formData.motorcycleInfo.year ||
@@ -366,7 +277,7 @@ export default {
         })
         
         if (result.success) {
-          toast.success('Driver application submitted successfully! Please wait for admin approval.')
+          toast.success('Application submitted! Wait for admin approval.')
           router.push('/driver/login')
         } else {
           toast.error(result.error || 'Registration failed')
@@ -389,3 +300,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Optional Custom Scrollbar if form is long */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; 
+}
+</style>

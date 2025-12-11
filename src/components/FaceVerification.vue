@@ -1,180 +1,131 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="showTryAgain && !showCooldown ? handleTryAgain() : null">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-      <h3 class="text-xl font-semibold text-gray-900 mb-4">Face Verification</h3>
-      <p class="text-gray-600 mb-4">
-        Please position your face in front of the camera to verify your identity.
-      </p>
-
-      <div class="relative mb-4" style="aspect-ratio: 4/3;">
-        <video
-          ref="videoElement"
-          autoplay
-          playsinline
-          class="w-full h-full object-cover rounded-lg bg-gray-900"
-          style="transform: scaleX(-1);"
-        ></video>
-        <canvas ref="canvasElement" class="hidden"></canvas>
-        
-        <!-- Circular Overlay (like GCash) - creates new circle for verification -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div class="relative w-64 h-64">
-            <!-- Outer circle guide -->
-            <div class="absolute inset-0 rounded-full border-4 border-white opacity-50"></div>
-            <!-- Inner circle for face alignment - changes color based on verification status -->
-            <div 
-              class="absolute inset-4 rounded-full border-2 transition-colors" 
-              :class="faceDetected ? (verifying ? 'border-blue-500 animate-pulse' : 'border-green-500') : 'border-gray-400'"
-            ></div>
-            <!-- Center dot -->
-            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
-          </div>
-        </div>
-
-        <!-- Liveness check status -->
-        <div v-if="!livenessChecked && !faceDetectedOnce && !showTryAgain" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-          🔍 Checking liveness...
-        </div>
-
-        <!-- Face detection status - only show once, don't blink -->
-        <div v-if="faceDetectedOnce && !verifying && !showTryAgain" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-          ✓ Face Detected
-        </div>
-
-        <!-- Face Scan Progress Ring -->
-        <div v-if="detecting" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div class="relative w-64 h-64">
-            <!-- Scanning Circle Progress Ring -->
-            <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-              <!-- Background circle -->
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="rgba(255, 255, 255, 0.3)"
-                stroke-width="4"
-              />
-              <!-- Progress circle -->
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="rgb(59, 130, 246)"
-                stroke-width="4"
-                stroke-linecap="round"
-                :stroke-dasharray="283"
-                :stroke-dashoffset="283 - (scanProgress * 283 / 100)"
-                class="transition-all duration-300"
-              />
-            </svg>
-            <!-- Center text -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
-              <svg class="animate-spin h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p class="text-sm font-semibold">Scanning Face...</p>
-              <p class="text-xs mt-1 opacity-75">{{ Math.round(scanProgress) }}%</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Verification Loading Circle -->
-        <div v-if="verifying" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
-          <div class="text-white text-center">
-            <div class="relative w-32 h-32 mx-auto mb-4">
-              <!-- Spinning circle ring -->
-              <svg class="absolute inset-0 w-full h-full transform -rotate-90 animate-spin" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="rgb(59, 130, 246)"
-                  stroke-width="4"
-                  stroke-linecap="round"
-                  stroke-dasharray="283"
-                  stroke-dashoffset="70"
-                />
-              </svg>
-              <!-- Center icon -->
-              <div class="absolute inset-0 flex items-center justify-center">
-                <svg class="h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <p class="text-sm font-semibold">Verifying Face...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Attempts counter -->
-      <div v-if="verificationAttempts > 0 && verificationAttempts < 3 && !showCooldown" class="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-        <p class="mb-2">Verification failed. Attempt {{ verificationAttempts }} of 3. Please try again.</p>
-        <button
-          @click="handleTryAgain"
-          class="w-full mt-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
-
-      <!-- Face does not match message -->
-      <div v-if="error && error.includes('Face does not match') && verificationAttempts < 3 && !showCooldown" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-        <p class="mb-2">Face does not match registered face. Attempt {{ verificationAttempts }} of 3. Please try again.</p>
-        <button
-          @click="handleTryAgain"
-          class="w-full mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
-
-      <!-- Cooldown countdown -->
-      <div v-if="showCooldown" class="mb-4 p-4 bg-orange-100 border border-orange-400 text-orange-700 rounded text-center">
-        <p class="font-semibold mb-2">Too many failed attempts</p>
-        <p class="text-lg">Please wait <span class="font-bold">{{ formatTime(cooldownSeconds) }}</span> before trying again.</p>
-      </div>
-
-      <div v-if="error" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-        {{ error }}
-      </div>
-
-      <!-- Auto-verification status -->
-      <div v-if="faceDetected && !verifying && !showCooldown" class="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded text-center">
-        <p class="font-semibold">Face detected! Verification will start automatically...</p>
-      </div>
-
-      <div class="flex justify-end space-x-3">
-        <button
-          @click="handleCancel"
-          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-        >
-          Cancel
-        </button>
-        <!-- Keep button as fallback but hide it when auto-verifying -->
-        <button
-          v-if="!faceDetected || showCooldown"
-          @click="handleVerify"
-          :disabled="!faceDetected || verifying || showCooldown || verificationAttempts >= 3"
-          class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {{ verifying ? 'Verifying...' : 'Verify Face' }}
-        </button>
-      </div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md" @click="showTryAgain && !showCooldown ? handleTryAgain() : null">
+    
+    <div class="relative w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/50 overflow-hidden transform transition-all">
       
-      <!-- Tap to retry hint -->
-      <div v-if="showTryAgain && !showCooldown" class="mt-4 text-center">
-        <p class="text-sm text-gray-600 mb-2">Tap anywhere on the screen to retry</p>
+      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#3ED400] to-[#A8EB12]"></div>
+
+      <div class="p-8 text-center">
+        <h3 class="text-2xl font-black text-gray-800 mb-2">Face Verification</h3>
+        <p class="text-sm text-gray-500 mb-6 font-medium">Please look at the camera to verify identity.</p>
+
+        <div class="relative w-full aspect-[4/3] mx-auto mb-6 rounded-3xl overflow-hidden border-4 border-gray-100 shadow-inner bg-gray-900 group">
+          
+          <video
+            ref="videoElement"
+            autoplay
+            playsinline
+            class="w-full h-full object-cover transform scale-x-[-1]"
+          ></video>
+          <canvas ref="canvasElement" class="hidden"></canvas>
+          
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="relative w-64 h-64">
+              <div class="absolute inset-0 rounded-full border-[3px] border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.2)]"></div>
+              
+              <div 
+                class="absolute inset-2 rounded-full border-[3px] transition-all duration-300"
+                :class="faceDetected ? (verifying ? 'border-blue-400 shadow-[0_0_30px_#60A5FA] animate-pulse' : 'border-[#3ED400] shadow-[0_0_30px_#3ED400]') : 'border-white/60 border-dashed'"
+              ></div>
+              
+              <div v-if="detecting && !faceDetectedOnce" class="absolute inset-0 rounded-full overflow-hidden opacity-30">
+                 <div class="w-full h-2 bg-[#3ED400] absolute top-0 animate-scan shadow-[0_0_15px_#3ED400]"></div>
+              </div>
+
+              <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white/80 rounded-full"></div>
+            </div>
+          </div>
+
+          <div v-if="!livenessChecked && !faceDetectedOnce && !showTryAgain && detecting" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500/90 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
+            <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            CHECKING LIVENESS
+          </div>
+
+          <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 scale-50" enter-to-class="opacity-100 scale-100">
+            <div v-if="faceDetectedOnce && !verifying && !showTryAgain" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md text-[#00C851] px-5 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              FACE DETECTED
+            </div>
+          </transition>
+
+          <div v-if="(verifying) || (detecting && !livenessChecked && !faceDetectedOnce)" class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity">
+            <div v-if="verifying">
+                <svg class="animate-spin h-10 w-10 text-white mb-3" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-white text-xs font-bold tracking-widest uppercase shadow-black drop-shadow-md">
+                  Verifying...
+                </p>
+            </div>
+          </div>
+          
+          <div v-if="showTryAgain && !showCooldown" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] cursor-pointer" @click="handleTryAgain">
+             <svg class="w-12 h-12 text-white mb-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+             <p class="text-white text-sm font-bold uppercase tracking-wider">Tap to Retry</p>
+          </div>
+        </div>
+
+        <div class="min-h-[80px] flex flex-col justify-center mb-4">
+          
+          <div v-if="verificationAttempts > 0 && verificationAttempts < 3 && !showCooldown" class="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl text-xs font-medium flex items-center justify-center gap-2 animate-pulse">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Match failed. Attempt {{ verificationAttempts }}/3. Try again.
+          </div>
+
+          <div v-if="showCooldown" class="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-center shadow-inner">
+            <p class="font-bold text-sm mb-1">Too many attempts</p>
+            <p class="text-xs opacity-80">Please wait</p>
+            <p class="text-2xl font-black mt-1">{{ formatTime(cooldownSeconds) }}</p>
+          </div>
+
+          <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium text-center">
+            {{ error }}
+          </div>
+
+          <div v-if="faceDetectedOnce && !verifying && !showCooldown && !error && !showTryAgain" class="text-blue-500 text-sm font-bold animate-pulse flex justify-center items-center gap-2">
+              Verifying automatically...
+          </div>
+          
+           <div v-if="showTryAgain && !showCooldown" class="text-gray-400 text-xs font-medium animate-bounce">
+            Tap the screen or click below to retry
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button
+            @click="handleCancel"
+            class="flex-1 py-3.5 rounded-xl text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+          
+          <button
+            v-if="(!faceDetected || showCooldown) && !showTryAgain"
+            @click="handleVerify"
+            :disabled="!faceDetected || verifying || showCooldown || verificationAttempts >= 3"
+            class="flex-1 py-3.5 bg-gradient-to-r from-[#3ED400] to-[#00C851] text-white rounded-xl font-bold shadow-lg shadow-green-200 hover:shadow-green-300 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+          >
+            <span v-if="verifying" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            {{ verifying ? 'Verifying...' : 'Verify' }}
+          </button>
+
+           <button
+            v-if="showTryAgain && !showCooldown"
+            @click="handleTryAgain"
+            class="flex-1 py-3.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+          >
+            Try Again
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+// --- LOGIC MO (EXACTLY AS PROVIDED IN CODE 2) ---
 import { ref, onMounted, onUnmounted } from 'vue'
 import { detectFace, getFaceDescriptor, loadModels, compareFaces, detectFaceWithLiveness } from '@/services/faceRecognitionService'
 
@@ -562,3 +513,15 @@ const handleCancel = () => {
 }
 </script>
 
+<style scoped>
+/* COPIED CSS ANIMATION FROM DESIGN A */
+@keyframes scan {
+  0% { top: 0%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+.animate-scan {
+  animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+</style>

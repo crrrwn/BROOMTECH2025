@@ -1,86 +1,107 @@
 <template>
-  <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Chat List -->
-      <div class="lg:col-span-1">
-        <div class="bg-white rounded-lg shadow-sm border">
-          <div class="p-4 border-b bg-gray-50">
-            <h3 class="text-lg font-semibold text-gray-900">Active Chats</h3>
-            <p class="text-sm text-gray-600">{{ activeChats.length }} conversation(s)</p>
+  <div class="min-h-screen bg-gray-50/50 pb-20 font-sans h-screen flex flex-col">
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 h-full flex flex-col gap-6">
+
+      <div class="relative overflow-hidden bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-3xl p-6 md:p-8 shadow-lg text-white shrink-0">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 flex items-center gap-4">
+          <div class="p-3 bg-white/20 rounded-2xl backdrop-blur-md shadow-inner">
+             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
           </div>
-          
-          <div class="divide-y max-h-96 overflow-y-auto">
-            <div
-              v-for="chat in activeChats"
-              :key="chat.id"
-              @click="selectChat(chat)"
-              :class="[
-                'p-4 cursor-pointer hover:bg-gray-50 transition-colors',
-                selectedChatId === chat.id ? 'bg-blue-50 border-r-4 border-primary' : ''
-              ]"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <span class="text-gray-600 text-sm font-medium">
-                      {{ chat.customerName ? chat.customerName.charAt(0) : 'U' }}
-                    </span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-medium text-gray-900 truncate">
-                      {{ chat.customerName || 'Customer' }}
-                    </p>
-                    <p class="text-sm text-gray-600 truncate">
-                      Order #{{ chat.orderId ? chat.orderId.substring(0, 8) : 'N/A' }}
-                    </p>
-                    <p class="text-xs text-gray-500 truncate">
-                      {{ chat.lastMessage || 'No messages yet' }}
-                    </p>
-                  </div>
-                </div>
-                <div class="text-right flex-shrink-0">
-                  <p class="text-xs text-gray-500">{{ formatChatTime(chat.lastMessageAt) }}</p>
-                  <div v-if="chat.unreadCount && chat.unreadCount[currentDriverId] > 0" class="inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs rounded-full mt-1">
-                    {{ chat.unreadCount[currentDriverId] }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Empty State -->
-            <div v-if="activeChats.length === 0" class="p-8 text-center">
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-              <p class="text-gray-600">No active chats</p>
-              <p class="text-sm text-gray-500 mt-1">Chats will appear when you're assigned to orders</p>
-            </div>
+          <div>
+            <h1 class="text-3xl font-extrabold tracking-tight">Messages</h1>
+            <p class="text-green-50 font-medium">Chat with customers about active orders.</p>
           </div>
         </div>
       </div>
 
-      <!-- Chat Window -->
-      <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow-sm border h-96">
-          <ChatWindow
-            v-if="selectedChatId"
-            :chat-id="selectedChatId"
-            :order-id="selectedOrderId"
-            :chat-partner="selectedChatPartner"
-            :is-driver="true"
-          />
-          
-          <!-- No Chat Selected -->
-          <div v-else class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">Select a Chat</h3>
-              <p class="text-gray-600">Choose a conversation from the left to start chatting with customers</p>
-            </div>
-          </div>
+      <div class="flex-1 bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden flex min-h-0">
+        
+        <div :class="['w-full md:w-80 lg:w-96 border-r border-gray-100 flex flex-col bg-white', selectedChatId ? 'hidden md:flex' : 'flex']">
+           
+           <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+              <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Conversations</h3>
+              <span class="bg-[#3ED400] text-white text-[10px] font-bold px-2 py-1 rounded-full">{{ activeChats.length }} Active</span>
+           </div>
+
+           <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+              
+              <div v-if="loading" class="p-4 text-center text-gray-400 text-sm">Loading chats...</div>
+              
+              <div v-else-if="activeChats.length === 0" class="flex flex-col items-center justify-center h-64 text-center px-6">
+                 <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-300">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                 </div>
+                 <p class="text-gray-500 font-medium">No active conversations</p>
+                 <p class="text-xs text-gray-400 mt-1">Chats appear when you accept an order.</p>
+              </div>
+
+              <div 
+                v-for="chat in activeChats" 
+                :key="chat.id" 
+                @click="selectChat(chat)"
+                class="relative p-4 rounded-xl cursor-pointer transition-all duration-200 border group hover:bg-gray-50"
+                :class="selectedChatId === chat.id ? 'bg-green-50 border-[#3ED400]' : 'bg-white border-transparent hover:border-gray-200'"
+              >
+                 <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                       <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg border-2 border-white shadow-sm overflow-hidden">
+                          <span v-if="!chat.customerAvatar">{{ chat.customerName ? chat.customerName.charAt(0).toUpperCase() : 'C' }}</span>
+                          <img v-else :src="chat.customerAvatar" class="w-full h-full object-cover" />
+                       </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                       <div class="flex justify-between items-baseline mb-0.5">
+                          <h4 class="font-bold text-gray-900 truncate text-sm" :class="{'text-[#3ED400]': selectedChatId === chat.id}">{{ chat.customerName || 'Customer' }}</h4>
+                          <span class="text-[10px] text-gray-400 shrink-0">{{ formatChatTime(chat.lastMessageAt) }}</span>
+                       </div>
+                       <p class="text-xs text-gray-500 truncate pr-2">{{ chat.lastMessage || 'No messages yet' }}</p>
+                       <p class="text-[10px] text-gray-400 mt-1 font-mono">Order #{{ chat.orderId ? chat.orderId.substring(0,8).toUpperCase() : 'N/A' }}</p>
+                    </div>
+                    <div v-if="chat.unreadCount && chat.unreadCount[currentDriverId] > 0" class="shrink-0">
+                       <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">{{ chat.unreadCount[currentDriverId] }}</span>
+                    </div>
+                 </div>
+              </div>
+
+           </div>
         </div>
+
+        <div :class="['flex-1 flex flex-col bg-white relative', !selectedChatId ? 'hidden md:flex' : 'flex']">
+           
+           <div v-if="selectedChatId" class="md:hidden px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-white shadow-sm z-20">
+              <button @click="selectedChatId = null" class="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-600">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              </button>
+              <div class="flex items-center gap-3">
+                 <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs border border-white shadow-sm overflow-hidden">
+                    <img v-if="selectedChatPartner?.avatar" :src="selectedChatPartner.avatar" class="w-full h-full object-cover"/>
+                    <span v-else>{{ selectedChatPartner?.name?.charAt(0) || 'C' }}</span>
+                 </div>
+                 <h3 class="font-bold text-gray-900 text-sm">{{ selectedChatPartner?.name || 'Customer' }}</h3>
+              </div>
+           </div>
+
+           <div v-if="!selectedChatId" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-gray-50/50">
+              <div class="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-6 animate-in zoom-in-95 duration-500">
+                 <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-800 mb-2">Select a Conversation</h2>
+              <p class="text-gray-500 max-w-sm">Choose a customer from the sidebar to start chatting about their order.</p>
+           </div>
+
+           <div v-else class="flex-1 overflow-hidden relative bg-white">
+              <ChatWindow
+                 :chat-id="selectedChatId"
+                 :order-id="selectedOrderId"
+                 :chat-partner="selectedChatPartner"
+                 :is-driver="true"
+                 class="h-full w-full"
+              />
+           </div>
+
+        </div>
+
       </div>
     </div>
   </div>
@@ -95,9 +116,7 @@ import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/fire
 
 export default {
   name: 'DriverChat',
-  components: {
-    ChatWindow
-  },
+  components: { ChatWindow },
   setup() {
     const authStore = useAuthStore()
     return { authStore }
@@ -113,165 +132,106 @@ export default {
     }
   },
   computed: {
-    currentDriverId() {
-      return this.authStore.user?.uid
-    }
+    currentDriverId() { return this.authStore.user?.uid }
   },
   async mounted() {
     await this.loadActiveChats()
-    
-    // Check if orderId is provided in query params
     const orderId = this.$route.query.orderId
     if (orderId) {
-      // Wait for chats to load, then select the chat for this order
       this.$nextTick(() => {
-        const chatForOrder = this.activeChats.find(chat => chat.orderId === orderId)
-        if (chatForOrder) {
-          this.selectChat(chatForOrder)
-        }
+        const chat = this.activeChats.find(c => c.orderId === orderId)
+        if (chat) this.selectChat(chat)
       })
     }
   },
   beforeUnmount() {
-    if (this.unsubscribeOrders) {
-      this.unsubscribeOrders()
-    }
-    chatService.unsubscribe(`driver_chats_${this.currentDriverId}`)
+    if (this.unsubscribeOrders) this.unsubscribeOrders()
+    // chatService.unsubscribe logic if applicable
   },
   methods: {
     async loadActiveChats() {
       try {
         this.loading = true
-        
-        if (!this.currentDriverId) {
-          console.error('No driver ID found')
-          return
-        }
+        if (!this.currentDriverId) return
 
-        console.log('[v0] Loading orders for driver:', this.currentDriverId)
-        
-        // Query orders assigned to this driver with real-time updates (without orderBy to avoid index)
-        const ordersQuery = query(
+        const q = query(
           collection(db, 'orders'),
           where('driverId', '==', this.currentDriverId),
           where('status', 'in', ['driver_assigned', 'in_transit', 'on_the_way', 'arrived'])
         )
         
-        // Subscribe to real-time updates
-        this.unsubscribeOrders = onSnapshot(ordersQuery, async (snapshot) => {
-          console.log('[v0] Orders snapshot received, count:', snapshot.size)
-          
-          const chatsPromises = snapshot.docs.map(async (orderDoc) => {
-            const order = { id: orderDoc.id, ...orderDoc.data() }
-            
-            try {
-              // Get or create chat room for this order
-              const chatRoomId = await chatService.createChatRoom(
-                order.userId,
-                this.currentDriverId,
-                order.id
-              )
-              
-              // Get customer information
-              const customerDoc = await getDoc(doc(db, 'users', order.userId))
-              const customerData = customerDoc.exists() ? customerDoc.data() : {}
-              
-              // Get chat data to check for unread messages
-              const chatDoc = await getDoc(doc(db, 'chats', chatRoomId))
-              const chatData = chatDoc.exists() ? chatDoc.data() : {}
-              
-              return {
-                id: chatRoomId,
-                orderId: order.id,
-                userId: order.userId,
-                driverId: this.currentDriverId,
-                customerName: customerData.firstName && customerData.lastName 
-                  ? `${customerData.firstName} ${customerData.lastName}`
-                  : 'Customer',
-                customerPhone: customerData.contact,
-                lastMessage: chatData.lastMessage || null,
-                lastMessageAt: chatData.lastMessageAt || order.createdAt,
-                unreadCount: chatData.unreadCount || {},
-                order: order
-              }
-            } catch (error) {
-              console.error('[v0] Error processing order:', order.id, error)
-              return null
-            }
+        this.unsubscribeOrders = onSnapshot(q, async (snapshot) => {
+          const chatPromises = snapshot.docs.map(async (orderDoc) => {
+             const order = { id: orderDoc.id, ...orderDoc.data() }
+             try {
+                // Get chat room
+                const roomId = await chatService.createChatRoom(order.userId, this.currentDriverId, order.id)
+                
+                // Get customer details
+                const customerDoc = await getDoc(doc(db, 'users', order.userId))
+                const customer = customerDoc.exists() ? customerDoc.data() : {}
+                
+                // Get chat metadata (last message)
+                const chatDoc = await getDoc(doc(db, 'chats', roomId))
+                const chatMeta = chatDoc.exists() ? chatDoc.data() : {}
+
+                return {
+                   id: roomId,
+                   orderId: order.id,
+                   userId: order.userId,
+                   driverId: this.currentDriverId,
+                   customerName: customer.firstName ? `${customer.firstName} ${customer.lastName}` : 'Customer',
+                   customerPhone: customer.contact,
+                   customerAvatar: customer.photoURL || customer.profilePictureUrl || null,
+                   lastMessage: chatMeta.lastMessage || null,
+                   lastMessageAt: chatMeta.lastMessageAt || order.createdAt,
+                   unreadCount: chatMeta.unreadCount || {},
+                   order: order
+                }
+             } catch (e) { return null }
           })
           
-          const chats = (await Promise.all(chatsPromises)).filter(chat => chat !== null)
-          
+          const results = (await Promise.all(chatPromises)).filter(c => c !== null)
           // Sort by last message time
-          chats.sort((a, b) => {
-            const timeA = a.lastMessageAt?.toMillis?.() || 0
-            const timeB = b.lastMessageAt?.toMillis?.() || 0
-            return timeB - timeA
+          results.sort((a,b) => {
+             const tA = a.lastMessageAt?.toMillis?.() || 0
+             const tB = b.lastMessageAt?.toMillis?.() || 0
+             return tB - tA
           })
           
-          this.activeChats = chats
-          console.log('[v0] Active chats loaded:', chats.length)
-          
-          // Check if orderId is in query params and select that chat
-          const orderId = this.$route.query.orderId
-          if (orderId) {
-            const chatForOrder = chats.find(chat => chat.orderId === orderId)
-            if (chatForOrder) {
-              this.selectChat(chatForOrder)
-            } else if (!this.selectedChatId && chats.length > 0) {
-              // Fallback to first chat if order chat not found
-              this.selectChat(chats[0])
-            }
-          } else if (!this.selectedChatId && chats.length > 0) {
-          // Auto-select first chat if none selected and chats exist
-            this.selectChat(chats[0])
-          }
-        }, (error) => {
-          // Silently handle all errors - queries work without indexes, errors are expected
-          // Don't log to console to keep it clean
+          this.activeChats = results
+          this.loading = false
         })
-        
-      } catch (error) {
-        console.error('[v0] Error loading active chats:', error)
-      } finally {
-        this.loading = false
-      }
+      } catch (e) { console.error(e); this.loading = false }
     },
-
     async selectChat(chat) {
-      this.selectedChatId = chat.id
-      this.selectedOrderId = chat.orderId
-      
-      // Set chat partner info
-      this.selectedChatPartner = {
-        id: chat.userId,
-        name: chat.customerName,
-        role: 'user',
-        phone: chat.customerPhone
-      }
-      
-      // Mark messages as read
-      try {
-        await chatService.markMessagesAsRead(chat.id, this.currentDriverId)
-      } catch (error) {
-        console.error('Error marking messages as read:', error)
-      }
+       this.selectedChatId = chat.id
+       this.selectedOrderId = chat.orderId
+       this.selectedChatPartner = {
+          id: chat.userId,
+          name: chat.customerName,
+          role: 'user',
+          phone: chat.customerPhone,
+          avatar: chat.customerAvatar
+       }
+       try { await chatService.markMessagesAsRead(chat.id, this.currentDriverId) } catch(e){}
     },
-
-    formatChatTime(timestamp) {
-      if (!timestamp) return ''
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-      const now = new Date()
-      const diffInHours = (now - date) / (1000 * 60 * 60)
-
-      if (diffInHours < 1) {
-        return 'Just now'
-      } else if (diffInHours < 24) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      } else {
-        return date.toLocaleDateString()
-      }
+    formatChatTime(ts) {
+       if(!ts) return ''
+       const d = ts.toDate ? ts.toDate() : new Date(ts)
+       const now = new Date()
+       const diff = (now - d) / (1000 * 60 * 60)
+       if(diff < 1) return 'Just now'
+       if(diff < 24) return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+       return d.toLocaleDateString()
     }
   }
 }
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 20px; }
+.custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #d1d5db; }
+</style>

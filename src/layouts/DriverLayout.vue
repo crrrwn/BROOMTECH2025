@@ -1,231 +1,196 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="flex">
-      <!-- Sidebar -->
-      <div class="w-64 bg-white shadow-lg">
-        <div class="p-6">
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-lg">B</span>
-            </div>
-            <span class="text-xl font-bold text-gray-900">BroomTech</span>
-          </div>
-          <div class="mt-4">
-            <span class="text-sm text-gray-500">Driver Portal</span>
-          </div>
-        </div>
-        
-        <!-- Online/Offline Toggle -->
-        <div class="px-6 pb-4">
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span class="text-sm font-medium text-gray-700">Status</span>
-            <button 
-              @click="handleToggleStatus"
-              :disabled="!userLoaded"
-              :class="[
-                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                driverStore.isOnline ? 'bg-primary' : 'bg-gray-300',
-                !userLoaded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-              ]"
-            >
-              <span 
-                :class="[
-                  'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                  driverStore.isOnline ? 'translate-x-6' : 'translate-x-1'
-                ]"
-              />
-            </button>
-          </div>
-          <p class="text-xs text-gray-500 mt-1">
-            {{ userLoaded ? (driverStore.isOnline ? 'You are online and available for bookings' : 'You are offline') : 'Loading status...' }}
-          </p>
-        </div>
-        
-        <nav class="mt-2">
-          <div class="px-6 py-2">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>
-          </div>
-          
-          <div class="mt-2 space-y-1">
-            <button
-              @click="toggleLocationTracking"
-              class="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors text-left"
-              :class="isTrackingLocation ? 'bg-blue-100 text-blue-700' : ''"
-              title="Toggle location tracking"
-            >
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              <span>{{ isTrackingLocation ? 'Tracking Active' : 'Use My Location' }}</span>
-            </button>
-            
-            <router-link to="/driver" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-              </svg>
-              Dashboard
-            </router-link>
-            
-            <router-link to="/driver/assignments" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-              My Assignments
-              <span v-if="activeAssignmentsCount > 0" class="ml-auto bg-primary text-white text-xs rounded-full px-2 py-1">
-                {{ activeAssignmentsCount }}
-              </span>
-            </router-link>
-            
-            <!-- Updated menu item from "Upload Proof & Payment" to "Remit Payment" -->
-            <router-link to="/driver/remit" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-              </svg>
-              Remit Payment
-            </router-link>
-            
-            <router-link to="/driver/profile" class="flex items-center px-6 py-3 text-gray-700 hover:bg-primary hover:text-white transition-colors" active-class="bg-primary text-white">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              Profile
-            </router-link>
-          </div>
-          
-          <div class="mt-8 px-6">
-            <button @click="logout" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-              </svg>
-              Logout
-            </button>
-          </div>
-        </nav>
-      </div>
+  <div class="flex h-screen bg-gray-50 font-sans overflow-hidden">
+    
+    <transition enter-active-class="transition-opacity ease-linear duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity ease-linear duration-300" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div 
+        v-if="isSidebarOpen" 
+        @click="isSidebarOpen = false" 
+        class="fixed inset-0 bg-black/50 z-20 md:hidden"
+      ></div>
+    </transition>
+
+    <aside 
+      :class="[
+        'fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-100 flex flex-col shadow-xl transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:shadow-none',
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      ]"
+    >
       
-      <!-- Main content -->
-      <div class="flex-1">
-        <!-- Top bar -->
-        <header class="bg-white shadow-sm border-b">
-          <div class="px-6 py-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-4">
-                <h1 class="text-2xl font-semibold text-gray-900">{{ pageTitle }}</h1>
-                <div class="flex items-center space-x-2">
-                  <div :class="[
-                    'w-3 h-3 rounded-full',
-                    driverStore.isOnline ? 'bg-green-500' : 'bg-gray-400'
-                  ]"></div>
-                  <span class="text-sm text-gray-600">{{ driverStore.isOnline ? 'Online' : 'Offline' }}</span>
-                </div>
-              </div>
-              
-              <div class="flex items-center space-x-4">
-                <!-- Notifications Icon -->
-                <div class="relative">
-                  <button
-                    @click="showNotifications = !showNotifications"
-                    class="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span
-                      v-if="unreadCount > 0"
-                      class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
-                    >
-                      {{ unreadCount > 9 ? '9+' : unreadCount }}
-                    </span>
-                  </button>
-                  
-                  <!-- Notifications Modal -->
-                  <div
-                    v-if="showNotifications"
-                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    @click.self="showNotifications = false"
-                  >
-                    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col shadow-xl">
-                      <div class="p-4 border-b bg-gray-50 flex items-center justify-between sticky top-0 bg-white z-10">
-                        <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
-                        <div class="flex items-center gap-3">
-                          <button
-                            v-if="notifications.length > 0 && unreadCount > 0"
-                            @click="markAllAsRead"
-                            class="text-sm text-primary hover:text-primary-dark font-medium"
-                          >
-                            Mark all as read
-                          </button>
-                          <button
-                            @click="showNotifications = false"
-                            class="text-gray-500 hover:text-gray-700"
-                          >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div class="overflow-y-auto flex-1 p-4">
-                        <div v-if="loadingNotifications" class="text-center py-8 text-gray-500">
-                          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                          <p>Loading notifications...</p>
-                        </div>
-                        <div v-else-if="notifications.length === 0" class="text-center py-8 text-gray-500">
-                          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                          </svg>
-                          <p class="text-lg font-medium">No notifications</p>
-                          <p class="text-sm mt-2">You're all caught up!</p>
-                        </div>
-                        <div v-else class="space-y-2">
-                          <div
-                            v-for="notification in notifications"
-                            :key="notification.id"
-                            @click="markAsRead(notification)"
-                            :class="[
-                              'p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors',
-                              !notification.read ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
-                            ]"
-                          >
-                            <div class="flex items-start space-x-3">
-                              <div class="flex-shrink-0">
-                                <div :class="[
-                                  'w-3 h-3 rounded-full mt-2',
-                                  !notification.read ? 'bg-primary' : 'bg-gray-300'
-                                ]"></div>
-                              </div>
-                              <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900">{{ notification.title || 'Notification' }}</p>
-                                <p class="text-sm text-gray-600 mt-1">{{ notification.message || notification.body || '' }}</p>
-                                <p class="text-xs text-gray-400 mt-2">{{ formatDate(notification.createdAt) }}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="flex items-center space-x-2">
-                  <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">{{ driverInitials }}</span>
-                  </div>
-                  <span class="text-gray-700">{{ driverName }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-        
-        <!-- Page content -->
-        <main class="p-6">
-          <router-view />
-        </main>
+      <div class="h-20 flex items-center px-8 border-b border-gray-50 justify-between">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-xl flex items-center justify-center shadow-lg text-white font-extrabold text-xl">B</div>
+          <span class="ml-3 text-xl font-bold text-gray-800 tracking-tight">BroomTech</span>
+        </div>
+        <button @click="isSidebarOpen = false" class="md:hidden text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
       </div>
+
+      <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Main Menu</p>
+        
+        <router-link 
+          to="/driver" 
+          @click="isSidebarOpen = false"
+          class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
+          active-class="bg-green-50 text-[#3ED400]"
+        >
+          <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          Dashboard
+        </router-link>
+
+        <router-link 
+          to="/driver/assignments" 
+          @click="isSidebarOpen = false"
+          class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
+          active-class="bg-green-50 text-[#3ED400]"
+        >
+          <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002 2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+          Assignments
+          <span v-if="activeAssignmentsCount > 0" class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ activeAssignmentsCount }}</span>
+        </router-link>
+
+        <router-link 
+          to="/driver/chat" 
+          @click="isSidebarOpen = false"
+          class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
+          active-class="bg-green-50 text-[#3ED400]"
+        >
+          <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          Messages
+        </router-link>
+
+        <router-link 
+          to="/driver/remit" 
+          @click="isSidebarOpen = false"
+          class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
+          active-class="bg-green-50 text-[#3ED400]"
+        >
+           <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+           Remit Payment
+        </router-link>
+
+        <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mt-6 mb-2">Settings</p>
+        
+        <router-link 
+          to="/driver/profile" 
+          @click="isSidebarOpen = false"
+          class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
+          active-class="bg-green-50 text-[#3ED400]"
+        >
+          <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          My Profile
+        </router-link>
+
+        <button 
+          @click="toggleLocationTracking(); isSidebarOpen = false" 
+          :class="['w-full flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group', isTrackingLocation ? 'text-blue-600 bg-blue-50' : '']"
+        >
+           <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" :class="isTrackingLocation ? 'animate-pulse text-blue-600' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+           {{ isTrackingLocation ? 'Tracking Active' : 'Enable Tracking' }}
+        </button>
+      </nav>
+
+      <div class="p-4 border-t border-gray-100 bg-gray-50/50">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+           <p class="text-xs font-bold text-gray-400 uppercase mb-3">Availability Status</p>
+           
+           <button 
+             @click="handleToggleStatus"
+             :disabled="!userLoaded"
+             class="relative w-full h-12 rounded-full transition-all duration-300 shadow-inner group overflow-hidden"
+             :class="driverStore.isOnline ? 'bg-[#3ED400]' : 'bg-gray-200'"
+           >
+             <div class="absolute inset-y-0 left-0 px-4 flex items-center text-xs font-bold text-white uppercase tracking-wider" v-if="driverStore.isOnline">Online</div>
+             <div class="absolute inset-y-0 right-0 px-4 flex items-center text-xs font-bold text-gray-500 uppercase tracking-wider" v-else>Offline</div>
+             
+             <div 
+                class="absolute top-1 bottom-1 w-10 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center"
+                :class="driverStore.isOnline ? 'translate-x-[calc(190px-48px)]' : 'translate-x-1 left-0'"
+                style="/* fallback for translate calculation if needed */"
+             >
+                <div class="w-2 h-2 rounded-full" :class="driverStore.isOnline ? 'bg-[#3ED400]' : 'bg-gray-400'"></div>
+             </div>
+           </button>
+           <p class="text-[10px] text-gray-400 mt-2 font-medium">{{ userLoaded ? (driverStore.isOnline ? 'Visible to customers' : 'Currently offline') : 'Loading...' }}</p>
+        </div>
+        
+        <button @click="logout" class="w-full mt-4 flex items-center justify-center px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+           Sign Out
+        </button>
+      </div>
+
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden relative">
+      
+      <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 z-10 shrink-0">
+         
+         <div class="md:hidden flex items-center">
+            <button @click="isSidebarOpen = true" class="p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+               <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <span class="ml-3 font-bold text-lg text-gray-800">BroomTech</span>
+         </div>
+
+         <h2 class="hidden md:block text-2xl font-extrabold text-gray-900 tracking-tight">{{ pageTitle }}</h2>
+
+         <div class="flex items-center gap-4">
+           
+            <div class="relative">
+               <button @click="showNotifications = !showNotifications" class="relative p-2.5 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                  <span v-if="unreadCount > 0" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>
+               </button>
+
+               <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
+                  <div v-if="showNotifications" class="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 overflow-hidden" @click.stop>
+                     <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                        <span class="text-sm font-bold text-gray-700">Notifications</span>
+                        <button v-if="unreadCount > 0" @click="markAllAsRead" class="text-xs font-bold text-[#3ED400] hover:text-[#32b000]">Mark all read</button>
+                     </div>
+                     <div class="max-h-80 overflow-y-auto">
+                        <div v-if="loadingNotifications" class="p-6 text-center"><div class="animate-spin w-6 h-6 border-2 border-gray-200 border-t-[#3ED400] rounded-full mx-auto"></div></div>
+                        <div v-else-if="notifications.length === 0" class="p-8 text-center text-gray-400 text-sm">No new notifications</div>
+                        <div v-else>
+                           <div v-for="notif in notifications" :key="notif.id" @click="markAsRead(notif)" :class="['px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors flex gap-3', !notif.read ? 'bg-blue-50/30' : '']">
+                              <div :class="['w-2 h-2 rounded-full mt-2 shrink-0', !notif.read ? 'bg-blue-500' : 'bg-gray-200']"></div>
+                              <div>
+                                 <p class="text-sm font-bold text-gray-800">{{ notif.title || 'Update' }}</p>
+                                 <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ notif.message || notif.body }}</p>
+                                 <p class="text-[10px] text-gray-400 mt-1">{{ formatDate(notif.createdAt) }}</p>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </transition>
+            </div>
+
+            <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
+               <div class="text-right hidden sm:block">
+                  <p class="text-sm font-bold text-gray-900 leading-tight">{{ driverName }}</p>
+                  <p class="text-xs text-gray-500 font-medium">Driver</p>
+               </div>
+               <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#74E600] to-[#00C851] flex items-center justify-center text-white font-bold text-sm shadow-md cursor-pointer hover:shadow-lg transition-shadow">
+                  {{ driverInitials }}
+               </div>
+            </div>
+
+         </div>
+      </header>
+
+      <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50">
+         <router-view v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+               <component :is="Component" />
+            </transition>
+         </router-view>
+      </main>
+
     </div>
+
   </div>
 </template>
 
@@ -244,6 +209,10 @@ export default {
   },
   data() {
     return {
+      // Added for the new design's mobile menu
+      isSidebarOpen: false, 
+      
+      // Existing data from your code
       userLoaded: false,
       availableBookingsCount: 3,
       activeAssignmentsCount: 1,
@@ -571,3 +540,8 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

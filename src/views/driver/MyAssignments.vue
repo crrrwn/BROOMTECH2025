@@ -1,467 +1,353 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-semibold text-gray-900">My Assignments</h1>
-        <p class="text-gray-600">View and manage your assigned deliveries</p>
-      </div>
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-2">
-          <div :class="[
-            'w-3 h-3 rounded-full',
-            isOnline ? 'bg-green-500' : 'bg-gray-400'
-          ]"></div>
-          <span class="text-sm font-medium"
-                :class="isOnline ? 'text-green-600' : 'text-gray-500'">
-            {{ isOnline ? 'Online' : 'Offline' }}
-          </span>
-        </div>
-        <button
-          @click="refreshBookings"
-          class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-        >
-          Refresh
-        </button>
-      </div>
-    </div>
+  <div class="min-h-screen w-full bg-gray-50/50 overflow-x-hidden font-sans pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 md:space-y-8">
 
-    <!-- Weather Status Banner for Drivers -->
-    <div v-if="isBadWeather && badWeatherFeeEnabled"
-         class="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-yellow-600" fill="currentColor"
-               viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a 1 1 0 00-1-1z"
-              clip-rule="evenodd"
-            />
-          </svg>
+      <div class="relative overflow-hidden bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg text-white transform transition hover:scale-[1.005] duration-500">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 md:w-64 md:h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div class="flex items-center space-x-3 mb-2">
+              <div class="w-fit p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+              </div>
+              <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">My Assignments</h1>
+            </div>
+            <p class="text-[#e6ffcc] text-base font-medium ml-1">Manage your deliveries and tasks.</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl border border-white/30 shadow-sm">
+              <div :class="['w-3 h-3 rounded-full shadow-inner', isOnline ? 'bg-[#3ED400] shadow-[0_0_8px_#3ED400]' : 'bg-gray-400']"></div>
+              <span class="text-sm font-bold tracking-wide">{{ isOnline ? 'ONLINE' : 'OFFLINE' }}</span>
+            </div>
+
+            <button @click="refreshBookings" 
+                    class="p-2 bg-white text-[#00C851] rounded-xl hover:bg-gray-50 transition-colors shadow-lg group">
+              <svg class="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+          </div>
         </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-yellow-800">
-            Bad Weather Alert: {{ currentWeather }} - All bookings include ₱5 surcharge
+      </div>
+
+      <div v-if="isBadWeather && badWeatherFeeEnabled" class="bg-yellow-50/90 backdrop-blur-sm border-l-4 border-yellow-500 p-4 rounded-xl shadow-sm flex items-start gap-3">
+        <div class="flex-shrink-0 p-1 bg-yellow-100 rounded-full">
+          <svg class="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a 1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-yellow-800">Bad Weather Alert</p>
+          <p class="text-xs text-yellow-700 mt-0.5">
+            Current condition: {{ currentWeather }}. All bookings include a ₱5 surcharge.
           </p>
         </div>
       </div>
-    </div>
 
-    <!-- Tabs: Active and History -->
-    <div class="bg-white rounded-lg shadow-sm border">
-      <div class="border-b border-gray-200">
-        <nav class="flex -mb-px">
-          <button
-            @click="activeTab = 'active'"
-            :class="[
-              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'active' 
-                ? 'border-primary text-primary' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            ]"
-          >
-            Active
+      <div class="flex flex-col gap-6">
+        
+        <div class="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 shadow-sm w-full md:w-fit flex self-center md:self-start">
+          <button @click="activeTab = 'active'"
+                  :class="['flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300', activeTab === 'active' ? 'bg-gradient-to-r from-[#74E600] to-[#00C851] text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']">
+            Active Tasks
           </button>
-          <button
-            @click="activeTab = 'history'"
-            :class="[
-              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'history' 
-                ? 'border-primary text-primary' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            ]"
-          >
+          <button @click="activeTab = 'history'"
+                  :class="['flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300', activeTab === 'history' ? 'bg-gradient-to-r from-[#74E600] to-[#00C851] text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']">
             History
           </button>
-        </nav>
-      </div>
-    </div>
+        </div>
 
-    <!-- Filters (only show for Active tab) -->
-    <div v-if="activeTab === 'active'" class="bg-white rounded-lg p-4 shadow-sm border">
-      <div class="flex flex-wrap gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select v-model="filters.status"
-                  class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary">
-            <option value="">All Status</option>
-            <option value="driver_assigned">Assigned</option>
-            <option value="picked_up">Picked Up</option>
-            <option value="in_transit">In Transit</option>
-            <option value="arrived">Arrived</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
-          <select v-model="filters.serviceType"
-                  class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary">
-            <option value="">All Services</option>
-            <option value="food-delivery">Food Delivery</option>
-            <option value="grocery">Grocery Shopping</option>
-            <option value="pickup-drop">Pick-up & Drop</option>
-            <option value="bill-payment">Bill Payment</option>
-            <option value="medicine">Medicine Delivery</option>
-            <option value="gift">Surprise Gift</option>
-          </select>
-        </div>
-        <!-- Add Payment Method filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-          <select v-model="filters.paymentMethod"
-                  class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary">
-            <option value="">All Methods</option>
-            <option value="GCASH">GCash</option>
-            <option value="COD">Cash on Delivery</option>
-          </select>
+        <div v-if="activeTab === 'active'" class="bg-white/80 backdrop-blur-md p-5 rounded-2xl shadow-lg border border-white/50 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="relative">
+            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+            <div class="relative">
+              <select v-model="filters.status" class="w-full pl-4 pr-10 py-3 bg-gray-50 border-transparent focus:bg-white border-2 hover:border-gray-200 focus:border-[#3ED400] rounded-xl focus:ring-0 font-medium text-gray-700 transition-all appearance-none cursor-pointer">
+                <option value="">All Status</option>
+                <option value="driver_assigned">Assigned</option>
+                <option value="picked_up">Picked Up</option>
+                <option value="in_transit">In Transit</option>
+                <option value="arrived">Arrived</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Service</label>
+            <div class="relative">
+              <select v-model="filters.serviceType" class="w-full pl-4 pr-10 py-3 bg-gray-50 border-transparent focus:bg-white border-2 hover:border-gray-200 focus:border-[#3ED400] rounded-xl focus:ring-0 font-medium text-gray-700 transition-all appearance-none cursor-pointer">
+                <option value="">All Services</option>
+                <option value="food-delivery">Food Delivery</option>
+                <option value="grocery">Grocery Shopping</option>
+                <option value="pickup-drop">Pick-up & Drop</option>
+                <option value="bill-payment">Bill Payment</option>
+                <option value="medicine">Medicine Delivery</option>
+                <option value="gift">Surprise Gift</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Payment</label>
+            <div class="relative">
+              <select v-model="filters.paymentMethod" class="w-full pl-4 pr-10 py-3 bg-gray-50 border-transparent focus:bg-white border-2 hover:border-gray-200 focus:border-[#3ED400] rounded-xl focus:ring-0 font-medium text-gray-700 transition-all appearance-none cursor-pointer">
+                <option value="">All Methods</option>
+                <option value="GCASH">GCash</option>
+                <option value="COD">Cash on Delivery</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Active Bookings List -->
-    <div v-if="activeTab === 'active'" class="space-y-4">
-      <div v-for="booking in activeBookings"
-           :key="booking.id"
-           class="bg-white rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <div class="flex items-center space-x-3 mb-3">
-              <div :class="[
-                'w-12 h-12 rounded-lg flex items-center justify-center',
-                getServiceColor(booking.serviceType)
-              ]">
-                <component :is="getServiceIcon(booking.serviceType)"
-                           class="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">
-                  {{ booking.serviceName || booking.serviceTitle }}
-                </h3>
-                <p class="text-sm text-gray-500">
-                  {{ booking.customerName }} • {{ formatDate(booking.createdAt) }}
-                </p>
-              </div>
-              <button
-                @click="openChat(booking)"
-                class="ml-auto p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Chat with customer"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor"
-                     viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-              </button>
+      <div class="space-y-6">
+        
+        <template v-if="activeTab === 'active'">
+          <div v-if="activeBookings.length === 0" class="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-200">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <p class="text-sm font-medium text-gray-700">Pickup Location</p>
-                <p class="text-sm text-gray-600">
-                  {{ booking.pickupAddress || getPickupLocation(booking) }}
-                </p>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-700">Drop-off Location</p>
-                <p class="text-sm text-gray-600">
-                  {{ booking.deliveryAddress || getDeliveryLocation(booking) }}
-                </p>
-              </div>
-            </div>
-            <!-- Payment Method display badge - now properly shows actual payment method from Firestore -->
-            <div class="mb-4 flex items-center gap-2">
-              <span :class="getStatusBadgeClass(booking.status)"
-                    class="px-3 py-1 text-xs font-medium rounded-full">
-                {{ formatStatus(booking.status) }}
-              </span>
-              <!-- Display payment method from booking data -->
-              <span v-if="booking.paymentMethod && booking.paymentMethod.trim()"
-                    :class="getPaymentMethodBadge(booking.paymentMethod)"
-                    class="px-3 py-1 text-xs font-medium rounded-full">
-                {{ formatPaymentMethod(booking.paymentMethod) }}
-              </span>
-              <!-- Fallback: show placeholder if payment method is missing -->
-              <span v-else class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                💳 Payment Pending
-              </span>
-            </div>
-            <div v-if="booking.notes"
-                 class="bg-gray-50 rounded-lg p-3 mb-4">
-              <p class="text-sm text-gray-700">
-                <strong>Notes:</strong> {{ booking.notes }}
-              </p>
-            </div>
+            <h3 class="text-xl font-bold text-gray-800">No Active Assignments</h3>
+            <p class="text-gray-500 mt-2 text-sm">{{ isOnline ? 'Waiting for new tasks...' : 'Go online to receive tasks.' }}</p>
+          </div>
+
+          <div v-for="booking in activeBookings" :key="booking.id" 
+               class="bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-300 group relative">
             
-            <!-- Additional Orders Section -->
-            <div v-if="booking.additionalOrders && booking.additionalOrders.length > 0" class="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-200">
-              <h4 class="text-sm font-semibold text-gray-900 mb-2">Additional Orders ({{ booking.additionalOrders.length }})</h4>
-              <div class="space-y-2">
-                <div v-for="(additionalOrder, index) in booking.additionalOrders" :key="index" class="bg-white p-2 rounded border border-blue-200">
-                  <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                      <p class="text-xs font-medium text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</p>
-                      <p class="text-xs text-gray-500 mt-1">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing?.total || 55).toFixed(2) }}</p>
+            <div class="h-1.5 w-full bg-gradient-to-r from-[#3ED400] to-[#A8EB12]"></div>
+
+            <div class="p-6 md:p-8">
+              <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+                <div class="flex items-center gap-4">
+                  <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg text-white transform group-hover:scale-110 transition-transform', getServiceColor(booking.serviceType)]">
+                    <component :is="getServiceIcon(booking.serviceType)" class="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-black text-gray-800 leading-tight">
+                      {{ booking.serviceName || booking.serviceTitle }}
+                    </h3>
+                    <p class="text-sm text-gray-500 font-medium flex items-center mt-1">
+                      <span class="font-bold text-gray-700 mr-1">{{ booking.customerName }}</span> • {{ formatDate(booking.createdAt) }}
+                    </p>
+                  </div>
+                </div>
+                
+                <button @click="openChat(booking)" 
+                        class="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors self-end md:self-start">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div class="relative pl-4 border-l-2 border-green-300">
+                  <div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-green-500"></div>
+                  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup</p>
+                  <p class="text-sm font-bold text-gray-800 line-clamp-2">
+                    {{ booking.pickupAddress || getPickupLocation(booking) }}
+                  </p>
+                </div>
+                <div class="relative pl-4 border-l-2 border-red-300">
+                  <div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-red-500"></div>
+                  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Drop-off</p>
+                  <p class="text-sm font-bold text-gray-800 line-clamp-2">
+                    {{ booking.deliveryAddress || getDeliveryLocation(booking) }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 mb-6">
+                <span :class="[getStatusBadgeClass(booking.status), 'px-3 py-1 text-xs font-extrabold uppercase tracking-wide rounded-lg border border-opacity-20']">
+                  {{ formatStatus(booking.status) }}
+                </span>
+                <span v-if="booking.paymentMethod && booking.paymentMethod.trim()"
+                      :class="[getPaymentMethodBadge(booking.paymentMethod), 'px-3 py-1 text-xs font-extrabold uppercase tracking-wide rounded-lg border border-opacity-20']">
+                  {{ formatPaymentMethod(booking.paymentMethod) }}
+                </span>
+                <span v-else class="px-3 py-1 text-xs font-extrabold uppercase tracking-wide rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
+                  Payment Pending
+                </span>
+              </div>
+
+              <div v-if="booking.notes" class="mb-6 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-xl border border-yellow-100 italic">
+                <span class="font-bold not-italic">Note:</span> {{ booking.notes }}
+              </div>
+
+              <div v-if="booking.additionalOrders && booking.additionalOrders.length > 0" class="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <h4 class="text-xs font-bold text-blue-800 uppercase tracking-widest mb-3">Additional Orders ({{ booking.additionalOrders.length }})</h4>
+                <div class="space-y-2">
+                  <div v-for="(additionalOrder, index) in booking.additionalOrders" :key="index" class="bg-white p-3 rounded-xl border border-blue-100 shadow-sm flex justify-between items-center">
+                    <div>
+                      <p class="text-sm font-bold text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</p>
+                      <p class="text-xs text-gray-500 font-medium">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing?.total || 55).toFixed(2) }}</p>
                     </div>
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-full" :class="
-                      additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                      additionalOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    ">
+                    <span :class="['px-2 py-1 text-[10px] font-bold uppercase rounded-lg', additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700']">
                       {{ additionalOrder.status || 'pending' }}
                     </span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div class="ml-6 text-right">
-            <div class="mb-4">
-              <!-- CHANGE: Use totalAmount directly from Firestore if available (saved from Set Items Total), otherwise calculate -->
-              <p class="text-2xl font-bold text-primary">
-                ₱{{ (booking.totalAmount || calculateFinalAmount(booking)).toFixed(2) }}
-              </p>
-              <p class="text-sm text-gray-500">Total Earnings</p>
-              <!-- CHANGE: Only show GCash fee note if payment method is GCash, not COD -->
-              <p v-if="booking.paymentMethod?.toUpperCase() !== 'COD'" class="text-xs text-gray-500 mt-1">
-                (includes ₱{{ calculateGCashFee(booking) }} GCash fee)
-              </p>
-              <p v-else class="text-xs text-gray-500 mt-1">
-                (Cash on Delivery - No GCash fee)
-              </p>
-            </div>
-            <div class="space-y-2">
-              <button
-                v-if="booking.status !== 'delivered'"
-                @click="startDelivery(booking)"
-                class="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium"
-              >
-                {{ booking.status === 'driver_assigned' ? 'Start Delivery' : 'In Progress' }}
-              </button>
-              <button
-                v-else
-                disabled
-                class="w-full bg-green-600 text-white px-4 py-2 rounded-lg cursor-not-allowed font-medium"
-              >
-                DELIVERED
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Empty State for Active -->
-    <div v-if="activeTab === 'active' && activeBookings.length === 0"
-         class="text-center py-12">
-      <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none"
-           stroke="currentColor"
-           viewBox="0 0 24 24">
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2m9 5a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 012-2z" />
-      </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Assignments</h3>
-      <p class="text-gray-600">
-        {{ isOnline ? 'You will see your assignments here' : 'Go online to receive assignments' }}
-      </p>
-    </div>
+              <div class="flex flex-col md:flex-row justify-between items-end gap-4 border-t border-gray-100 pt-6">
+                <div>
+                  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Earnings</p>
+                  <p class="text-3xl font-black text-[#3ED400]">
+                    ₱{{ (booking.totalAmount || calculateFinalAmount(booking)).toFixed(2) }}
+                  </p>
+                  <p v-if="booking.paymentMethod?.toUpperCase() !== 'COD'" class="text-[10px] font-bold text-gray-400 mt-1">
+                    (includes ₱{{ calculateGCashFee(booking) }} GCash fee)
+                  </p>
+                  <p v-else class="text-[10px] font-bold text-gray-400 mt-1">
+                    (Cash on Delivery)
+                  </p>
+                </div>
 
-    <!-- History Bookings List -->
-    <div v-if="activeTab === 'history'" class="space-y-4">
-      <div v-for="booking in historyBookings"
-           :key="booking.id"
-           class="bg-white rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <div class="flex items-center space-x-3 mb-3">
-              <div :class="[
-                'w-12 h-12 rounded-lg flex items-center justify-center',
-                getServiceColor(booking.serviceType)
-              ]">
-                <component :is="getServiceIcon(booking.serviceType)"
-                           class="w-6 h-6 text-white" />
+                <div class="w-full md:w-auto">
+                  <button v-if="booking.status !== 'delivered'"
+                          @click="startDelivery(booking)"
+                          class="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-bold rounded-xl shadow-lg hover:shadow-green-200 hover:-translate-y-0.5 transition-all">
+                    {{ booking.status === 'driver_assigned' ? 'Start Delivery' : 'View In Progress' }}
+                  </button>
+                  <button v-else disabled
+                          class="w-full md:w-auto px-8 py-3 bg-gray-100 text-green-600 font-bold rounded-xl border border-green-200 cursor-not-allowed">
+                    DELIVERED
+                  </button>
+                </div>
               </div>
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">
-                  {{ booking.serviceName || booking.serviceTitle }}
-                </h3>
-                <p class="text-sm text-gray-500">
-                  {{ booking.customerName }} • Delivered {{ formatDate(booking.deliveredAt || booking.createdAt) }}
-                </p>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <p class="text-sm font-medium text-gray-700">Pickup Location</p>
-                <p class="text-sm text-gray-600">
-                  {{ booking.pickupAddress || getPickupLocation(booking) }}
-                </p>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-700">Drop-off Location</p>
-                <p class="text-sm text-gray-600">
-                  {{ booking.deliveryAddress || getDeliveryLocation(booking) }}
-                </p>
-              </div>
-            </div>
-            <div class="mb-4 flex items-center gap-2">
-              <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                Delivered
-              </span>
-              <span v-if="booking.paymentMethod && booking.paymentMethod.trim()"
-                    :class="getPaymentMethodBadge(booking.paymentMethod)"
-                    class="px-3 py-1 text-xs font-medium rounded-full">
-                {{ formatPaymentMethod(booking.paymentMethod) }}
-              </span>
+
             </div>
           </div>
-          <div class="ml-6 text-right">
-            <div class="mb-4">
-              <p class="text-2xl font-bold text-primary">
-                ₱{{ (booking.totalAmount || calculateFinalAmount(booking)).toFixed(2) }}
-              </p>
-              <p class="text-sm text-gray-500">Total Earnings</p>
+        </template>
+
+        <template v-if="activeTab === 'history'">
+          <div v-if="historyBookings.length === 0" class="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-200">
+            <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h3 class="text-xl font-bold text-gray-800">No History Yet</h3>
+            <p class="text-gray-500 mt-2 text-sm">Completed deliveries will appear here.</p>
+          </div>
+
+          <div v-for="booking in historyBookings" :key="booking.id"
+               class="bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 transition-colors opacity-80 hover:opacity-100">
+            <div class="flex flex-col md:flex-row justify-between gap-4">
+              <div class="flex items-start gap-4">
+                <div :class="['w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm', getServiceColor(booking.serviceType)]">
+                  <component :is="getServiceIcon(booking.serviceType)" class="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900">{{ booking.serviceName || booking.serviceTitle }}</h3>
+                  <p class="text-xs text-gray-500 font-medium mt-1">
+                    {{ booking.customerName }} • Delivered {{ formatDate(booking.deliveredAt || booking.createdAt) }}
+                  </p>
+                  
+                  <div class="mt-3 flex gap-2">
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold uppercase rounded-md">Delivered</span>
+                    <span v-if="booking.paymentMethod" :class="[getPaymentMethodBadge(booking.paymentMethod), 'px-2 py-1 text-[10px] font-bold uppercase rounded-md']">
+                      {{ formatPaymentMethod(booking.paymentMethod) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-right">
+                <p class="text-xl font-black text-gray-800">₱{{ (booking.totalAmount || calculateFinalAmount(booking)).toFixed(2) }}</p>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Earnings</p>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
+
       </div>
 
-      <!-- Empty State for History -->
-      <div v-if="historyBookings.length === 0"
-           class="text-center py-12">
-        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none"
-             stroke="currentColor"
-             viewBox="0 0 24 24">
-          <path stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No Delivery History</h3>
-        <p class="text-gray-600">
-          Completed deliveries will appear here
-        </p>
-      </div>
     </div>
 
-    <!-- Start Delivery Modal -->
-    <div v-if="showStartDeliveryModal"
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="border-b p-6 flex items-center justify-between sticky top-0 bg-white">
-          <h2 class="text-xl font-semibold text-gray-900">Start Delivery</h2>
-          <button
-            @click="showStartDeliveryModal = false"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <svg class="w-6 h-6" fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12" />
-            </svg>
+    <div v-if="showStartDeliveryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 transform transition-all">
+        <div class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 p-6 flex justify-between items-center z-10">
+          <h2 class="text-2xl font-black text-gray-900">Start Delivery</h2>
+          <button @click="showStartDeliveryModal = false" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="p-6 space-y-4" v-if="selectedBooking">
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-600 mb-1">Pickup Location</p>
-            <p class="font-medium text-gray-900">
-              {{ selectedBooking.pickupAddress || getPickupLocation(selectedBooking) }}
-            </p>
-            <p class="text-sm text-gray-600 mt-3 mb-1">Drop-off Location</p>
-            <p class="font-medium text-gray-900">
-              {{ selectedBooking.deliveryAddress || getDeliveryLocation(selectedBooking) }}
-            </p>
-          </div>
-          <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <p class="text-sm text-gray-600 mb-2">Your Current Location</p>
-            <div id="currentLocationDisplay"
-                 class="text-sm font-medium text-gray-900">
-              <span v-if="currentLocation">
-                {{ currentLocation.lat.toFixed(4) }}, {{ currentLocation.lng.toFixed(4) }}
-              </span>
-              <span v-else class="text-gray-500">Getting location...</span>
+
+        <div class="p-6 space-y-6" v-if="selectedBooking">
+          <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
+            <div class="relative pl-6 border-l-2 border-gray-300 space-y-6">
+              <div class="relative">
+                <div class="absolute -left-[29px] top-0 w-3 h-3 rounded-full bg-green-500 ring-4 ring-white"></div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pickup Location</p>
+                <p class="font-bold text-gray-900">{{ selectedBooking.pickupAddress || getPickupLocation(selectedBooking) }}</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[29px] top-0 w-3 h-3 rounded-full bg-red-500 ring-4 ring-white"></div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Drop-off Location</p>
+                <p class="font-bold text-gray-900">{{ selectedBooking.deliveryAddress || getDeliveryLocation(selectedBooking) }}</p>
+              </div>
             </div>
           </div>
-          <button
-            @click="showNavigationMap"
-            class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2">
-            <svg class="w-5 h-5" fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Start Navigate</span>
+
+          <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-blue-500 uppercase tracking-wide mb-1">Current Location</p>
+              <div id="currentLocationDisplay" class="text-sm font-bold text-gray-800">
+                <span v-if="currentLocation">{{ currentLocation.lat.toFixed(4) }}, {{ currentLocation.lng.toFixed(4) }}</span>
+                <span v-else class="text-gray-400 italic">Acquiring location...</span>
+              </div>
+            </div>
+            <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </div>
+          </div>
+
+          <button @click="showNavigationMap"
+                  class="w-full py-4 bg-gray-900 text-white rounded-xl hover:bg-black transition-all font-bold flex items-center justify-center gap-2 shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+            Start Navigation
           </button>
-          <div class="space-y-2">
-            <button
-              @click="updateDeliveryStatus(selectedBooking, 'in_transit')"
-              class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+            <button @click="updateDeliveryStatus(selectedBooking, 'in_transit')"
+                    class="py-3 bg-blue-100 text-blue-700 font-bold rounded-xl hover:bg-blue-200 transition-colors">
               In Transit
             </button>
-            <button
-              @click="updateDeliveryStatus(selectedBooking, 'on_the_way')"
-              class="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
+            <button @click="updateDeliveryStatus(selectedBooking, 'on_the_way')"
+                    class="py-3 bg-purple-100 text-purple-700 font-bold rounded-xl hover:bg-purple-200 transition-colors">
               On The Way
             </button>
-            <button
-              @click="updateDeliveryStatus(selectedBooking, 'delivered')"
-              class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
-            >
+            <button @click="updateDeliveryStatus(selectedBooking, 'delivered')"
+                    class="py-3 bg-green-100 text-green-700 font-bold rounded-xl hover:bg-green-200 transition-colors">
               Delivered
             </button>
           </div>
-          <button
-            @click="showStartDeliveryModal = false"
-            class="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
+
+          <button @click="showStartDeliveryModal = false" class="w-full py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors">
+            Close
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Receipt Preview Modal -->
-
-
-    <!-- Receipt Preview Modal -->
-    <div v-if="showReceiptPreviewModal"
-         class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Receipt / Proof Preview</h2>
-          <button
-            @click="showReceiptPreviewModal = false"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+    <div v-if="showReceiptPreviewModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md">
+      <div class="bg-transparent max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
+        <div class="w-full flex justify-between items-center mb-4 px-4">
+          <h2 class="text-white text-lg font-bold">Proof of Delivery</h2>
+          <button @click="showReceiptPreviewModal = false" class="p-2 bg-white/20 rounded-full hover:bg-white/30 text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="p-6 flex items-center justify-center">
-          <img v-if="receiptPreviewUrl"
-               :src="receiptPreviewUrl"
-               alt="Receipt Preview"
-               class="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain" />
-        </div>
+        <img v-if="receiptPreviewUrl" :src="receiptPreviewUrl" alt="Receipt" class="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain bg-white/10" />
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
+// --- LOGIC MO (WALANG BINAGO) ---
 import { weatherService } from '@/services/weatherService'
 import { db } from '@/firebase/config'
 import {
@@ -540,15 +426,15 @@ export default {
   methods: {
     getServiceColor(serviceType) {
       const colors = {
-        'food-delivery': 'bg-orange-500',
-        'food': 'bg-orange-500',
-        'grocery': 'bg-green-500',
-        'pickup-drop': 'bg-blue-500',
-        'bill-payment': 'bg-purple-500',
-        'medicine': 'bg-red-500',
-        'gift': 'bg-pink-500'
+        'food-delivery': 'bg-orange-500 shadow-orange-200',
+        'food': 'bg-orange-500 shadow-orange-200',
+        'grocery': 'bg-green-500 shadow-green-200',
+        'pickup-drop': 'bg-blue-500 shadow-blue-200',
+        'bill-payment': 'bg-purple-500 shadow-purple-200',
+        'medicine': 'bg-red-500 shadow-red-200',
+        'gift': 'bg-pink-500 shadow-pink-200'
       }
-      return colors[serviceType] || 'bg-gray-500'
+      return colors[serviceType] || 'bg-gray-500 shadow-gray-200'
     },
     getServiceIcon() {
       return 'svg'
@@ -587,23 +473,23 @@ export default {
     },
     getStatusBadgeClass(status) {
       const classes = {
-        'driver_assigned': 'bg-blue-100 text-blue-800',
-        'picked_up': 'bg-yellow-100 text-yellow-800',
-        'in_transit': 'bg-purple-100 text-purple-800',
-        'arrived': 'bg-indigo-100 text-indigo-800',
-        'delivered': 'bg-green-100 text-green-800'
+        'driver_assigned': 'bg-blue-100 text-blue-700 border-blue-200',
+        'picked_up': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        'in_transit': 'bg-purple-100 text-purple-700 border-purple-200',
+        'arrived': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        'delivered': 'bg-green-100 text-green-700 border-green-200'
       }
-      return classes[status] || 'bg-gray-100 text-gray-800'
+      return classes[status] || 'bg-gray-100 text-gray-700 border-gray-200'
     },
     getPaymentMethodBadge(paymentMethod) {
-      if (!paymentMethod) return 'bg-gray-100 text-gray-800'
+      if (!paymentMethod) return 'bg-gray-100 text-gray-700 border-gray-200'
       const method = paymentMethod.toUpperCase()
       if (method === 'GCASH') {
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-700 border-blue-200'
       } else if (method === 'COD') {
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-700 border-green-200'
       }
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-gray-100 text-gray-700 border-gray-200'
     },
     formatStatus(status) {
       const statusMap = {
@@ -619,7 +505,7 @@ export default {
       if (!paymentMethod) return 'Unknown'
       const method = paymentMethod.toUpperCase()
       if (method === 'GCASH') return '💳 GCash'
-      if (method === 'COD') return '💰 Cash on Delivery'
+      if (method === 'COD') return '💰 COD'
       return paymentMethod
     },
     formatDate(timestamp) {
@@ -854,7 +740,7 @@ export default {
         return
       }
       try {
-        const locationUrl = `https://maps.google.com/?q=${this.currentLocation.lat},${this.currentLocation.lng}`
+        const locationUrl = `https://maps.google.com/?q=$${this.currentLocation.lat},${this.currentLocation.lng}`
         if (navigator.share) {
           await navigator.share({
             title: 'My Current Location',
@@ -886,7 +772,7 @@ export default {
         }
         this.directionsService.route(directionsRequest, (result, status) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
-            const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(pickupAddress)}&travelmode=driving`
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=$${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(pickupAddress)}&travelmode=driving`
             window.open(mapsUrl, '_blank')
             this.$toast?.success?.('Opening directions in Google Maps')
           } else {
@@ -976,7 +862,7 @@ export default {
           this.selectedBooking.pickupAddress || this.getPickupLocation(this.selectedBooking)
         const dropoffAddress =
           this.selectedBooking.deliveryAddress || this.getDeliveryLocation(this.selectedBooking)
-        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=$${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
         window.open(mapsUrl, '_blank')
         this.$toast?.success?.('Navigation opened in Google Maps')
         this.showStartDeliveryModal = false
@@ -1049,7 +935,7 @@ export default {
       if (!this.currentLocation || !this.selectedBooking) return
       const pickupAddress =
         this.selectedBooking.pickupAddress || this.getPickupLocation(this.selectedBooking)
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(pickupAddress)}&travelmode=driving`
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=$${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(pickupAddress)}&travelmode=driving`
       window.open(mapsUrl, '_blank')
       this.$toast?.success?.('Opening directions in Google Maps')
     },
@@ -1059,7 +945,7 @@ export default {
         this.selectedBooking.pickupAddress || this.getPickupLocation(this.selectedBooking)
       const dropoffAddress =
         this.selectedBooking.deliveryAddress || this.getDeliveryLocation(this.selectedBooking)
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=$${this.currentLocation.lat},${this.currentLocation.lng}&destination=${encodeURIComponent(dropoffAddress)}&waypoints=${encodeURIComponent(pickupAddress)}&travelmode=driving`
       window.open(mapsUrl, '_blank')
       this.$toast?.success?.('Navigation started in Google Maps')
     },
