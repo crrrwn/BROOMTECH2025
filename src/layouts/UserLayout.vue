@@ -239,23 +239,16 @@
         </main>
       </div>
     </div>
-
-    <!-- Added floating chatbot component -->
-    <FloatingChatbot />
   </div>
 </template>
 
 <script>
 import { useAuthStore } from '@/stores/auth'
-import FloatingChatbot from '@/components/FloatingChatbot.vue'
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
 
 export default {
   name: 'UserLayout',
-  components: {
-    FloatingChatbot
-  },
   setup() {
     const authStore = useAuthStore()
     return { authStore }

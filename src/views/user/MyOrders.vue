@@ -107,7 +107,7 @@
 
               <!-- Show chat button when driverId exists, not just when driver object exists -->
               <div v-if="order.driverId || order.driver" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-4">
-                <img v-if="order.driver" :src="order.driver.avatar" :alt="order.driver.name" class="w-10 h-10 rounded-full">
+                <img v-if="order.driver?.avatar" :src="order.driver.avatar" :alt="order.driver.name" class="w-10 h-10 rounded-full object-cover">
                 <div v-else class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
                   D
                 </div>
@@ -115,9 +115,11 @@
                   <p class="font-medium text-gray-900">{{ order.driver?.name || 'Driver Assigned' }}</p>
                 </div>
                 <div class="flex space-x-2">
-                  <button @click="openChatWithDriver(order)"
-                          class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                          title="Chat with driver">
+                  <button 
+                    @click.stop="openChatWithDriver(order)"
+                    :disabled="!order.driverId && !order.driver"
+                    class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    title="Chat with driver">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                     </svg>
@@ -1041,48 +1043,100 @@ export default {
       }
     },
 
+    // ====== STANDALONE CHAT MODAL (NOT CONNECTED TO CHATMESSAGES PAGE) ======
+    // This opens a standalone chat modal for real-time communication with driver
+    // Real-time updates are handled by ChatWindow component using Firestore onSnapshot
     async openChatWithDriver(order) {
-      console.log('[v0] Opening chat for order:', order.id, 'driverId:', order.driverId)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1049',message:'openChatWithDriver entry',data:{orderId:order?.id,driverId:order?.driverId,hasDriver:!!order?.driver,currentAuthUid:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
+      console.log('[v0] Opening standalone chat modal for order:', order?.id, 'driverId:', order?.driverId, 'driver:', order?.driver)
       
+      // Validate order
+      if (!order || !order.id) {
+        console.error('[v0] Invalid order object')
+        this.showNotification('error', 'Order information is invalid')
+        return
+      }
+
+      // Check if driver is assigned
       if (!order.driverId && !order.driver) {
-        this.$toast?.error?.('No driver assigned to this order yet')
+        console.warn('[v0] No driver assigned to order:', order.id)
+        this.showNotification('error', 'No driver assigned to this order yet')
+        return
+      }
+
+      // Check if user is authenticated
+      if (!this.authStore.user || !this.authStore.user.uid) {
+        console.error('[v0] User not authenticated')
+        this.showNotification('error', 'Please log in to chat with driver')
         return
       }
 
       try {
-        const driverId = order.driverId || order.driver?.uid
+        // Get driver ID from order
+        const driverId = order.driverId || order.driver?.uid || order.driver?.id
         
         if (!driverId) {
-          this.$toast?.error?.('Driver information not available')
+          console.error('[v0] Driver ID not found in order:', order)
+          this.showNotification('error', 'Driver information not available')
           return
         }
 
-        // Create or get chat room with driver
+        console.log('[v0] Creating/getting chat room - userId:', this.authStore.user.uid, 'driverId:', driverId, 'orderId:', order.id)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1083',message:'Before createChatRoom',data:{userId:this.authStore.user.uid,driverId,orderId:order.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+
+        // Create or get chat room with driver (real-time enabled)
         const chatRoomId = await chatService.createChatRoom(
           this.authStore.user.uid,
           driverId,
           order.id
         )
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1090',message:'After createChatRoom',data:{chatRoomId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
 
         console.log('[v0] Chat room created/retrieved:', chatRoomId)
 
-        // Set chat modal state
+        if (!chatRoomId) {
+          throw new Error('Failed to create chat room')
+        }
+
+        // Set chat modal state for standalone modal
         this.chatOrderId = order.id
         this.chatId = chatRoomId
         
-        // Set chat partner info
+        // Set chat partner info with fallback values
         this.chatPartner = {
           id: driverId,
-          name: order.driver?.name || 'Driver',
+          name: order.driver?.name || order.driver?.firstName || 'Driver',
           role: 'driver',
-          phone: order.driver?.phone || ''
+          phone: order.driver?.phone || order.driver?.contact || ''
         }
 
-        // Show chat modal
+        console.log('[v0] Chat partner set:', this.chatPartner)
+
+        // Show standalone chat modal (NOT navigating to ChatMessages page)
         this.showChatModal = true
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1113',message:'Chat modal opened',data:{chatId:this.chatId,showChatModal:this.showChatModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        console.log('[v0] Chat modal opened successfully')
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyOrders.vue:1115',message:'Error opening chat',data:{code:error.code,message:error.message,orderId:order?.id,driverId:order?.driverId,userId:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
         console.error('[v0] Error opening chat:', error)
-        this.$toast?.error?.('Error opening chat. Please try again.')
+        console.error('[v0] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          orderId: order?.id,
+          driverId: order?.driverId,
+          userId: this.authStore.user?.uid
+        })
+        this.showNotification('error', `Error opening chat: ${error.message || 'Please try again'}`)
       }
     },
 

@@ -180,11 +180,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <p class="text-gray-600">Name</p>
-                <p class="font-medium">{{ order.customerData?.firstName || '' }} {{ order.customerData?.lastName || '' }}</p>
+                <p class="font-medium">
+                  {{ order.customerData?.fullName || 
+                     (order.customerData?.firstName && order.customerData?.lastName 
+                       ? `${order.customerData.firstName} ${order.customerData.lastName}`.trim()
+                       : order.customerData?.firstName || order.customerData?.lastName || order.customerData?.name || 'N/A') }}
+                </p>
               </div>
               <div>
                 <p class="text-gray-600">Phone</p>
-                <p class="font-medium">{{ order.customerData?.phone || 'N/A' }}</p>
+                <p class="font-medium">{{ order.customerData?.phone || order.customerData?.contact || order.customerData?.phoneNumber || 'N/A' }}</p>
               </div>
               <div>
                 <p class="text-gray-600">Email</p>
@@ -707,15 +712,50 @@ export default {
         // Load customer data if needed
         if (this.order.userId) {
           try {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:708',message:'Loading customer data',data:{userId:this.order.userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+            // #endregion
             const userRef = doc(db, 'users', this.order.userId)
             const userSnap = await getDoc(userRef)
             if (userSnap.exists()) {
-              this.order.customerData = userSnap.data()
+              const userData = userSnap.data()
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:713',message:'Customer data loaded',data:{userId:this.order.userId,hasFirstName:!!userData.firstName,hasLastName:!!userData.lastName,hasPhone:!!userData.phone,hasContact:!!userData.contact,hasEmail:!!userData.email,userDataKeys:Object.keys(userData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+              // #endregion
+              // Map user data with fallbacks for different field names
+              this.order.customerData = {
+                ...userData,
+                // Ensure we have firstName and lastName
+                firstName: userData.firstName || userData.first_name || '',
+                lastName: userData.lastName || userData.last_name || '',
+                // Phone might be in 'phone' or 'contact' field
+                phone: userData.phone || userData.contact || userData.phoneNumber || '',
+                // Email
+                email: userData.email || '',
+                // Full name as fallback
+                fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.name || ''
+              }
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:725',message:'Customer data mapped',data:{firstName:this.order.customerData.firstName,lastName:this.order.customerData.lastName,phone:this.order.customerData.phone,email:this.order.customerData.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+              // #endregion
+            } else {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:728',message:'User document not found',data:{userId:this.order.userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+              // #endregion
+              console.warn('[v0] User document not found:', this.order.userId)
             }
           } catch (userError) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:732',message:'Error loading customer data',data:{userId:this.order.userId,code:userError.code,message:userError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+            // #endregion
             console.warn('[v0] Error loading customer data:', userError)
             // Don't fail the entire load if customer data can't be loaded
           }
+        } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:738',message:'No userId in order',data:{orderId:this.orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+          // #endregion
+          console.warn('[v0] No userId in order, cannot load customer data')
         }
       } catch (error) {
         console.error('[v0] Error loading order:', error)
@@ -1168,40 +1208,115 @@ export default {
       this.showOrderDetailsModal = true
     },
 
+    // ====== STANDALONE CHAT MODAL (NOT CONNECTED TO DRIVER/CHAT PAGE) ======
+    // This opens a standalone chat modal for real-time communication with user
+    // Real-time updates are handled by ChatWindow component using Firestore onSnapshot
     async openChat() {
-      if (!this.orderId || !this.order) {
-        this.toast.error('Order information not available')
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1174',message:'openChat entry',data:{orderId:this.orderId,hasOrder:!!this.order},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
+      console.log('[v0] Opening chat modal - orderId:', this.orderId, 'order:', this.order)
+      
+      if (!this.orderId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1178',message:'No orderId',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+        console.error('[v0] No orderId available')
+        this.toast.error('Order ID is missing')
         return
       }
 
+      if (!this.order) {
+        console.error('[v0] Order data not loaded yet')
+        this.toast.error('Order information is still loading. Please wait...')
+        // Try to reload order data
+        await this.loadOrderData()
+        if (!this.order) {
+          return
+        }
+      }
+
       try {
-        this.showChatModal = true
-        
-        // Get or create chat room
+        // Get user and driver IDs
         const userId = this.order.userId
         const driverId = this.authStore.user?.uid
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1195',message:'Got user and driver IDs',data:{userId,driverId,currentAuthUid:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+        console.log('[v0] Chat participants - userId:', userId, 'driverId:', driverId)
         
-        if (!userId || !driverId) {
-          this.toast.error('User or driver information not available')
-          this.showChatModal = false
+        if (!userId) {
+          console.error('[v0] User ID not found in order')
+          this.toast.error('Customer information not available in order')
+          return
+        }
+        
+        if (!driverId) {
+          console.error('[v0] Driver ID not found')
+          this.toast.error('Driver information not available')
           return
         }
 
-        // Get or create chat room
+        // Load customer data if not already loaded
+        if (!this.order.customerData && userId) {
+          console.log('[v0] Loading customer data for chat...')
+          try {
+            const userRef = doc(db, 'users', userId)
+            const userSnap = await getDoc(userRef)
+            if (userSnap.exists()) {
+              this.order.customerData = userSnap.data()
+              console.log('[v0] Customer data loaded:', this.order.customerData)
+            } else {
+              console.warn('[v0] Customer document not found:', userId)
+            }
+          } catch (userError) {
+            console.error('[v0] Error loading customer data:', userError)
+            // Continue anyway, we'll use default values
+          }
+        }
+
+        // Get or create chat room for real-time communication
+        console.log('[v0] Creating/getting chat room...')
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1231',message:'Before createChatRoom',data:{userId,driverId,orderId:this.orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
         this.chatId = await chatService.createChatRoom(userId, driverId, this.orderId)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1233',message:'After createChatRoom',data:{chatId:this.chatId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        console.log('[v0] Chat room ID:', this.chatId)
         
-        // Set chat partner info
+        // Set chat partner info with fallback values
         this.chatPartner = {
           id: userId,
           name: this.order.customerData?.firstName && this.order.customerData?.lastName
             ? `${this.order.customerData.firstName} ${this.order.customerData.lastName}`
-            : 'Customer',
+            : this.order.customerData?.fullName || 'Customer',
           role: 'user',
-          phone: this.order.customerData?.phone || this.order.customerData?.contact
+          phone: this.order.customerData?.phone || this.order.customerData?.contact || ''
         }
+        
+        console.log('[v0] Chat partner set:', this.chatPartner)
+
+        // Show standalone chat modal (NOT navigating to Driver/Chat page)
+        this.showChatModal = true
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1248',message:'Chat modal opened',data:{chatId:this.chatId,showChatModal:this.showChatModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        console.log('[v0] Chat modal opened successfully')
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DeliveryTracking.vue:1250',message:'Error opening chat',data:{code:error.code,message:error.message,orderId:this.orderId,userId:this.order?.userId,driverId:this.authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
         console.error('[v0] Error opening chat:', error)
-        this.toast.error('Failed to open chat')
+        console.error('[v0] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          orderId: this.orderId,
+          userId: this.order?.userId,
+          driverId: this.authStore.user?.uid
+        })
+        this.toast.error(`Failed to open chat: ${error.message || 'Unknown error'}`)
         this.showChatModal = false
       }
     },

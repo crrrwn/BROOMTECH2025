@@ -23,6 +23,31 @@
       </div>
     </div>
 
+    <!-- Booking Restriction Warning Banner -->
+    <div v-if="isBookingRestricted" class="bg-red-100 border-l-4 border-red-500 p-6 shadow-lg">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-8 w-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-red-800 mb-2">🚫 Booking Restricted</h3>
+          <p class="text-base text-red-800 mb-2">
+            <span v-if="restrictionType === 'banned'">
+              Your account has been banned. You are permanently restricted from booking services. Please contact support for more information.
+            </span>
+            <span v-else-if="restrictionType === 'flagged'">
+              Your account has been flagged. You are unable to book services until <strong>{{ restrictionEndTime }}</strong>.
+            </span>
+          </p>
+          <p v-if="restrictionReason" class="text-sm text-red-700 italic">
+            Reason: {{ restrictionReason }}
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Service Selection -->
     <div class="bg-white p-6 rounded-lg shadow-sm border">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Select Service Type</h2>
@@ -779,10 +804,17 @@ export default {
         pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
       },
 
+      // User restriction status
+      isBookingRestricted: false,
+      restrictionType: null, // 'banned' or 'flagged'
+      restrictionEndTime: null,
+      restrictionReason: null
+
     }
   },
   computed: {
     canSubmitBooking() {
+      if (this.isBookingRestricted) return false
       if (!this.selectedService) return false
       const hasPaymentMethod = !!this.bookingForm.paymentMethod
       const hasRequiredFields = this.checkRequiredFields()
@@ -797,6 +829,9 @@ export default {
   async mounted() {
     // Restore form data from localStorage
     this.restoreFormData()
+    
+    // Check user booking restrictions
+    await this.checkUserRestriction()
     
     this.loadGoogleMapsAPI()
     await this.loadPricingSettings()
@@ -2023,9 +2058,74 @@ export default {
       return feeMap[budgetRange] || ''
     },
 
+    async checkUserRestriction() {
+      try {
+        const user = this.authStore?.user
+        if (!user?.uid) return
+
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (!userDoc.exists()) return
+
+        const userData = userDoc.data()
+        const status = userData.status
+        const now = new Date()
+
+        // Check if user is banned
+        if (status === 'banned' || userData.banned === true) {
+          this.isBookingRestricted = true
+          this.restrictionType = 'banned'
+          this.restrictionReason = userData.flagReason || 'Account banned by admin'
+          return
+        }
+
+        // Check if user is flagged and restriction is still active
+        if (status === 'flagged' && userData.bookingRestrictedUntil) {
+          const restrictedUntil = new Date(userData.bookingRestrictedUntil)
+          if (now < restrictedUntil) {
+            this.isBookingRestricted = true
+            this.restrictionType = 'flagged'
+            this.restrictionEndTime = restrictedUntil.toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+            this.restrictionReason = userData.flagReason || 'Account flagged by admin'
+          } else {
+            // Restriction has expired, clear it
+            this.isBookingRestricted = false
+            this.restrictionType = null
+            this.restrictionEndTime = null
+            this.restrictionReason = null
+          }
+        } else {
+          // No restriction
+          this.isBookingRestricted = false
+          this.restrictionType = null
+          this.restrictionEndTime = null
+          this.restrictionReason = null
+        }
+      } catch (error) {
+        console.error('[v0] Error checking user restriction:', error)
+      }
+    },
+
     async submitBooking() {
       try {
         this.formError = ''
+
+        // Check restriction again before submitting
+        await this.checkUserRestriction()
+        if (this.isBookingRestricted) {
+          if (this.restrictionType === 'banned') {
+            this.formError = 'Your account has been banned. You cannot book services.'
+          } else {
+            this.formError = `Your account is restricted from booking until ${this.restrictionEndTime}.`
+          }
+          this.showNotification('error', this.formError)
+          return
+        }
 
         const user = this.authStore?.user
         const userProfile = this.authStore?.userProfile

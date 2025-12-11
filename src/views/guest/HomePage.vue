@@ -241,22 +241,29 @@
     <button
       v-show="showScrollBottom"
       @click="scrollToBottom"
-      class="fixed bottom-6 right-6 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700 transition-all duration-300"
+      class="fixed bottom-20 right-6 z-40 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700 transition-all duration-300"
       aria-label="Scroll to bottom"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
       </svg>
     </button>
+
+    <!-- Floating Chatbot -->
+    <FloatingChatbot />
   </div>
 </template>
 
 <script>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import FloatingChatbot from '@/components/FloatingChatbot.vue'
 
 export default {
   name: 'HomePage',
+  components: {
+    FloatingChatbot
+  },
   setup() {
     const router = useRouter()
     

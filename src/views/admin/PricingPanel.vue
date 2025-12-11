@@ -859,7 +859,7 @@ export default {
     },
     
     async banUser(user) {
-      if (!confirm(`Are you sure you want to ban ${user.name}? They will not be able to access the platform.`)) {
+      if (!confirm(`Are you sure you want to ban ${user.name}? They will not be able to access the platform or book services.`)) {
         return
       }
       
@@ -867,21 +867,23 @@ export default {
         await setDoc(doc(db, 'users', user.id), {
           status: 'banned',
           banned: true,
-          bannedAt: new Date().toISOString()
+          bannedAt: new Date().toISOString(),
+          bookingRestricted: true // Permanent restriction
         }, { merge: true })
         
         // Create notification for the user
         const notificationRef = doc(collection(db, 'notifications'))
         await setDoc(notificationRef, {
           userId: user.id,
+          recipientType: 'user',
           type: 'account_banned',
-          title: 'Account Banned',
-          message: 'Your account has been banned by the admin due to violations of our terms and conditions. Please contact support for more information.',
+          title: 'Account Banned - Booking Permanently Restricted',
+          message: 'Your account has been banned by the admin due to violations of our terms and conditions. You are permanently restricted from booking services. Please contact support for more information.',
           read: false,
           createdAt: new Date().toISOString()
         })
         
-        this.showNotification('success', `${user.name} has been banned`)
+        this.showNotification('success', `${user.name} has been banned and permanently restricted from booking services`)
         this.loadFraudStats()
       } catch (error) {
         console.error('[v0] Error banning user:', error)
@@ -898,6 +900,7 @@ export default {
         await setDoc(doc(db, 'users', user.id), {
           status: 'active',
           banned: false,
+          bookingRestricted: false,
           unbannedAt: new Date().toISOString()
         }, { merge: true })
         
@@ -905,9 +908,10 @@ export default {
         const notificationRef = doc(collection(db, 'notifications'))
         await setDoc(notificationRef, {
           userId: user.id,
+          recipientType: 'user',
           type: 'account_unbanned',
           title: 'Account Unbanned',
-          message: 'Your account has been unbanned by the admin. You can now access the platform again.',
+          message: 'Your account has been unbanned by the admin. You can now access the platform and book services again.',
           read: false,
           createdAt: new Date().toISOString()
         })
@@ -926,20 +930,22 @@ export default {
       }
       
       try {
-        // Update user status to active
+        // Update user status to active and remove booking restriction
         await setDoc(doc(db, 'users', user.id), {
           status: 'active',
           unflaggedAt: new Date().toISOString(),
-          flagReason: null
+          flagReason: null,
+          bookingRestrictedUntil: null
         }, { merge: true })
         
         // Create notification for the user
         const notificationRef = doc(collection(db, 'notifications'))
         await setDoc(notificationRef, {
           userId: user.id,
+          recipientType: 'user',
           type: 'account_unflagged',
           title: 'Account Unflagged',
-          message: 'Your account flag has been removed by the admin. Thank you for your cooperation.',
+          message: 'Your account flag has been removed by the admin. You can now book services again. Thank you for your cooperation.',
           read: false,
           createdAt: new Date().toISOString()
         })
@@ -1056,25 +1062,31 @@ export default {
       try {
         const user = this.selectedUser
         
-        // Update user status to flagged
+        // Calculate 12 hours from now
+        const now = new Date()
+        const restrictedUntil = new Date(now.getTime() + 12 * 60 * 60 * 1000) // 12 hours in milliseconds
+        
+        // Update user status to flagged with 12-hour booking restriction
         await setDoc(doc(db, 'users', user.id), {
           status: 'flagged',
           flaggedAt: new Date().toISOString(),
-          flagReason: this.flagReason
+          flagReason: this.flagReason,
+          bookingRestrictedUntil: restrictedUntil.toISOString()
         }, { merge: true })
         
         // Create notification for the user
         const notificationRef = doc(collection(db, 'notifications'))
         await setDoc(notificationRef, {
           userId: user.id,
+          recipientType: 'user',
           type: 'account_flagged',
-          title: 'Account Flagged',
-          message: `Your account has been flagged by the admin. Reason: ${this.flagReason}`,
+          title: 'Account Flagged - Booking Restricted',
+          message: `Your account has been flagged by the admin. Reason: ${this.flagReason}. You will be unable to book services for 12 hours. The restriction will be lifted on ${restrictedUntil.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.`,
           read: false,
           createdAt: new Date().toISOString()
         })
         
-        this.showNotification('success', `${user.name} has been flagged and notified`)
+        this.showNotification('success', `${user.name} has been flagged and will be unable to book services for 12 hours`)
         this.closeFlagModal()
         this.loadFraudStats()
       } catch (error) {

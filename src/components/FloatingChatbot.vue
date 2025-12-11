@@ -10,19 +10,15 @@
       <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
       </svg>
-      <!-- Notification Badge -->
-      <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-        <span class="text-xs text-white font-bold">!</span>
-      </div>
     </button>
 
     <!-- Chat Window -->
     <div
       v-if="isOpen"
-      class="w-80 h-96 bg-white rounded-lg shadow-2xl border overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+      class="w-80 h-[500px] bg-white rounded-lg shadow-2xl border overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300"
     >
       <!-- Header -->
-      <div class="p-4 bg-green-600 text-white">
+      <div class="p-4 bg-green-600 text-white flex-shrink-0">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -31,8 +27,8 @@
               </svg>
             </div>
             <div>
-              <h3 class="font-semibold text-sm">Booking Assistant</h3>
-              <p class="text-xs opacity-90">I can help you book services</p>
+              <h3 class="font-semibold text-sm">BroomBot</h3>
+              <p class="text-xs opacity-90">Automated FAQ Assistant</p>
             </div>
           </div>
           <button @click="toggleChat" class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors">
@@ -43,104 +39,74 @@
         </div>
       </div>
 
-      <!-- Quick Action Buttons -->
-      <div class="p-3 bg-gray-50 border-b">
-        <div class="flex flex-wrap gap-2">
-          <button
-            @click="sendQuickMessage('How do I book a food delivery?')"
-            class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors"
-          >
-            🍔 Food Delivery
-          </button>
-          <button
-            @click="sendQuickMessage('How do I book bill payments?')"
-            class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors"
-          >
-            💳 Bill Payments
-          </button>
-          <button
-            @click="sendQuickMessage('How do I book grocery shopping?')"
-            class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200 transition-colors"
-          >
-            🛒 Grocery Shopping
-          </button>
-          <button
-            @click="sendQuickMessage('What services do you offer?')"
-            class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs hover:bg-orange-200 transition-colors"
-          >
-            📋 All Services
-          </button>
-        </div>
-      </div>
-
-      <!-- Messages Area -->
-      <div class="flex-1 h-64 overflow-y-auto p-3 space-y-3" ref="messagesContainer">
-        <!-- Welcome Message -->
-        <div v-if="messages.length === 0" class="flex justify-start">
-          <div class="max-w-xs">
-            <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <p class="text-sm text-green-800">
-                👋 Hi! I'm your booking assistant. I can help you:
-              </p>
-              <ul class="text-xs text-green-700 mt-2 ml-4 list-disc space-y-1">
-                <li>Book food delivery, bill payments, grocery shopping, and more</li>
-                <li>Understand how each service works</li>
-                <li>Check pricing and delivery fees</li>
-                <li>Navigate the booking process</li>
-              </ul>
-              <p class="text-sm text-green-800 mt-2">What would you like to book today?</p>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Booking Assistant • now</p>
+      <!-- Content Area -->
+      <div class="flex-1 overflow-y-auto">
+        <!-- Topic Selection View -->
+        <div v-if="!selectedTopic" class="p-4">
+          <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-1">Hi! I'm BroomBot, your automated FAQ assistant.</p>
+            <p class="text-xs text-gray-500">Select a topic to get instant answers:</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button
+              @click="selectTopic('Order Status')"
+              class="w-full px-4 py-3 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors font-medium text-left flex items-center justify-between"
+            >
+              <span class="flex items-center gap-2">
+                <span>📦</span>
+                <span>Order Status</span>
+              </span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+            <button
+              @click="selectTopic('Book Service')"
+              class="w-full px-4 py-3 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors font-medium text-left flex items-center justify-between"
+            >
+              <span class="flex items-center gap-2">
+                <span>📝</span>
+                <span>Book Service</span>
+              </span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+            <button
+              @click="selectTopic('Pricing')"
+              class="w-full px-4 py-3 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 transition-colors font-medium text-left flex items-center justify-between"
+            >
+              <span class="flex items-center gap-2">
+                <span>💰</span>
+                <span>Pricing</span>
+              </span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <!-- Chat Messages -->
-        <div v-for="message in messages" :key="message.id" class="flex" :class="message.isUser ? 'justify-end' : 'justify-start'">
-          <div class="max-w-xs">
-            <div class="rounded-lg px-3 py-2 text-sm" :class="message.isUser ? 'bg-green-600 text-white' : 'bg-green-50 text-green-800 border border-green-200'">
-              <p>{{ message.text }}</p>
-            </div>
-            <p class="text-xs text-gray-500 mt-1" :class="message.isUser ? 'text-right' : 'text-left'">
-              {{ message.isUser ? 'You' : 'Assistant' }} • {{ formatTime(message.timestamp) }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Typing Indicator -->
-        <div v-if="isTyping" class="flex justify-start">
-          <div class="max-w-xs">
-            <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <div class="flex space-x-1">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Assistant is typing...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Input Area -->
-      <div class="border-t p-3">
-        <div class="flex space-x-2">
-          <input
-            v-model="newMessage"
-            @keypress.enter="sendMessage"
-            type="text"
-            placeholder="Type a message..."
-            class="flex-1 border border-gray-300 rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            :disabled="isTyping"
-          />
+        <!-- FAQ Content View -->
+        <div v-else class="p-4">
           <button
-            @click="sendMessage"
-            :disabled="!newMessage.trim() || isTyping"
-            class="w-8 h-8 bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+            @click="goBack"
+            class="mb-3 flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
+            Back to Topics
           </button>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <span>{{ getTopicIcon(selectedTopic) }}</span>
+              <span>{{ selectedTopic }}</span>
+            </h4>
+            <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+              {{ getTopicContent(selectedTopic) }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -153,137 +119,93 @@ export default {
   data() {
     return {
       isOpen: false,
-      messages: [],
-      newMessage: '',
-      isTyping: false
+      selectedTopic: null
     }
   },
   methods: {
     toggleChat() {
       this.isOpen = !this.isOpen
+      // Reset selected topic when closing
+      if (!this.isOpen) {
+        this.selectedTopic = null
+      }
     },
 
-    sendQuickMessage(message) {
-      this.newMessage = message
-      this.sendMessage()
+    selectTopic(topic) {
+      this.selectedTopic = topic
     },
 
-    async sendMessage() {
-      if (!this.newMessage.trim()) return
-
-      const userMessage = {
-        id: Date.now(),
-        text: this.newMessage,
-        isUser: true,
-        timestamp: new Date()
-      }
-
-      this.messages.push(userMessage)
-      const messageText = this.newMessage
-      this.newMessage = ''
-      this.scrollToBottom()
-
-      // Simulate bot typing
-      this.isTyping = true
-      
-      // Simulate API call delay
-      setTimeout(() => {
-        const botResponse = this.generateBotResponse(messageText)
-        this.messages.push({
-          id: Date.now() + 1,
-          text: botResponse,
-          isUser: false,
-          timestamp: new Date()
-        })
-        this.isTyping = false
-        this.scrollToBottom()
-      }, 1500)
+    goBack() {
+      this.selectedTopic = null
     },
 
-    generateBotResponse(userMessage) {
-      const message = userMessage.toLowerCase()
-      
-      // Food Delivery
-      if (message.includes('food') && (message.includes('delivery') || message.includes('book'))) {
-        return "🍔 To book Food Delivery:\n1. Go to 'Book Service' → Select 'Food Delivery'\n2. Enter restaurant name and address (e.g., Jollibee, McDonald's)\n3. Enter delivery address and recipient details\n4. Add food order details and special instructions\n5. Review the route on the map and estimated delivery fee\n6. Submit your booking!\n\n💡 Tip: Make sure both addresses are within Calapan City!"
+    getTopicIcon(topic) {
+      const icons = {
+        'Order Status': '📦',
+        'Book Service': '📝',
+        'Pricing': '💰'
       }
-      
-      // Bill Payments
-      if (message.includes('bill') && (message.includes('payment') || message.includes('pay'))) {
-        return "💳 To book Bill Payments:\n1. Go to 'Book Service' → Select 'Bill Payments'\n2. Enter biller name (e.g., MERALCO, GLOBE, PLDT)\n3. Fill in account name, account number, and amount\n4. Upload receipt/reference (required)\n5. Enter pickup and return addresses\n6. Review and submit!\n\n📋 Note: Receipt upload is required for bill payment services."
-      }
-      
-      // Grocery Shopping
-      if (message.includes('grocery') || (message.includes('shopping') && message.includes('book'))) {
-        return "🛒 To book Grocery Shopping:\n1. Go to 'Book Service' → Select 'Grocery Shopping'\n2. Enter your shopping list\n3. Select store preference (optional)\n4. Enter delivery address\n5. Add preferred delivery time (optional)\n6. Review estimated fee and submit!\n\n💡 Our driver will shop for you and deliver to your address."
-      }
-      
-      // Gift Delivery
-      if (message.includes('gift') || (message.includes('delivery') && message.includes('gift'))) {
-        return "🎁 To book Gift Delivery:\n1. Go to 'Book Service' → Select 'Gift Delivery'\n2. Enter gift type (e.g., Flowers, Cake, Jewelry)\n3. Enter recipient name and contact\n4. Enter store name and address (where to buy)\n5. Enter delivery address\n6. Select preferred date & time\n7. Review and submit!\n\n💝 Perfect for birthdays, anniversaries, and special occasions!"
-      }
-      
-      // Medicine Delivery
-      if (message.includes('medicine') || message.includes('prescription')) {
-        return "💊 To book Medicine Delivery:\n1. Go to 'Book Service' → Select 'Medicine Delivery'\n2. Enter medicine names\n3. Upload prescription (if required)\n4. Enter quantity needed\n5. Enter delivery address\n6. Review and submit!\n\n⚠️ Important: Please ensure prescription is valid and medicines are available."
-      }
-      
-      // Pickup & Drop
-      if (message.includes('pickup') || message.includes('drop') || message.includes('pick-up')) {
-        return "📦 To book Pickup & Drop:\n1. Go to 'Book Service' → Select 'Pickup & Drop'\n2. Enter pickup address and contact\n3. Enter item description and type\n4. Enter dropoff address\n5. Select preferred pickup date & time\n6. Review route and estimated fee\n7. Submit your booking!\n\n🚗 Great for sending packages, documents, or items within Calapan City!"
-      }
-      
-      // All Services
-      if (message.includes('service') && (message.includes('all') || message.includes('offer') || message.includes('available'))) {
-        return "📋 We offer these services:\n\n🍔 Food Delivery - Order from restaurants\n💳 Bill Payments - Pay bills and get receipts\n🛒 Grocery Shopping - Shop for you and deliver\n🎁 Gift Delivery - Send gifts to loved ones\n💊 Medicine Delivery - Get medicines delivered\n📦 Pickup & Drop - Send packages and items\n\nAll services are available within Calapan City only. Go to 'Book Service' to get started!"
-      }
-      
-      // Pricing
-      if (message.includes('price') || message.includes('rate') || message.includes('cost') || message.includes('fee')) {
-        return "💰 Delivery Fee Structure:\n\n• Base Charge (First 3km): ₱10\n• Distance Fee (After 3km): ₱2 per km\n• Bad Weather Surcharge: May apply during heavy rain\n\n💡 The exact fee is calculated based on your route and shown before booking. You can see the estimated delivery fee on the map after entering addresses!"
-      }
-      
-      // How to book / booking process
-      if (message.includes('how') && (message.includes('book') || message.includes('order'))) {
-        return "📝 General Booking Steps:\n\n1. Go to 'Book Service' in your dashboard\n2. Select the service type you need\n3. Fill in all required fields (marked with *)\n4. Enter addresses - make sure they're within Calapan City\n5. Review the map route and estimated delivery fee\n6. Choose payment method (COD, GCash, etc.)\n7. Submit your booking!\n\n✅ You'll receive a confirmation and can track your order in 'My Orders'."
-      }
-      
-      // Address / Location
-      if (message.includes('address') || message.includes('location') || message.includes('calapan')) {
-        return "📍 Important Location Info:\n\n• All services are available ONLY within Calapan City\n• When entering addresses, make sure they're in Calapan City, Oriental Mindoro\n• The map will show if your address is valid\n• You can use 'Use Current Location' button if you're in Calapan City\n• Addresses outside Calapan City cannot be booked"
-      }
-      
-      // Payment methods
-      if (message.includes('payment') || message.includes('pay') || message.includes('method')) {
-        return "💳 Payment Methods Available:\n\n• Cash on Delivery (COD) - Pay when service is completed\n• GCash - Digital payment via GCash\n• Other digital wallets\n\n💡 Payment method is selected during booking. COD is available for most services!"
-      }
-      
-      // Order status / tracking
-      if (message.includes('order') && (message.includes('status') || message.includes('track'))) {
-        return "📦 To check your order status:\n\n1. Go to 'My Orders' in your dashboard\n2. You'll see all your orders with their current status\n3. Statuses include: Pending, Confirmed, In Transit, On The Way, Delivered, Cancelled\n4. Click on an order to see full details\n5. You can chat with your driver, cancel (within 30 seconds), or give feedback\n\n💬 You can also contact your assigned driver directly!"
-      }
-      
-      // Default responses
-      const defaultResponses = [
-        "I'm here to help you book services! What would you like to book? You can ask about:\n• Food Delivery\n• Bill Payments\n• Grocery Shopping\n• Gift Delivery\n• Medicine Delivery\n• Pickup & Drop",
-        "Need help booking a service? Just tell me which service you're interested in, and I'll guide you through the process!",
-        "I can help you with booking any of our services. What would you like to know more about?"
-      ]
-      
-      return defaultResponses[Math.floor(Math.random() * defaultResponses.length)]
+      return icons[topic] || '📋'
     },
 
-    formatTime(timestamp) {
-      return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    },
+    getTopicContent(topic) {
+      const content = {
+        'Order Status': `To check your order status:
 
-    scrollToBottom() {
-      this.$nextTick(() => {
-        const container = this.$refs.messagesContainer
-        if (container) {
-          container.scrollTop = container.scrollHeight
-        }
-      })
+1. Go to 'My Orders' in your dashboard
+2. You'll see all your orders with their current status
+3. Statuses include:
+   • Pending - Waiting for driver assignment
+   • Confirmed - Driver has been assigned
+   • In Transit - Driver is on the way
+   • On The Way - Driver is delivering
+   • Delivered - Order completed
+   • Cancelled - Order was cancelled
+
+4. Click on an order to see full details
+5. You can chat with your driver, cancel (within 30 seconds), or give feedback
+
+💬 You can also contact your assigned driver directly through the chat feature!`,
+
+        'Book Service': `How to Book a Service:
+
+📝 General Booking Steps:
+
+1. Go to 'Book Service' in your dashboard
+2. Select the service type you need:
+   • Food Delivery
+   • Bill Payments
+   • Grocery Shopping
+   • Gift Delivery
+   • Medicine Delivery
+   • Pickup & Drop
+
+3. Fill in all required fields (marked with *)
+4. Enter addresses - make sure they're within Calapan City
+5. Review the map route and estimated delivery fee
+6. Choose payment method (COD, GCash, etc.)
+7. Submit your booking!
+
+✅ You'll receive a confirmation and can track your order in 'My Orders'.
+
+💡 Tip: Make sure all addresses are within Calapan City, Oriental Mindoro!`,
+
+        'Pricing': `💰 Delivery Fee Structure:
+
+• Base Charge (First 3km): ₱55
+• Distance Fee (After 3km): ₱15 per additional kilometer
+• Bad Weather Surcharge: May apply during heavy rain
+
+💡 The exact fee is calculated based on your route and shown before booking. You can see the estimated delivery fee on the map after entering addresses!
+
+📊 Example:
+• 2km distance: ₱55 (base charge)
+• 5km distance: ₱55 (base) + ₱30 (2km × ₱15) = ₱85
+• 10km distance: ₱55 (base) + ₱105 (7km × ₱15) = ₱160
+
+All fees are displayed transparently before you confirm your booking.`
+      }
+      return content[topic] || 'Content not available.'
     }
   }
 }

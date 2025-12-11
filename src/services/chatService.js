@@ -1,4 +1,4 @@
-import { db } from "@/firebase/config"
+import { db, auth } from "@/firebase/config"
 import {
   collection,
   doc,
@@ -22,21 +22,124 @@ export class ChatService {
   // Create or get existing chat room between user and driver
   async createChatRoom(userId, driverId, orderId) {
     try {
-      // Check if chat room already exists for this order
-      const existingChatQuery = query(collection(db, "chats"), where("orderId", "==", orderId))
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:23',message:'createChatRoom entry',data:{userId,driverId,orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      console.log('[ChatService] Creating/getting chat room:', { userId, driverId, orderId })
+      
+      // Validate inputs
+      if (!userId || !driverId || !orderId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:29',message:'Missing parameters',data:{userId,driverId,orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+        throw new Error('Missing required parameters: userId, driverId, or orderId')
+      }
 
-      const existingChats = await getDocs(existingChatQuery)
+      // Check if chat room already exists for this order
+      // Query based on current authenticated user's role to ensure permission
+      // Get current user ID to determine which query to use
+      const currentUserId = auth.currentUser?.uid
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:38',message:'Checking existing chats',data:{orderId,userId,driverId,currentUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      
+      let existingChats
+      try {
+        // Determine which query to use based on current user's role
+        // If current user is the userId, query by userId
+        // If current user is the driverId, query by driverId
+        let chatQuery
+        if (currentUserId === userId) {
+          // Current user is the customer - query by userId
+          chatQuery = query(collection(db, "chats"), where("orderId", "==", orderId), where("userId", "==", userId))
+        } else if (currentUserId === driverId) {
+          // Current user is the driver - query by driverId
+          chatQuery = query(collection(db, "chats"), where("orderId", "==", orderId), where("driverId", "==", driverId))
+        } else {
+          // Fallback: try both queries
+          const userChatQuery = query(collection(db, "chats"), where("orderId", "==", orderId), where("userId", "==", userId))
+          const driverChatQuery = query(collection(db, "chats"), where("orderId", "==", orderId), where("driverId", "==", driverId))
+          const [userChats, driverChats] = await Promise.all([getDocs(userChatQuery), getDocs(driverChatQuery)])
+          // Merge results and remove duplicates
+          const allDocs = [...userChats.docs, ...driverChats.docs]
+          const uniqueDocs = Array.from(new Map(allDocs.map(doc => [doc.id, doc])).values())
+          existingChats = { docs: uniqueDocs, empty: uniqueDocs.length === 0 }
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:54',message:'Query successful (fallback)',data:{orderId,found:!existingChats.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+          // #endregion
+        }
+        
+        if (chatQuery) {
+          existingChats = await getDocs(chatQuery)
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:60',message:'Query successful',data:{orderId,found:!existingChats.empty,queryType:currentUserId === userId ? 'userId' : 'driverId'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+          // #endregion
+        }
+      } catch (queryError) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:64',message:'Query error, will create new chat',data:{orderId,code:queryError.code,message:queryError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        // If query fails due to permissions, proceed to create new chat
+        // This can happen if no chat exists yet or if user doesn't have read permission
+        existingChats = { docs: [], empty: true }
+      }
 
       if (!existingChats.empty) {
-        return existingChats.docs[0].id
+        const existingChat = existingChats.docs[0]
+        const chatData = existingChat.data()
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:37',message:'Existing chat found',data:{chatId:existingChat.id,participants:chatData.participants,hasUserId:!!chatData.participants?.[userId],hasDriverId:!!chatData.participants?.[driverId]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        
+        // Ensure participants object exists and includes both users
+        // If participants is missing or incomplete, update it
+        if (!chatData.participants || 
+            !chatData.participants[userId] || 
+            !chatData.participants[driverId]) {
+          console.log('[ChatService] Updating participants for existing chat:', existingChat.id)
+          const participantsUpdate = {
+            [userId]: true,
+            [driverId]: true
+          }
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:45',message:'Updating participants',data:{chatId:existingChat.id,participantsUpdate},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+          // #endregion
+          const chatRef = doc(db, "chats", existingChat.id)
+          try {
+            await updateDoc(chatRef, {
+              participants: participantsUpdate
+            })
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:66',message:'Participants updated',data:{chatId:existingChat.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+            // #endregion
+          } catch (updateError) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:69',message:'Update participants failed',data:{chatId:existingChat.id,code:updateError.code,message:updateError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+            // #endregion
+            // If update fails due to permissions, log but continue
+            // The chat might still be usable if userId/driverId are set correctly
+            console.warn('[ChatService] Failed to update participants, but chat may still work:', updateError.message)
+          }
+        }
+        
+        console.log('[ChatService] Using existing chat room:', existingChat.id)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:56',message:'Returning existing chatId',data:{chatId:existingChat.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        return existingChat.id
       }
 
       // Create new chat room
+      // IMPORTANT: participants must be an object/map (not array) to match Firestore rules
+      // Rules check: resource.data.participants[request.auth.uid] != null
       const chatData = {
         userId,
         driverId,
         orderId,
-        participants: [userId, driverId],
+        participants: {
+          [userId]: true,
+          [driverId]: true
+        },
         createdAt: serverTimestamp(),
         lastMessage: null,
         lastMessageAt: null,
@@ -46,10 +149,56 @@ export class ChatService {
         },
       }
 
-      const chatRef = await addDoc(collection(db, "chats"), chatData)
+      console.log('[ChatService] Creating new chat room with data:', chatData)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:131',message:'Creating new chat',data:{chatData,participantsKeys:Object.keys(chatData.participants)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      
+      let chatRef
+      try {
+        chatRef = await addDoc(collection(db, "chats"), chatData)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:137',message:'Chat created successfully',data:{chatId:chatRef.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        console.log('[ChatService] Chat room created successfully:', chatRef.id)
+      } catch (createError) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:140',message:'Chat creation failed',data:{code:createError.code,message:createError.message,userId,driverId,orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        throw new Error(`Failed to create chat room: ${createError.message || createError.code || 'Unknown error'}`)
+      }
+      
+      // Verify the chat document is accessible by trying to read it
+      try {
+        const verifyRef = doc(db, "chats", chatRef.id)
+        const verifyDoc = await getDoc(verifyRef)
+        if (!verifyDoc.exists()) {
+          throw new Error('Chat document was created but cannot be read')
+        }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:149',message:'Chat verified accessible',data:{chatId:chatRef.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+      } catch (verifyError) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:152',message:'Chat verification failed',data:{chatId:chatRef.id,code:verifyError.code,message:verifyError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        // Log warning but still return the chatId - it might work after propagation delay
+        console.warn('[ChatService] Chat created but verification failed (may be propagation delay):', verifyError.message)
+      }
+      
       return chatRef.id
     } catch (error) {
-      console.error("Error creating chat room:", error)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:84',message:'Error creating chat',data:{code:error.code,message:error.message,userId,driverId,orderId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      console.error("[ChatService] Error creating chat room:", error)
+      console.error("[ChatService] Error details:", {
+        code: error.code,
+        message: error.message,
+        userId,
+        driverId,
+        orderId
+      })
       throw error
     }
   }
@@ -57,6 +206,28 @@ export class ChatService {
   // Send message in chat room
   async sendMessage(chatId, senderId, senderRole, message, messageType = "text") {
     try {
+      console.log('[ChatService] Sending message:', { chatId, senderId, senderRole, messageType })
+      
+      // Verify chat exists and sender is a participant
+      const chatRef = doc(db, "chats", chatId)
+      const chatDoc = await getDoc(chatRef)
+      
+      if (!chatDoc.exists()) {
+        throw new Error('Chat room does not exist')
+      }
+      
+      const chatData = chatDoc.data()
+      if (!chatData.participants || !chatData.participants[senderId]) {
+        // Update participants if missing
+        console.log('[ChatService] Updating participants for chat:', chatId)
+        await updateDoc(chatRef, {
+          participants: {
+            ...(chatData.participants || {}),
+            [senderId]: true
+          }
+        })
+      }
+      
       const messageData = {
         chatId,
         senderId,
@@ -68,15 +239,14 @@ export class ChatService {
       }
 
       // Add message to messages subcollection
+      console.log('[ChatService] Adding message to subcollection')
       await addDoc(collection(db, "chats", chatId, "messages"), messageData)
 
-      // Update chat room with last message info
-      const chatRef = doc(db, "chats", chatId)
-      const chatDoc = await getDoc(chatRef)
-
+      // Update chat room with last message info (use existing chatDoc from above)
       if (chatDoc.exists()) {
         const chatData = chatDoc.data()
-        const otherParticipant = chatData.participants.find((p) => p !== senderId)
+        // participants is now an object, find the other participant
+        const otherParticipant = Object.keys(chatData.participants || {}).find((p) => p !== senderId)
 
         const lastMessageText = messageType === 'image' ? '📷 Image' : message
 
@@ -97,6 +267,28 @@ export class ChatService {
   // Send image message in chat room
   async sendImageMessage(chatId, senderId, senderRole, imageUrl) {
     try {
+      console.log('[ChatService] Sending image message:', { chatId, senderId, senderRole })
+      
+      // Verify chat exists and sender is a participant
+      const chatRef = doc(db, "chats", chatId)
+      const chatDoc = await getDoc(chatRef)
+      
+      if (!chatDoc.exists()) {
+        throw new Error('Chat room does not exist')
+      }
+      
+      const chatData = chatDoc.data()
+      if (!chatData.participants || !chatData.participants[senderId]) {
+        // Update participants if missing
+        console.log('[ChatService] Updating participants for chat:', chatId)
+        await updateDoc(chatRef, {
+          participants: {
+            ...(chatData.participants || {}),
+            [senderId]: true
+          }
+        })
+      }
+      
       const messageData = {
         chatId,
         senderId,
@@ -109,15 +301,14 @@ export class ChatService {
       }
 
       // Add message to messages subcollection
+      console.log('[ChatService] Adding image message to subcollection')
       await addDoc(collection(db, "chats", chatId, "messages"), messageData)
 
-      // Update chat room with last message info
-      const chatRef = doc(db, "chats", chatId)
-      const chatDoc = await getDoc(chatRef)
-
+      // Update chat room with last message info (use existing chatDoc from above)
       if (chatDoc.exists()) {
         const chatData = chatDoc.data()
-        const otherParticipant = chatData.participants.find((p) => p !== senderId)
+        // participants is now an object, find the other participant
+        const otherParticipant = Object.keys(chatData.participants || {}).find((p) => p !== senderId)
 
         await updateDoc(chatRef, {
           lastMessage: '📷 Image',
@@ -133,12 +324,18 @@ export class ChatService {
     }
   }
 
-  // Subscribe to chat messages
+  // Subscribe to chat messages - REAL-TIME using Firestore onSnapshot
+  // This provides instant updates when new messages are sent/received
+  // Used by standalone chat modals in MyOrders and DeliveryTracking
   subscribeToMessages(chatId, callback) {
-    console.log("[v0] Setting up message subscription for chat:", chatId)
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:220',message:'subscribeToMessages entry',data:{chatId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+    // #endregion
+    console.log("[v0] Setting up REAL-TIME message subscription for chat:", chatId)
 
     const messagesQuery = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"))
 
+    // onSnapshot provides real-time updates - automatically triggers when messages change
     const unsubscribe = onSnapshot(
       messagesQuery,
       (snapshot) => {
@@ -147,12 +344,26 @@ export class ChatService {
           messages.push({ id: doc.id, ...doc.data() })
         })
 
-        console.log("[v0] Messages updated in chat", chatId, "- Total messages:", messages.length)
+        console.log("[v0] REAL-TIME: Messages updated in chat", chatId, "- Total messages:", messages.length)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:229',message:'Messages snapshot received',data:{chatId,messageCount:messages.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion
 
+        // Callback is triggered automatically on any message change (real-time)
         callback(messages)
       },
       (error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:276',message:'Messages subscription error',data:{chatId,code:error.code,message:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion
         console.error("Messages subscription error:", error)
+        // Call callback with empty array to indicate error, but don't throw
+        // This allows the UI to handle the error gracefully
+        if (error.code === 'permission-denied' || error.code === 'missing-or-insufficient-permissions') {
+          console.error(`[ChatService] Permission denied for chat ${chatId}. User may not have access to this chat.`)
+        }
+        // Still call callback with empty array so UI can show appropriate message
+        callback([])
       },
     )
 
@@ -161,26 +372,84 @@ export class ChatService {
   }
 
   // Subscribe to user's chat rooms
+  // Since participants is now an object, we query by userId OR driverId
   subscribeToUserChats(userId, callback) {
-    const chatsQuery = query(
+    let allChats = []
+    let userChatsLoaded = false
+    let driverChatsLoaded = false
+
+    // Helper to merge and deduplicate chats
+    const mergeAndCallback = () => {
+      if (userChatsLoaded && driverChatsLoaded) {
+        // Remove duplicates based on chat ID
+        const uniqueChats = Array.from(
+          new Map(allChats.map(chat => [chat.id, chat])).values()
+        )
+        // Sort by lastMessageAt
+        uniqueChats.sort((a, b) => {
+          const aTime = a.lastMessageAt?.toDate?.() || new Date(0)
+          const bTime = b.lastMessageAt?.toDate?.() || new Date(0)
+          return bTime - aTime
+        })
+        callback(uniqueChats)
+      }
+    }
+
+    // Query chats where user is the customer
+    const userChatsQuery = query(
       collection(db, "chats"),
-      where("participants", "array-contains", userId),
+      where("userId", "==", userId),
       orderBy("lastMessageAt", "desc"),
     )
 
-    const unsubscribe = onSnapshot(
-      chatsQuery,
+    const unsubscribeUser = onSnapshot(
+      userChatsQuery,
       (snapshot) => {
         const chats = []
         snapshot.forEach((doc) => {
           chats.push({ id: doc.id, ...doc.data() })
         })
-        callback(chats)
+        allChats = allChats.filter(c => c.userId !== userId).concat(chats)
+        userChatsLoaded = true
+        mergeAndCallback()
       },
       (error) => {
         console.error("User chats subscription error:", error)
+        userChatsLoaded = true
+        mergeAndCallback()
       },
     )
+
+    // Query chats where user is the driver
+    const driverChatsQuery = query(
+      collection(db, "chats"),
+      where("driverId", "==", userId),
+      orderBy("lastMessageAt", "desc"),
+    )
+
+    const unsubscribeDriver = onSnapshot(
+      driverChatsQuery,
+      (snapshot) => {
+        const chats = []
+        snapshot.forEach((doc) => {
+          chats.push({ id: doc.id, ...doc.data() })
+        })
+        allChats = allChats.filter(c => c.driverId !== userId).concat(chats)
+        driverChatsLoaded = true
+        mergeAndCallback()
+      },
+      (error) => {
+        console.error("Driver chats subscription error:", error)
+        driverChatsLoaded = true
+        mergeAndCallback()
+      },
+    )
+
+    // Return combined unsubscribe function
+    const unsubscribe = () => {
+      unsubscribeUser()
+      unsubscribeDriver()
+    }
 
     this.listeners.set(`user_chats_${userId}`, unsubscribe)
     return unsubscribe
@@ -262,29 +531,50 @@ export class ChatService {
   // Delete message (mark as deleted, don't actually delete from Firestore)
   async deleteMessage(chatId, messageId, userId) {
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:532',message:'deleteMessage entry',data:{chatId,messageId,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       const messageRef = doc(db, "chats", chatId, "messages", messageId)
       const messageDoc = await getDoc(messageRef)
       
       if (!messageDoc.exists()) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:537',message:'Message not found',data:{chatId,messageId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
         throw new Error("Message not found")
       }
       
       const messageData = messageDoc.data()
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:541',message:'Message data retrieved',data:{chatId,messageId,senderId:messageData.senderId,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       
       // Only allow deletion if user is the sender
       if (messageData.senderId !== userId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:544',message:'User not sender',data:{chatId,messageId,senderId:messageData.senderId,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
         throw new Error("You can only delete your own messages")
       }
       
       // Mark message as deleted instead of actually deleting it
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:549',message:'Updating message to deleted',data:{chatId,messageId,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       await updateDoc(messageRef, {
         deleted: true,
         deletedAt: serverTimestamp(),
         deletedBy: userId
       })
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:555',message:'Message deleted successfully',data:{chatId,messageId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       
       return true
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chatService.js:558',message:'Error deleting message',data:{chatId,messageId,userId,code:error.code,message:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       console.error("Error deleting message:", error)
       throw error
     }

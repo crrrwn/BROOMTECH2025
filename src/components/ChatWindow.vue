@@ -335,20 +335,53 @@ export default {
     }
   },
   async mounted() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:337',message:'ChatWindow mounted',data:{chatId:this.chatId,orderId:this.orderId,currentUserId:this.currentUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+    // #endregion
+    // Initialize real-time message subscription (Firestore onSnapshot)
     this.subscribeToMessages()
     this.markMessagesAsRead()
   },
   beforeUnmount() {
+    // Clean up real-time subscription when component unmounts
     chatService.unsubscribe(`messages_${this.chatId}`)
   },
   methods: {
+    // Real-time message subscription using Firestore onSnapshot
+    // Messages update automatically when new messages are sent
     subscribeToMessages() {
-      chatService.subscribeToMessages(this.chatId, (messages) => {
-        this.messages = messages
-        this.$nextTick(() => {
-          this.scrollToBottom()
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:352',message:'subscribeToMessages entry',data:{chatId:this.chatId,currentUserId:this.currentUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+      
+      if (!this.chatId) {
+        console.error('[ChatWindow] Cannot subscribe: chatId is missing')
+        return
+      }
+      
+      try {
+        chatService.subscribeToMessages(this.chatId, (messages) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:361',message:'Messages callback received',data:{chatId:this.chatId,messageCount:messages.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+          // #endregion
+          this.messages = messages
+          this.loading = false
+          this.$nextTick(() => {
+            this.scrollToBottom()
+          })
         })
-      })
+      } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:370',message:'Subscribe error',data:{chatId:this.chatId,code:error.code,message:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion
+        console.error('[ChatWindow] Error subscribing to messages:', error)
+        this.loading = false
+        // Emit error notification to parent
+        this.$emit('notification', {
+          type: 'error',
+          message: `Failed to load messages: ${error.message || 'Please try again'}`
+        })
+      }
     },
 
     async sendMessage() {
@@ -378,10 +411,17 @@ export default {
     },
 
     async markMessagesAsRead() {
+      if (!this.chatId || !this.currentUserId) {
+        return
+      }
       try {
         await chatService.markMessagesAsRead(this.chatId, this.currentUserId)
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:395',message:'markMessagesAsRead error',data:{chatId:this.chatId,code:error.code,message:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion
         console.error('Error marking messages as read:', error)
+        // Don't show error to user - this is a non-critical operation
       }
     },
 
@@ -567,7 +607,13 @@ export default {
       this.closeDeleteConfirm()
 
       try {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:600',message:'confirmDelete entry',data:{chatId:this.chatId,messageId,currentUserId:this.currentUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
         await chatService.deleteMessage(this.chatId, messageId, this.currentUserId)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:610',message:'Delete successful',data:{chatId:this.chatId,messageId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
         // Emit notification event for parent component to handle
         this.$emit('notification', {
           type: 'success',
@@ -578,6 +624,9 @@ export default {
           this.$toast.success('Message deleted')
         }
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatWindow.vue:620',message:'Delete error',data:{chatId:this.chatId,messageId,currentUserId:this.currentUserId,code:error.code,message:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
         console.error('Error deleting message:', error)
         // Emit notification event for parent component to handle
         this.$emit('notification', {
