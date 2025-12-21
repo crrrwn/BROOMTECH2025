@@ -257,8 +257,9 @@
                 <div class="flex items-center gap-2">
                   <button @click="viewOrder(order)" class="text-blue-600 hover:text-blue-900 text-xs">View</button>
                   <!-- CHANGE: Removed Track button from actions column -->
-                  <button v-if="order.driverName && order.status !== 'delivered' && order.status !== 'picked_up' && order.status !== 'in_transit'" @click="openAssignDriverModal(order)" class="text-purple-600 hover:text-purple-900 text-xs">
-                    Reassign
+                  <!-- Reassign button only shows when no driver is assigned -->
+                  <button v-if="!order.driverId && !order.driverName && order.status !== 'delivered' && order.status !== 'cancelled'" @click="openAssignDriverModal(order)" class="text-purple-600 hover:text-purple-900 text-xs">
+                    Assign
                   </button>
                   <button v-if="order.status !== 'cancelled' && order.status !== 'delivered'" @click="cancelOrder(order)" class="text-red-600 hover:text-red-900 text-xs">Cancel</button>
                 </div>
@@ -429,6 +430,32 @@
               <div v-if="getServiceDetails(selectedOrder)" class="mt-2 pt-2 border-t border-gray-100">
                 <p class="text-gray-600 text-xs">Service Details</p>
                 <p class="font-medium text-sm">{{ getServiceDetails(selectedOrder) }}</p>
+              </div>
+            </div>
+            
+            <!-- Customer Feedback Section -->
+            <div v-if="selectedOrder?.feedback && selectedOrder?.status === 'delivered'" class="mt-4 pt-4 border-t border-gray-200">
+              <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                </svg>
+                Customer Feedback
+              </h4>
+              <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="flex text-yellow-400">
+                    <svg v-for="i in 5" :key="i" 
+                         :class="i <= (selectedOrder.feedback.rating || 0) ? 'text-yellow-400' : 'text-gray-300'" 
+                         class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                  </div>
+                  <span class="text-sm font-bold text-gray-700">{{ selectedOrder.feedback.rating || 0 }}.0</span>
+                  <span class="text-xs text-gray-500">by {{ selectedOrder.feedback.userName || 'Customer' }}</span>
+                </div>
+                <p v-if="selectedOrder.feedback.comment" class="text-sm text-gray-700 italic bg-white/60 p-2 rounded border border-yellow-100">
+                  "{{ selectedOrder.feedback.comment }}"
+                </p>
               </div>
             </div>
           </div>
@@ -815,6 +842,32 @@
               </div>
             </div>
 
+            <!-- Customer Feedback Section -->
+            <div v-if="selectedOrderForDetails?.feedback && selectedOrderForDetails?.status === 'delivered'" class="bg-white p-4 rounded-lg border border-yellow-200 bg-yellow-50">
+              <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                </svg>
+                Customer Feedback
+              </h4>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="flex text-yellow-400">
+                    <svg v-for="i in 5" :key="i" 
+                         :class="i <= (selectedOrderForDetails.feedback.rating || 0) ? 'text-yellow-400' : 'text-gray-300'" 
+                         class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                  </div>
+                  <span class="text-sm font-bold text-gray-700">{{ selectedOrderForDetails.feedback.rating || 0 }}.0</span>
+                  <span class="text-xs text-gray-500">by {{ selectedOrderForDetails.feedback.userName || 'Customer' }}</span>
+                </div>
+                <p v-if="selectedOrderForDetails.feedback.comment" class="text-sm text-gray-700 italic bg-white/60 p-2 rounded border border-yellow-100">
+                  "{{ selectedOrderForDetails.feedback.comment }}"
+                </p>
+              </div>
+            </div>
+
           </div>
 
           Action Buttons
@@ -1058,6 +1111,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { db } from '@/firebase/config'
 import { collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, where, serverTimestamp, getDocs } from 'firebase/firestore'
 import { useToast } from 'vue-toastification'
@@ -1065,6 +1119,13 @@ import { realtimeService } from '@/services/realtime'
 import { loggingService } from '@/services/loggingService'
 import { useAuthStore } from '@/stores/auth'
 import { googleMapsService } from '@/services/googleMaps' // Import Google Maps service
+import jsPDF from 'jspdf'
+// Import autoTable plugin - for jspdf-autotable v5+
+import { applyPlugin, autoTable } from 'jspdf-autotable'
+
+// Apply plugin to jsPDF prototype (required for v5+)
+// This extends jsPDF with the autoTable method
+applyPlugin(jsPDF)
 
 // CHANGE: Removed non-existent icon component imports
 
@@ -1074,6 +1135,7 @@ export default {
   setup() {
     const toast = useToast()
     const authStore = useAuthStore()
+    const route = useRoute()
     const orders = ref([])
     const loading = ref(true)
     const error = ref(null)
@@ -1138,7 +1200,6 @@ export default {
       { status: 'confirmed', label: 'Confirmed' },
       { status: 'driver_assigned', label: 'Driver Assigned' },
       { status: 'in_transit', label: 'In Transit' },
-      { status: 'arrived', label: 'Arrived' },
       { status: 'delivered', label: 'Delivered' }
     ])
 
@@ -1604,27 +1665,41 @@ export default {
             pickupCoords = await geocodeAddress(pickupAddress)
             bounds.extend(pickupCoords)
 
-            // Add pickup marker (green)
-            pickupMarker.value = new window.google.maps.Marker({
-              position: pickupCoords,
-              map: map,
-              title: 'Pickup Location',
-              label: {
-                text: 'P',
-                color: 'white',
-                fontWeight: 'bold'
-              },
-              icon: {
-                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                  <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
-                    <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">P</text>
-                  </svg>
-                `),
-                scaledSize: new window.google.maps.Size(40, 40),
-                anchor: new window.google.maps.Point(20, 20)
+            // Add pickup marker using pin_location.png image
+            const createPickupPinMarker = (iconUrl, isFallback = false) => {
+              pickupMarker.value = new window.google.maps.Marker({
+                position: pickupCoords,
+                map: map,
+                title: 'Pickup Location',
+                icon: {
+                  url: iconUrl,
+                  scaledSize: new window.google.maps.Size(50, 50),
+                  anchor: new window.google.maps.Point(25, 50) // Anchor at bottom center of pin
+                }
+              })
+              
+              // If using custom image, verify it loads
+              if (!isFallback) {
+                const testImage = new Image()
+                testImage.onerror = () => {
+                  console.warn('pin_location.png failed to load for pickup, removing marker to recreate with fallback')
+                  if (pickupMarker.value) {
+                    pickupMarker.value.setMap(null)
+                    pickupMarker.value = null
+                    createPickupPinMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                      <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 0C11.193 0 0 11.193 0 25c0 25 25 25 25 25s25 0 25-25C50 11.193 38.807 0 25 0z" fill="#10B981"/>
+                        <circle cx="25" cy="25" r="8" fill="#ffffff"/>
+                      </svg>
+                    `), true)
+                  }
+                }
+                testImage.src = iconUrl
               }
-            })
+            }
+            
+            // Try to use PIN_LOCATION.png for pickup location
+            createPickupPinMarker('/PIN_LOCATION.png')
           } catch (error) {
             console.error('Error geocoding pickup address:', error)
           }
@@ -1636,27 +1711,41 @@ export default {
             dropoffCoords = await geocodeAddress(dropoffAddress)
             bounds.extend(dropoffCoords)
 
-            // Add drop-off marker (red)
-            dropoffMarker.value = new window.google.maps.Marker({
-              position: dropoffCoords,
-              map: map,
-              title: 'Drop-off Location',
-              label: {
-                text: 'D',
-                color: 'white',
-                fontWeight: 'bold'
-              },
-              icon: {
-                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                  <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="20" cy="20" r="18" fill="#EF4444" stroke="#ffffff" stroke-width="3"/>
-                    <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">D</text>
-                  </svg>
-                `),
-                scaledSize: new window.google.maps.Size(40, 40),
-                anchor: new window.google.maps.Point(20, 20)
+            // Create marker with pin_location.png, with fallback if image doesn't load
+            const createPinMarker = (iconUrl, isFallback = false) => {
+              dropoffMarker.value = new window.google.maps.Marker({
+                position: dropoffCoords,
+                map: map,
+                title: 'Drop-off Location',
+                icon: {
+                  url: iconUrl,
+                  scaledSize: new window.google.maps.Size(50, 50),
+                  anchor: new window.google.maps.Point(25, 50) // Anchor at bottom center of pin
+                }
+              })
+              
+              // If using custom image, verify it loads
+              if (!isFallback) {
+                const testImage = new Image()
+                testImage.onerror = () => {
+                  console.warn('pin_location.png failed to load, removing marker to recreate with fallback')
+                  if (dropoffMarker.value) {
+                    dropoffMarker.value.setMap(null)
+                    dropoffMarker.value = null
+                    createPinMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                      <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 0C11.193 0 0 11.193 0 25c0 25 25 25 25 25s25 0 25-25C50 11.193 38.807 0 25 0z" fill="#10B981"/>
+                        <circle cx="25" cy="25" r="8" fill="#ffffff"/>
+                      </svg>
+                    `), true)
+                  }
+                }
+                testImage.src = iconUrl
               }
-            })
+            }
+            
+            // Try to use PIN_LOCATION.png first
+            createPinMarker('/PIN_LOCATION.png')
           } catch (error) {
             console.error('Error geocoding drop-off address:', error)
           }
@@ -1786,24 +1875,44 @@ export default {
         }
 
         if (!driverMarker) {
-          // Create driver marker if it doesn't exist
-          driverMarker = new window.google.maps.Marker({
-            position: driverPosition,
-            map: map,
-            title: trackedDriverName.value,
-            icon: {
-              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#3B82F6" stroke="#ffffff" stroke-width="3"/>
-                  <path d="M20 8l6 12-6 12-6-12 6-12z" fill="#ffffff"/>
-                </svg>
-              `),
-              scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20)
+          // Create marker with rider.png, with fallback if image doesn't load
+          const createDriverMarker = (iconUrl, isFallback = false) => {
+            driverMarker = new window.google.maps.Marker({
+              position: driverPosition,
+              map: map,
+              title: trackedDriverName.value,
+              icon: {
+                url: iconUrl,
+                scaledSize: new window.google.maps.Size(60, 60),
+                anchor: new window.google.maps.Point(30, 30)
+              },
+              optimized: false
+            })
+            
+            // If using custom image, verify it loads
+            if (!isFallback) {
+              const testImage = new Image()
+              testImage.onerror = () => {
+                console.warn('rider.png failed to load, removing marker to recreate with fallback')
+                if (driverMarker) {
+                  driverMarker.setMap(null)
+                  driverMarker = null
+                  createDriverMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="30" cy="30" r="28" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+                      <text x="30" y="38" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🚴</text>
+                    </svg>
+                  `), true)
+                }
+              }
+              testImage.src = iconUrl
             }
-          })
+          }
+          
+          // Try to use RIDER.png first
+          createDriverMarker('/RIDER.png')
         } else {
-          // Smoothly animate marker to new position
+          // Smoothly animate marker to new position for visible movement
           const startPosition = driverMarker.getPosition()
           if (!startPosition) {
             // If no position, just set it directly
@@ -1811,19 +1920,31 @@ export default {
           } else {
             const endPosition = new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng)
             
+            // Calculate distance to determine animation steps
+            const distance = Math.sqrt(
+              Math.pow(endPosition.lat() - startPosition.lat(), 2) + 
+              Math.pow(endPosition.lng() - startPosition.lng(), 2)
+            )
+            
+            // More steps for longer distances to show smooth movement
+            const steps = Math.max(15, Math.min(30, Math.ceil(distance * 1000)))
+            
             let step = 0
-            const steps = 10
             const animateMarker = () => {
               step++
               const progress = step / steps
+              // Use easing function for smoother animation
+              const easedProgress = progress < 0.5 
+                ? 2 * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2
 
-              const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * progress
-              const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * progress
+              const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * easedProgress
+              const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * easedProgress
 
               driverMarker.setPosition(new window.google.maps.LatLng(lat, lng))
 
               if (step < steps) {
-                setTimeout(animateMarker, 50)
+                setTimeout(animateMarker, 30) // Faster update for smoother movement
               }
             }
             animateMarker()
@@ -1857,30 +1978,44 @@ export default {
           estimatedArrival.value = formatTime(distance)
         }
 
-        // Update map bounds to include driver, pickup, and drop-off locations
-        if (map && pickupMarker.value && dropoffMarker.value) {
-          const bounds = new window.google.maps.LatLngBounds()
+        // Pan map to follow driver movement (real-time tracking)
+        if (map) {
+          // Smoothly pan to driver location to show movement
+          map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
           
-          // Add pickup location
-          const pickupPos = pickupMarker.value.getPosition()
-          if (pickupPos) bounds.extend(pickupPos)
-          
-          // Add drop-off location
-          const dropoffPos = dropoffMarker.value.getPosition()
-          if (dropoffPos) bounds.extend(dropoffPos)
-          
-          // Add driver location
-          bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
-          
-          // Fit bounds to show all locations (with padding)
-          map.fitBounds(bounds, { padding: 100 })
-        } else {
-          // If markers not available, just pan to driver
-          setTimeout(() => {
-            if (map) {
-              map.panTo(driverPosition)
+          // Update map bounds to include driver, pickup, and drop-off locations
+          if (pickupMarker.value && dropoffMarker.value) {
+            const bounds = new window.google.maps.LatLngBounds()
+            
+            // Add pickup location
+            const pickupPos = pickupMarker.value.getPosition()
+            if (pickupPos) bounds.extend(pickupPos)
+            
+            // Add drop-off location
+            const dropoffPos = dropoffMarker.value.getPosition()
+            if (dropoffPos) bounds.extend(dropoffPos)
+            
+            // Add driver location
+            bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+            
+            // Fit bounds to show all locations (with padding) - but don't force it, let panTo handle movement
+            // Only fit bounds if driver is far from viewport
+            const mapCenter = map.getCenter()
+            if (mapCenter) {
+              const distanceFromCenter = Math.sqrt(
+                Math.pow(driverPosition.lat - mapCenter.lat(), 2) + 
+                Math.pow(driverPosition.lng - mapCenter.lng(), 2)
+              )
+              
+              // If driver is far from center, fit bounds to show everything
+              if (distanceFromCenter > 0.01) {
+                map.fitBounds(bounds, { padding: 100 })
+              }
             }
-          }, 500)
+          } else {
+            // If markers not available, just pan to driver
+            map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+          }
         }
       }, (error) => {
         console.error('Error listening to driver location:', error)
@@ -2336,13 +2471,20 @@ export default {
     }
 
     const formatServiceType = (serviceType) => {
+      if (!serviceType) return 'N/A'
       const serviceMap = {
         'grocery': 'Grocery Delivery',
+        'grocery-shopping': 'Grocery Shopping',
         'food': 'Food Delivery',
+        'food-delivery': 'Food Delivery',
         'package': 'Package Delivery',
-        'medicine': 'Medicine Delivery'
+        'pickup-drop': 'Pick-up & Drop',
+        'medicine': 'Medicine Delivery',
+        'medicine-delivery': 'Medicine Delivery',
+        'bill-payments': 'Bill Payments',
+        'gift-delivery': 'Gift Delivery'
       }
-      return serviceMap[serviceType] || serviceType
+      return serviceMap[serviceType] || serviceType || 'N/A'
     }
 
     // CHANGE: Added service-related helper functions
@@ -2656,7 +2798,7 @@ export default {
       const currentOrder = selectedOrderForProgress.value || trackedOrder.value
       if (!currentOrder) return false
 
-      const statusOrder = ['confirmed', 'driver_assigned', 'in_transit', 'arrived', 'delivered']
+      const statusOrder = ['confirmed', 'driver_assigned', 'in_transit', 'delivered']
       const currentIndex = statusOrder.indexOf(currentOrder.status)
       const stepIndex = statusOrder.indexOf(status)
 
@@ -2764,6 +2906,26 @@ export default {
       // Alternatively, implement a modal for preview
     }
 
+    // Check for orderId in route query and open order details
+    const checkRouteOrderId = () => {
+      const orderId = route.query.orderId
+      if (orderId && orders.value.length > 0) {
+        nextTick(() => {
+          const order = orders.value.find(o => o.id === orderId)
+          if (order) {
+            viewOrder(order)
+          }
+        })
+      }
+    }
+
+    // Watch for orders to load, then check route
+    watch(orders, () => {
+      if (orders.value.length > 0) {
+        checkRouteOrderId()
+      }
+    }, { immediate: false })
+
     onMounted(() => {
       fetchOrders()
       setupRealtimeDriverListeners()
@@ -2772,6 +2934,11 @@ export default {
       initializeGoogleMaps().catch(error => {
         console.error('[v0] Failed to preload Google Maps API:', error)
       })
+      
+      // Check route after a delay to allow orders to load
+      setTimeout(() => {
+        checkRouteOrderId()
+      }, 1000)
     })
 
     // CHANGE: Updated onUnmounted to reset unsubscribe.value to null for memory leak prevention
@@ -2951,12 +3118,15 @@ export default {
       return value
     }
 
-    // CHANGE: Implementing proper CSV export functionality
+    // CHANGE: Implementing PDF export functionality with user information
     const exportOrders = async () => {
       exportingOrders.value = true
       try {
+        console.log('[Export] Starting export process...')
+        
         // Get all filtered orders (without pagination)
         let filtered = orders.value
+        console.log('[Export] Total orders:', filtered.length)
 
         if (statusFilter.value) {
           filtered = filtered.filter(order => order.status === statusFilter.value)
@@ -2987,79 +3157,235 @@ export default {
 
         if (filtered.length === 0) {
           showNotification('error', 'No orders to export')
+          exportingOrders.value = false
           return
         }
 
-        // CSV Headers
-        const headers = [
-          'Order ID',
-          'Customer Name',
-          'Customer Phone',
-          'Customer Email',
-          'Service Type',
-          'Service Name',
-          'Status',
-          'Driver Name',
-          'Driver Phone',
-          'Pickup Address',
-          'Delivery Address',
-          'Total Amount',
-          'Order Date',
-          'Driver Assigned Date'
-        ]
+        console.log('[Export] Filtered orders:', filtered.length)
 
-        // CSV Rows
-        const rows = filtered.map(order => {
-          const formatDate = (timestamp) => {
-            if (!timestamp) return 'N/A'
-            if (timestamp.toDate) {
-              return timestamp.toDate().toLocaleString()
+        // Fetch user information for all orders
+        const userIds = [...new Set(filtered.map(o => o.userId).filter(Boolean))]
+        const usersMap = {}
+        
+        console.log('[Export] Fetching user data for', userIds.length, 'users')
+        await Promise.all(userIds.map(async (userId) => {
+          try {
+            const userDoc = await getDoc(doc(db, 'users', userId))
+            if (userDoc.exists()) {
+              usersMap[userId] = userDoc.data()
             }
-            return new Date(timestamp).toLocaleString()
+          } catch (error) {
+            console.error(`[Export] Error fetching user ${userId}:`, error)
           }
+        }))
 
-          return [
-            order.id || '',
-            order.customerName || 'Unknown',
-            order.customerPhone || 'N/A',
-            order.customerEmail || 'N/A',
-            order.serviceType || order.serviceId || 'N/A',
-            order.serviceName || formatServiceType(order.serviceType || order.serviceId),
-            order.status || 'pending',
-            order.driverName || getDriverNameById(order.driverId) || 'Not assigned',
-            order.driverPhone || getDriverPhoneById(order.driverId) || 'N/A',
-            order.pickupAddress || getPickupLocation(order) || 'N/A',
-            order.deliveryAddress || getDeliveryLocation(order) || 'N/A',
-            // Export total amount including pricing.total fallback
-            `₱${order.totalAmount || order.priceEstimate?.total || order.pricing?.total || 'TBD'}`,
-            formatDate(order.createdAt),
-            formatDate(order.driverAssignedAt)
-          ]
+        console.log('[Export] User data loaded:', Object.keys(usersMap).length)
+
+        // Helper function to format dates
+        const formatDate = (timestamp) => {
+          if (!timestamp) return 'N/A'
+          try {
+            if (timestamp.toDate) {
+              return timestamp.toDate().toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })
+            }
+            return new Date(timestamp).toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          } catch (e) {
+            return 'Invalid date'
+          }
+        }
+
+        // Create PDF
+        console.log('[Export] Creating PDF document...')
+        const pdfDoc = new jsPDF('landscape', 'mm', 'a4')
+        
+        // Landscape A4 dimensions: 297mm x 210mm
+        // With margins, available width is approximately 280mm
+        
+        // Add title
+        pdfDoc.setFontSize(16)
+        pdfDoc.text('Orders Export Report', 10, 12)
+        
+        // Add export date
+        pdfDoc.setFontSize(9)
+        pdfDoc.setTextColor(100, 100, 100)
+        pdfDoc.text(`Exported on: ${new Date().toLocaleString('en-US')}`, 10, 18)
+        pdfDoc.text(`Total Orders: ${filtered.length}`, 10, 23)
+        
+        // Reset text color
+        pdfDoc.setTextColor(0, 0, 0)
+        
+        // Prepare table data
+        console.log('[Export] Preparing table data...')
+        const tableData = filtered.map((order) => {
+          try {
+            const userData = order.userId && usersMap[order.userId] ? usersMap[order.userId] : null
+            
+            // Safely get values with fallbacks
+            const customerName = order.customerName || (userData ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Unknown' : 'Unknown')
+            const customerPhone = order.customerPhone || userData?.phone || userData?.contact || 'N/A'
+            const customerEmail = order.customerEmail || userData?.email || 'N/A'
+            const userName = userData ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'N/A' : 'N/A'
+            const userEmail = userData?.email || 'N/A'
+            const userPhone = userData?.phone || userData?.contact || 'N/A'
+            const userAddress = userData?.address || userData?.barangay || 'N/A'
+            const serviceType = formatServiceType(order.serviceType || order.serviceId) || 'N/A'
+            const status = order.status || 'pending'
+            const driverName = order.driverName || getDriverNameById(order.driverId) || 'Not assigned'
+            const driverPhone = order.driverPhone || getDriverPhoneById(order.driverId) || 'N/A'
+            const pickupAddr = order.pickupAddress || getPickupLocation(order) || 'N/A'
+            const deliveryAddr = order.deliveryAddress || getDeliveryLocation(order) || 'N/A'
+            const totalAmount = `₱${order.totalAmount || order.priceEstimate?.total || order.pricing?.total || 'TBD'}`
+            
+            return [
+              String(order.id || 'N/A'),
+              String(customerName),
+              String(customerPhone),
+              String(customerEmail),
+              String(userName),
+              String(userEmail),
+              String(userPhone),
+              String(userAddress),
+              String(serviceType),
+              String(status),
+              String(driverName),
+              String(driverPhone),
+              String(pickupAddr),
+              String(deliveryAddr),
+              String(totalAmount),
+              formatDate(order.createdAt),
+              formatDate(order.driverAssignedAt)
+            ]
+          } catch (e) {
+            console.error(`[Export] Error processing order ${order?.id || 'unknown'}:`, e)
+            // Return a row with error indicators
+            return [
+              String(order?.id || 'N/A'),
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error',
+              'Error'
+            ]
+          }
         })
 
-        // Create CSV content
-        const csvContent = [
-          headers.join(','),
-          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-        ].join('\n')
+        console.log('[Export] Table data prepared:', tableData.length, 'rows')
 
-        // Create Blob and download
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        const link = document.createElement('a')
-        const url = URL.createObjectURL(blob)
+        // Add table using autoTable (plugin applied via applyPlugin)
+        console.log('[Export] Adding table to PDF...')
         
-        link.setAttribute('href', url)
-        link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`)
-        link.style.visibility = 'hidden'
+        const tableOptions = {
+          startY: 28,
+          head: [[
+            'Order ID',
+            'Customer',
+            'Cust Phone',
+            'Cust Email',
+            'User',
+            'User Email',
+            'User Phone',
+            'User Addr',
+            'Service',
+            'Status',
+            'Driver',
+            'Drv Phone',
+            'Pickup',
+            'Delivery',
+            'Amount',
+            'Order Date',
+            'Assigned'
+          ]],
+          body: tableData,
+          styles: { 
+            fontSize: 5.5, 
+            cellPadding: 1,
+            overflow: 'linebreak',
+            cellWidth: 'wrap'
+          },
+          headStyles: { 
+            fillColor: [34, 197, 94], 
+            textColor: 255, 
+            fontStyle: 'bold',
+            fontSize: 6
+          },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { top: 28, left: 10, right: 10 },
+          // Landscape A4: 297mm width, with 10mm margins = 277mm available
+          // Distribute width proportionally across 17 columns
+          // Average: 277/17 = ~16.3mm per column, but we'll adjust for content
+          tableWidth: 277,
+          columnStyles: {
+            0: { cellWidth: 14, fontSize: 5, overflow: 'linebreak' }, // Order ID
+            1: { cellWidth: 16, fontSize: 5, overflow: 'linebreak' }, // Customer Name
+            2: { cellWidth: 14, fontSize: 5, overflow: 'linebreak' }, // Customer Phone
+            3: { cellWidth: 18, fontSize: 5, overflow: 'linebreak' }, // Customer Email
+            4: { cellWidth: 16, fontSize: 5, overflow: 'linebreak' }, // User Name
+            5: { cellWidth: 18, fontSize: 5, overflow: 'linebreak' }, // User Email
+            6: { cellWidth: 14, fontSize: 5, overflow: 'linebreak' }, // User Phone
+            7: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // User Address
+            8: { cellWidth: 15, fontSize: 5, overflow: 'linebreak' }, // Service Type
+            9: { cellWidth: 12, fontSize: 5, overflow: 'linebreak' }, // Status
+            10: { cellWidth: 16, fontSize: 5, overflow: 'linebreak' }, // Driver Name
+            11: { cellWidth: 14, fontSize: 5, overflow: 'linebreak' }, // Driver Phone
+            12: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Pickup Address
+            13: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Delivery Address
+            14: { cellWidth: 15, fontSize: 5, overflow: 'linebreak' }, // Total Amount
+            15: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Order Date
+            16: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }  // Assigned Date
+          },
+          // Enable horizontal page breaks if needed
+          showHead: 'everyPage',
+          showFoot: 'everyPage'
+        }
         
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        // Try method approach first (after applyPlugin)
+        if (typeof pdfDoc.autoTable === 'function') {
+          console.log('[Export] Using pdfDoc.autoTable method')
+          pdfDoc.autoTable(tableOptions)
+        } else if (typeof autoTable === 'function') {
+          // Fallback: use standalone function
+          console.log('[Export] Using autoTable standalone function')
+          autoTable(pdfDoc, tableOptions)
+        } else {
+          throw new Error('PDF table plugin not loaded. Please refresh the page and try again.')
+        }
+        
+        console.log('[Export] Table added successfully')
 
-        showNotification('success', `Successfully exported ${filtered.length} orders to Downloads folder`)
+        // Save PDF
+        console.log('[Export] Saving PDF...')
+        const fileName = `orders_export_${new Date().toISOString().split('T')[0]}.pdf`
+        pdfDoc.save(fileName)
+
+        console.log('[Export] Export completed successfully')
+        showNotification('success', `Successfully exported ${filtered.length} orders as PDF`)
       } catch (err) {
-        console.error('Error exporting orders:', err)
-        showNotification('error', 'Failed to export orders. Please try again.')
+        console.error('[Export] Error exporting orders:', err)
+        console.error('[Export] Error details:', err.message, err.stack)
+        showNotification('error', `Failed to export orders: ${err.message || 'Please try again.'}`)
       } finally {
         exportingOrders.value = false
       }

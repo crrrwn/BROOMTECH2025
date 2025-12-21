@@ -543,7 +543,7 @@
 import { realtimeService } from '@/services/realtime'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
-import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore'
+import { doc, updateDoc, serverTimestamp, getDoc, collection, addDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore'
 import LiveTracking from '@/components/LiveTracking.vue'
 import ChatWindow from '@/components/ChatWindow.vue'
 import { chatService } from '@/services/chatService'
@@ -808,20 +808,133 @@ export default {
 
       this.submittingFeedback = true
       try {
-        const feedbackData = {
-          rating: this.feedbackRating,
-          comment: this.feedbackComment.trim(),
-          aspects: this.feedbackAspects,
-          tags: this.selectedTags,
-          createdAt: serverTimestamp(),
-          userId: this.authStore.user.uid
+        // Get user information
+        const userRef = doc(db, 'users', this.authStore.user.uid)
+        const userSnap = await getDoc(userRef)
+        let userName = 'Anonymous'
+        let userInitials = 'A'
+        
+        if (userSnap.exists()) {
+          const userData = userSnap.data()
+          const firstName = userData.firstName || ''
+          const lastName = userData.lastName || ''
+          userName = `${firstName} ${lastName}`.trim() || userData.email || 'Anonymous'
+          userInitials = `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'A'
         }
 
+        // Get order information for driver and admin visibility
         const orderRef = doc(db, 'orders', this.feedbackOrderId)
+        const orderSnap = await getDoc(orderRef)
+        
+        if (!orderSnap.exists()) {
+          alert('Order not found. Please refresh the page and try again.')
+          this.submittingFeedback = false
+          return
+        }
+        
+        const orderData = orderSnap.data()
+
+        // Prepare feedback data, ensuring all fields are valid and properly formatted
+        const feedbackData = {
+          rating: Number(this.feedbackRating),
+          comment: String(this.feedbackComment || '').trim(),
+          aspects: this.feedbackAspects ? { ...this.feedbackAspects } : {},
+          tags: Array.isArray(this.selectedTags) ? [...this.selectedTags] : [],
+          createdAt: serverTimestamp(),
+          userId: String(this.authStore.user?.uid || ''),
+          userName: String(userName || 'Anonymous'),
+          userInitials: String(userInitials || 'A'),
+          orderId: String(this.feedbackOrderId),
+          driverId: orderData.driverId ? String(orderData.driverId) : null,
+          serviceType: orderData.service || orderData.serviceType || null
+        }
+        
+        // Remove null/undefined values that might cause Firestore issues
+        Object.keys(feedbackData).forEach(key => {
+          if (feedbackData[key] === null || feedbackData[key] === undefined) {
+            delete feedbackData[key]
+          }
+        })
+        
+        // Validate required fields
+        if (!feedbackData.rating || feedbackData.rating < 1 || feedbackData.rating > 5) {
+          alert('Please provide a valid rating (1-5 stars)')
+          this.submittingFeedback = false
+          return
+        }
+        
+        if (!feedbackData.userId) {
+          alert('User authentication error. Please log in again.')
+          this.submittingFeedback = false
+          return
+        }
+
+        // Save feedback to order (for driver and admin to see)
+        console.log('Saving feedback to order:', this.feedbackOrderId, feedbackData)
         await updateDoc(orderRef, {
           feedback: feedbackData,
           updatedAt: serverTimestamp()
         })
+        console.log('Feedback saved to order successfully')
+
+        // Also save to reviews collection for HomePage display
+        // Save review even if no comment (use default message)
+        try {
+          const reviewComment = this.feedbackComment && this.feedbackComment.trim() 
+            ? this.feedbackComment.trim() 
+            : `Rated ${this.feedbackRating} stars`
+          
+          const reviewData = {
+            rating: Number(this.feedbackRating) || 0,
+            comment: reviewComment,
+            userName: userName || 'Anonymous',
+            userInitials: userInitials || 'A',
+            userId: this.authStore.user.uid,
+            orderId: this.feedbackOrderId,
+            createdAt: serverTimestamp(),
+            approved: true // Auto-approve for display
+          }
+          
+          console.log('Saving review to reviews collection:', reviewData)
+          const reviewRef = await addDoc(collection(db, 'reviews'), reviewData)
+          console.log('✅ Review saved successfully with ID:', reviewRef.id)
+          
+          // Verify the review was saved
+          const verifyReviewSnap = await getDoc(reviewRef)
+          if (verifyReviewSnap.exists()) {
+            console.log('✅ Review verification successful:', verifyReviewSnap.data())
+          } else {
+            console.error('❌ Review verification failed: Document not found after save')
+          }
+        } catch (reviewError) {
+          // Log but don't fail the entire feedback submission if review save fails
+          console.error('❌ Error saving review to reviews collection:', reviewError)
+          console.error('Review error details:', {
+            message: reviewError.message,
+            code: reviewError.code,
+            stack: reviewError.stack
+          })
+          // Show user-friendly error but don't block feedback submission
+          console.warn('⚠️ Review was not saved to public collection, but feedback was saved to order')
+        }
+
+        // Verify the feedback was saved by reading it back
+        const verifySnap = await getDoc(orderRef)
+        if (verifySnap.exists()) {
+          const savedData = verifySnap.data()
+          console.log('Verification - Feedback saved in order:', savedData.feedback)
+          
+          if (!savedData.feedback) {
+            throw new Error('Feedback was not saved to order document. Please check Firestore permissions.')
+          }
+          
+          // Verify the rating was saved
+          if (!savedData.feedback.rating) {
+            throw new Error('Rating was not saved. Please try again.')
+          }
+        } else {
+          throw new Error('Order document not found after save attempt')
+        }
 
         // Update local order
         const orderIndex = this.orders.findIndex(o => o.id === this.feedbackOrderId)
@@ -833,11 +946,21 @@ export default {
         }
         this.filterOrders()
 
+        console.log('Feedback submission completed successfully')
         alert('Thank you for your feedback!')
         this.closeFeedbackModal()
       } catch (error) {
         console.error('Error submitting feedback:', error)
-        alert('Error submitting feedback. Please try again.')
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        })
+        // Show more detailed error message for debugging
+        const errorMessage = error.message || 'Unknown error occurred'
+        const errorCode = error.code || 'unknown'
+        console.error('Full error object:', error)
+        alert(`Error submitting feedback: ${errorMessage} (Code: ${errorCode}). Please check console for details.`)
       } finally {
         this.submittingFeedback = false
       }

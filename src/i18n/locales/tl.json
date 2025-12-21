@@ -25,7 +25,7 @@
     "description": "Pamahalaan ang mga setting at configuration ng buong sistema",
     "systemStatus": "Katayuan ng Sistema",
     "badWeatherFee": "Bayad sa Masamang Panahon",
-    "badWeatherFeeDesc": "Magdagdag ng ₱5 na dagdag-bayad sa masamang panahon",
+    "badWeatherFeeDesc": "Magdagdag ng ₱10 na dagdag-bayad sa masamang panahon",
     "badWeatherFeeEnabled": "Naka-enable na ang bayad sa masamang panahon",
     "badWeatherFeeDisabled": "Naka-disable na ang bayad sa masamang panahon",
     "autoAcceptUsers": "Awtomatikong Tanggapin ang mga User",
@@ -87,7 +87,7 @@
     "totalAmount": "Kabuuang Halaga",
     "bookNow": "Mag-book Ngayon",
     "badWeatherAlert": "Alerto sa Masamang Panahon",
-    "badWeatherMessage": "Dahil sa kasalukuyang kondisyon ng panahon ({weather}), may ₱5 na dagdag-bayad para sa kaligtasan at kabayaran ng driver."
+    "badWeatherMessage": "Dahil sa kasalukuyang kondisyon ng panahon ({weather}), may ₱10 na dagdag-bayad para sa kaligtasan at kabayaran ng driver."
   },
   "dashboard": {
     "title": "Dashboard ng Admin",

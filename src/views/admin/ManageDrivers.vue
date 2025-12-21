@@ -692,6 +692,11 @@
 <script>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, addDoc, setDoc } from 'firebase/firestore'
+import jsPDF from 'jspdf'
+import { applyPlugin, autoTable } from 'jspdf-autotable'
+
+// Apply plugin to jsPDF prototype (required for v5+)
+applyPlugin(jsPDF)
 import { db, auth, storage } from '@/firebase/config'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
@@ -709,7 +714,7 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const currentPage = ref(1)
-    const itemsPerPage = ref(10)
+    const itemsPerPage = ref(5)
     const unsubs = ref([])
 
     const selectedDriver = ref(null)
@@ -857,6 +862,48 @@ export default {
       return filteredDrivers.value.slice(start, end)
     })
 
+    // Fetch driver earnings from orders
+    const fetchDriverEarnings = async (driverId) => {
+      try {
+        // Query all delivered orders for this driver
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('driverId', '==', driverId),
+          where('status', '==', 'delivered')
+        )
+        
+        const ordersSnap = await getDocs(ordersQuery)
+        let totalEarnings = 0
+        
+        ordersSnap.forEach(orderDoc => {
+          const order = orderDoc.data()
+          // Get earnings from order - prioritize driverShare, then calculate 80% of total
+          let earnings = 0
+          
+          // First try to get driverShare if it exists
+          if (order.driverShare !== undefined && order.driverShare !== null) {
+            earnings = Number(order.driverShare) || 0
+          } else if (order.pricing?.driverShare !== undefined && order.pricing?.driverShare !== null) {
+            earnings = Number(order.pricing.driverShare) || 0
+          } else {
+            // Calculate 80% of total amount (driver's share)
+            const totalAmount = Number(order.totalAmount) || 
+                               Number(order.pricing?.total) || 
+                               Number(order.priceEstimate?.total) || 
+                               0
+            earnings = totalAmount * 0.8 // Driver gets 80% of the order total
+          }
+          
+          totalEarnings += earnings
+        })
+        
+        return totalEarnings
+      } catch (error) {
+        console.error(`[ManageDrivers] Error fetching earnings for driver ${driverId}:`, error)
+        return 0
+      }
+    }
+
     // load data once (both sources)
     const loadDrivers = async () => {
       try {
@@ -875,7 +922,19 @@ export default {
 
         drivers.value = Array.from(mapById.values())
 
-        toast.success(`Loaded ${drivers.value.length} drivers`)
+        // Fetch earnings for each driver from orders
+        console.log('[ManageDrivers] Fetching earnings for drivers...')
+        const earningsPromises = drivers.value.map(async (driver) => {
+          const earnings = await fetchDriverEarnings(driver.id)
+          // Update driver earnings
+          driver.earnings = earnings
+          return driver
+        })
+        
+        await Promise.all(earningsPromises)
+        console.log('[ManageDrivers] Earnings fetched for all drivers')
+
+        toast.success(`Loaded ${drivers.value.length} drivers with earnings`)
         currentPage.value = 1
       } catch (err) {
         console.error(err)
@@ -890,12 +949,22 @@ export default {
     const setupRealtimeListeners = () => {
       try {
         const driversCol = collection(db, 'drivers')
-        const unsubDrivers = onSnapshot(driversCol, (qs) => {
+        const unsubDrivers = onSnapshot(driversCol, async (qs) => {
           const existing = new Map(drivers.value.map(d => [d.id, d]))
           qs.forEach(d => {
             existing.set(d.id, toUnifiedDriver(d.data(), d.id, 'drivers'))
           })
           drivers.value = Array.from(existing.values())
+          
+          // Update earnings when drivers are updated (debounced to avoid too many calls)
+          if (drivers.value.length > 0) {
+            const earningsPromises = drivers.value.map(async (driver) => {
+              const earnings = await fetchDriverEarnings(driver.id)
+              driver.earnings = earnings
+              return driver
+            })
+            await Promise.all(earningsPromises)
+          }
         }, (err) => console.error('[Realtime drivers] error:', err))
 
         unsubs.value.push(unsubDrivers)
@@ -1099,64 +1168,166 @@ export default {
       }
     }
 
-    const exportReport = () => {
+    const exportReport = async () => {
       try {
-        // Prepare CSV data
-        const headers = [
-          'Driver ID',
-          'Name',
-          'Email',
-          'Phone',
-          'Vehicle Brand',
-          'Vehicle Model',
-          'Plate Number',
-          'Status',
-          'Deliveries',
-          'Earnings',
-          'Experience',
-          'Availability',
-          'Created At'
-        ]
+        // Ensure earnings are up to date before exporting
+        console.log('[Export] Fetching latest earnings for all drivers...')
+        const earningsPromises = drivers.value.map(async (driver) => {
+          const earnings = await fetchDriverEarnings(driver.id)
+          driver.earnings = earnings
+          return driver
+        })
+        await Promise.all(earningsPromises)
+        console.log('[Export] Earnings updated')
 
-        const rows = drivers.value.map(driver => [
-          driver.id,
-          `${driver.firstName} ${driver.lastName}`,
-          driver.email,
-          driver.phone || 'N/A',
-          driver.raw?.driverInfo?.motorcycleInfo?.brand || 'N/A',
-          driver.raw?.driverInfo?.motorcycleInfo?.model || 'N/A',
-          driver.plateNumber || 'N/A',
-          driver.status,
-          driver.deliveries,
-          driver.earnings,
-          driver.raw?.driverInfo?.experience || 'N/A',
-          driver.raw?.driverInfo?.availability || 'N/A',
-          driver.raw?.createdAt || 'N/A'
-        ])
+        // Helper function to format dates
+        const formatDate = (dateValue) => {
+          if (!dateValue) return 'N/A'
+          try {
+            if (typeof dateValue === 'string') {
+              return new Date(dateValue).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })
+            }
+            if (dateValue.toDate) {
+              return dateValue.toDate().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })
+            }
+            return new Date(dateValue).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })
+          } catch (e) {
+            return 'Invalid date'
+          }
+        }
 
-        // Create CSV content
-        const csvContent = [
-          headers.join(','),
-          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n')
-
-        // Create blob and download
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        const link = document.createElement('a')
-        const url = URL.createObjectURL(blob)
+        // Create PDF
+        console.log('[Export] Creating PDF document...')
+        const pdfDoc = new jsPDF('landscape', 'mm', 'a4')
         
-        link.setAttribute('href', url)
-        link.setAttribute('download', `drivers_report_${new Date().toISOString().split('T')[0]}.csv`)
-        link.style.visibility = 'hidden'
+        // Add title
+        pdfDoc.setFontSize(18)
+        pdfDoc.text('Drivers Report', 14, 15)
         
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        // Add export date
+        pdfDoc.setFontSize(10)
+        pdfDoc.setTextColor(100, 100, 100)
+        pdfDoc.text(`Exported on: ${new Date().toLocaleString('en-US')}`, 14, 22)
+        pdfDoc.text(`Total Drivers: ${drivers.value.length}`, 14, 27)
+        
+        // Reset text color
+        pdfDoc.setTextColor(0, 0, 0)
+        
+        // Prepare table data
+        console.log('[Export] Preparing table data...')
+        const tableData = drivers.value.map((driver) => {
+          try {
+            return [
+              String(driver.id || 'N/A'),
+              String(`${driver.firstName || ''} ${driver.lastName || ''}`.trim() || 'Unnamed Driver'),
+              String(driver.email || 'N/A'),
+              String(driver.phone || 'N/A'),
+              String(driver.raw?.driverInfo?.motorcycleInfo?.brand || 'N/A'),
+              String(driver.raw?.driverInfo?.motorcycleInfo?.model || 'N/A'),
+              String(driver.plateNumber || 'N/A'),
+              String(driver.status || 'N/A'),
+              String(driver.deliveries || 0),
+              `₱${Number(driver.earnings || 0).toLocaleString()}`,
+              String(driver.raw?.driverInfo?.experience || 'N/A'),
+              String(driver.raw?.driverInfo?.availability || 'N/A'),
+              formatDate(driver.raw?.createdAt)
+            ]
+          } catch (e) {
+            console.error(`[Export] Error processing driver ${driver?.id || 'unknown'}:`, e)
+            return ['Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error']
+          }
+        })
 
-        toast.success('Driver report exported successfully!')
+        console.log('[Export] Table data prepared:', tableData.length, 'rows')
+
+        // Add table
+        console.log('[Export] Adding table to PDF...')
+        
+        const tableOptions = {
+          startY: 32,
+          head: [[
+            'Driver ID',
+            'Name',
+            'Email',
+            'Phone',
+            'Vehicle Brand',
+            'Vehicle Model',
+            'Plate Number',
+            'Status',
+            'Deliveries',
+            'Earnings',
+            'Experience',
+            'Availability',
+            'Created At'
+          ]],
+          body: tableData,
+          styles: { 
+            fontSize: 6, 
+            cellPadding: 1,
+            overflow: 'linebreak'
+          },
+          headStyles: { 
+            fillColor: [34, 197, 94], 
+            textColor: 255, 
+            fontStyle: 'bold',
+            fontSize: 7
+          },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { top: 32, left: 10, right: 10 },
+          tableWidth: 277,
+          columnStyles: {
+            0: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Driver ID
+            1: { cellWidth: 25, fontSize: 6, overflow: 'linebreak' }, // Name
+            2: { cellWidth: 30, fontSize: 5, overflow: 'linebreak' }, // Email
+            3: { cellWidth: 18, fontSize: 5, overflow: 'linebreak' }, // Phone
+            4: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Vehicle Brand
+            5: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Vehicle Model
+            6: { cellWidth: 18, fontSize: 5, overflow: 'linebreak' }, // Plate Number
+            7: { cellWidth: 15, fontSize: 5, overflow: 'linebreak' }, // Status
+            8: { cellWidth: 15, fontSize: 5, overflow: 'linebreak' }, // Deliveries
+            9: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Earnings
+            10: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Experience
+            11: { cellWidth: 20, fontSize: 5, overflow: 'linebreak' }, // Availability
+            12: { cellWidth: 24, fontSize: 5, overflow: 'linebreak' }  // Created At
+          }
+        }
+        
+        // Try method approach first (after applyPlugin)
+        if (typeof pdfDoc.autoTable === 'function') {
+          console.log('[Export] Using pdfDoc.autoTable method')
+          pdfDoc.autoTable(tableOptions)
+        } else if (typeof autoTable === 'function') {
+          // Fallback: use standalone function
+          console.log('[Export] Using autoTable standalone function')
+          autoTable(pdfDoc, tableOptions)
+        } else {
+          throw new Error('PDF table plugin not loaded. Please refresh the page and try again.')
+        }
+        
+        console.log('[Export] Table added successfully')
+
+        // Save PDF
+        console.log('[Export] Saving PDF...')
+        const fileName = `drivers_report_${new Date().toISOString().split('T')[0]}.pdf`
+        pdfDoc.save(fileName)
+
+        console.log('[Export] Export completed successfully')
+        toast.success(`Successfully exported ${drivers.value.length} drivers as PDF`)
       } catch (err) {
-        console.error('Export error:', err)
-        toast.error('Failed to export driver report')
+        console.error('[Export] Error exporting drivers:', err)
+        toast.error(`Failed to export driver report: ${err.message || 'Please try again.'}`)
       }
     }
 

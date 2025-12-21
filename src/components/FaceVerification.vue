@@ -99,16 +99,6 @@
           >
             Cancel
           </button>
-          
-          <button
-            v-if="(!faceDetected || showCooldown) && !showTryAgain"
-            @click="handleVerify"
-            :disabled="!faceDetected || verifying || showCooldown || verificationAttempts >= 3"
-            class="flex-1 py-3.5 bg-gradient-to-r from-[#3ED400] to-[#00C851] text-white rounded-xl font-bold shadow-lg shadow-green-200 hover:shadow-green-300 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-          >
-            <span v-if="verifying" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-            {{ verifying ? 'Verifying...' : 'Verify' }}
-          </button>
 
            <button
             v-if="showTryAgain && !showCooldown"
@@ -266,7 +256,7 @@ const startDetection = () => {
         if (!livenessChecked.value) {
           livenessStatus.value = liveness.reason
           
-          if (!liveness.isLive && previousDetections.length >= 3) {
+          if (!liveness.isLive && previousDetections.length >= 2) {
             // Not a live face - block immediately
             error.value = liveness.reason || 'Liveness check failed. Please use a live camera, not a photo.'
             showTryAgain.value = true
@@ -277,8 +267,8 @@ const startDetection = () => {
             return
           }
           
-          // If we have enough samples and it's live, mark as checked
-          if (liveness.isLive && previousDetections.length >= 3) {
+          // If we have enough samples and it's live, mark as checked (reduced from 3 to 2 for faster scanning)
+          if (liveness.isLive && previousDetections.length >= 2) {
             livenessChecked.value = true
             livenessStatus.value = 'Live face verified'
           }
@@ -302,13 +292,13 @@ const startDetection = () => {
           currentDescriptor = getFaceDescriptor(detection)
           showTryAgain.value = false
           
-          // Auto-verify after face is detected (wait 2 seconds for stability)
+          // Auto-verify after face is detected (immediate for faster scanning)
           if (!verifying.value && !autoVerifyTimeout) {
             autoVerifyTimeout = setTimeout(() => {
               if (currentDescriptor && !verifying.value && !showCooldown.value && faceDetected.value) {
                 handleVerify()
               }
-            }, 2000) // 2 second delay to ensure face is stable
+            }, 300) // 300ms delay for faster scanning
           }
         }
       } else {
@@ -338,7 +328,7 @@ const startDetection = () => {
         scanProgressInterval = null
       }
     }
-  }, 500) // Check every 500ms
+  }, 150) // Check every 150ms for faster scanning
 }
 
 const stopCamera = () => {

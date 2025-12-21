@@ -25,7 +25,7 @@
     "description": "Manage system-wide settings and configurations",
     "systemStatus": "System Status",
     "badWeatherFee": "Bad Weather Fee",
-    "badWeatherFeeDesc": "Add ₱5 surcharge during bad weather",
+    "badWeatherFeeDesc": "Add ₱10 surcharge during bad weather",
     "badWeatherFeeEnabled": "Bad weather fee enabled",
     "badWeatherFeeDisabled": "Bad weather fee disabled",
     "autoAcceptUsers": "Auto-Accept Users",
@@ -87,7 +87,7 @@
     "totalAmount": "Total Amount",
     "bookNow": "Book Now",
     "badWeatherAlert": "Bad Weather Alert",
-    "badWeatherMessage": "Due to current weather conditions ({weather}), a ₱5 surcharge will be added to your delivery fee for driver safety and compensation."
+    "badWeatherMessage": "Due to current weather conditions ({weather}), a ₱10 surcharge will be added to your delivery fee for driver safety and compensation."
   },
   "dashboard": {
     "title": "Admin Dashboard",

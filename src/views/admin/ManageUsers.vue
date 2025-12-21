@@ -189,7 +189,7 @@
                 No users found
               </td>
             </tr>
-            <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50" :class="{ 'bg-red-50': user.fraudFlags && user.fraudFlags.length > 0 }">
+            <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-50" :class="{ 'bg-red-50': user.fraudFlags && user.fraudFlags.length > 0 }">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" :class="user.profilePictureUrl ? '' : 'bg-primary'">
@@ -278,6 +278,58 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div v-if="totalPages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-700">
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} of {{ filteredUsers.length }} users
+          </span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button
+            @click="previousPage"
+            :disabled="currentPage === 1"
+            :class="[
+              'px-3 py-1 text-sm font-medium rounded-md',
+              currentPage === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            Previous
+          </button>
+          
+          <div class="flex items-center space-x-1">
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'px-3 py-1 text-sm font-medium rounded-md',
+                currentPage === page
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              ]"
+            >
+              {{ page }}
+            </button>
+          </div>
+          
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            :class="[
+              'px-3 py-1 text-sm font-medium rounded-md',
+              currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
 
@@ -437,7 +489,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
 import { collection, query, where, getDocs, getCountFromServer, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
@@ -464,6 +516,10 @@ export default {
     
     const fraudSettings = ref(null)
     const showFlaggedOnly = ref(false)
+    
+    // Pagination
+    const currentPage = ref(1)
+    const itemsPerPage = ref(5)
 
     const barangays = ref([
       'Balingayan',
@@ -582,6 +638,41 @@ export default {
       }
       
       return filtered
+    })
+    
+    // Pagination computed properties
+    const totalPages = computed(() => {
+      return Math.ceil(filteredUsers.value.length / itemsPerPage.value)
+    })
+    
+    const paginatedUsers = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value
+      const end = start + itemsPerPage.value
+      return filteredUsers.value.slice(start, end)
+    })
+    
+    // Pagination methods
+    const goToPage = (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+      }
+    }
+    
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++
+      }
+    }
+    
+    const previousPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--
+      }
+    }
+    
+    // Reset to page 1 when filters change
+    watch([searchQuery, statusFilter, barangayFilter, showFlaggedOnly], () => {
+      currentPage.value = 1
     })
 
     const loadUsers = async () => {
@@ -1026,6 +1117,13 @@ export default {
       barangays,
       userStats,
       filteredUsers,
+      paginatedUsers,
+      currentPage,
+      itemsPerPage,
+      totalPages,
+      goToPage,
+      nextPage,
+      previousPage,
       showUserDetailsModal,
       selectedUser,
       userOrders,

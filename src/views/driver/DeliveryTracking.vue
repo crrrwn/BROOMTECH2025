@@ -190,6 +190,32 @@
               </div>
             </div>
           </div>
+
+          <!-- Customer Feedback Section -->
+          <div v-if="order?.feedback && order.status === 'delivered'" class="bg-gradient-to-br from-yellow-50 to-orange-50 p-5 rounded-2xl border border-yellow-200 shadow-sm">
+            <h4 class="text-xs font-black text-yellow-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+              </svg>
+              Customer Feedback
+            </h4>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="flex text-yellow-400">
+                  <svg v-for="i in 5" :key="i" 
+                       :class="i <= (order.feedback.rating || 0) ? 'text-yellow-400' : 'text-gray-300'" 
+                       class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                </div>
+                <span class="text-sm font-bold text-gray-700">{{ order.feedback.rating || 0 }}.0</span>
+                <span class="text-xs text-gray-500">by {{ order.feedback.userName || 'Customer' }}</span>
+              </div>
+              <p v-if="order.feedback.comment" class="text-sm text-gray-700 italic bg-white/60 p-3 rounded-lg border border-yellow-100">
+                "{{ order.feedback.comment }}"
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -380,6 +406,7 @@ export default {
       directionsRenderer: null,
       currentLocation: null,
       locationWatchId: null,
+      driverMarker: null, // Marker for driver's current location
       isFullscreen: false,
       showOrderDetailsModal: false,
       showChatModal: false,
@@ -450,6 +477,11 @@ export default {
     this.startLocationTracking()
   },
   beforeUnmount() {
+    // Clean up driver marker
+    if (this.driverMarker) {
+      this.driverMarker.setMap(null)
+      this.driverMarker = null
+    }
     if (this.locationWatchId) {
       navigator.geolocation.clearWatch(this.locationWatchId)
     }
@@ -758,6 +790,12 @@ export default {
       if (!this.map || !this.order) return
 
       try {
+        // Clear existing markers (except driver marker)
+        this.markers.forEach(marker => {
+          marker.setMap(null)
+        })
+        this.markers = []
+        
         const directionsService = new window.google.maps.DirectionsService()
         
         // Geocode addresses to get coordinates
@@ -766,44 +804,82 @@ export default {
         const pickupCoords = await this.geocodeAddress(this.pickupAddress)
         const deliveryCoords = await this.geocodeAddress(this.deliveryAddress)
 
-        // Add pickup marker
+        // Add pickup marker using PIN_LOCATION.png
         if (pickupCoords) {
-          const pickupMarker = new window.google.maps.Marker({
-            position: pickupCoords,
-            map: this.map,
-            icon: {
-              url: 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#F97316" stroke="white" stroke-width="2"/>
-                  <text x="20" y="26" font-size="16" font-weight="bold" fill="white" text-anchor="middle">1</text>
-                </svg>
-              `),
-              scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20)
-            },
-            title: 'Pickup Location'
-          })
-          this.markers.push(pickupMarker)
+          const createPickupMarker = (iconUrl, isFallback = false) => {
+            const pickupMarker = new window.google.maps.Marker({
+              position: pickupCoords,
+              map: this.map,
+              icon: {
+                url: iconUrl,
+                scaledSize: new window.google.maps.Size(50, 50),
+                anchor: new window.google.maps.Point(25, 50) // Anchor at bottom center of pin
+              },
+              title: 'Pickup Location'
+            })
+            this.markers.push(pickupMarker)
+            
+            // If using custom image, verify it loads
+            if (!isFallback) {
+              const testImage = new Image()
+              testImage.onerror = () => {
+                console.warn('PIN_LOCATION.png failed to load for pickup, using fallback')
+                const index = this.markers.indexOf(pickupMarker)
+                if (index > -1) {
+                  pickupMarker.setMap(null)
+                  this.markers.splice(index, 1)
+                  createPickupMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M25 0C11.193 0 0 11.193 0 25c0 25 25 25 25 25s25 0 25-25C50 11.193 38.807 0 25 0z" fill="#10B981"/>
+                      <circle cx="25" cy="25" r="8" fill="#ffffff"/>
+                    </svg>
+                  `), true)
+                }
+              }
+              testImage.src = iconUrl
+            }
+          }
+          
+          createPickupMarker('/PIN_LOCATION.png')
         }
 
-        // Add delivery marker
+        // Add delivery marker using PIN_LOCATION.png
         if (deliveryCoords) {
-          const deliveryMarker = new window.google.maps.Marker({
-            position: deliveryCoords,
-            map: this.map,
-            icon: {
-              url: 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#9CA3AF" stroke="white" stroke-width="2"/>
-                  <path d="M20 12 L20 20 L28 20" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
-                </svg>
-              `),
-              scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20)
-            },
-            title: 'Delivery Location'
-          })
-          this.markers.push(deliveryMarker)
+          const createDeliveryMarker = (iconUrl, isFallback = false) => {
+            const deliveryMarker = new window.google.maps.Marker({
+              position: deliveryCoords,
+              map: this.map,
+              icon: {
+                url: iconUrl,
+                scaledSize: new window.google.maps.Size(50, 50),
+                anchor: new window.google.maps.Point(25, 50) // Anchor at bottom center of pin
+              },
+              title: 'Delivery Location'
+            })
+            this.markers.push(deliveryMarker)
+            
+            // If using custom image, verify it loads
+            if (!isFallback) {
+              const testImage = new Image()
+              testImage.onerror = () => {
+                console.warn('PIN_LOCATION.png failed to load for delivery, using fallback')
+                const index = this.markers.indexOf(deliveryMarker)
+                if (index > -1) {
+                  deliveryMarker.setMap(null)
+                  this.markers.splice(index, 1)
+                  createDeliveryMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M25 0C11.193 0 0 11.193 0 25c0 25 25 25 25 25s25 0 25-25C50 11.193 38.807 0 25 0z" fill="#10B981"/>
+                      <circle cx="25" cy="25" r="8" fill="#ffffff"/>
+                    </svg>
+                  `), true)
+                }
+              }
+              testImage.src = iconUrl
+            }
+          }
+          
+          createDeliveryMarker('/PIN_LOCATION.png')
         }
 
         // Calculate and display route - same as BookService (pickup to delivery)
@@ -924,8 +1000,50 @@ export default {
             console.error('[v0] Error updating driver location in order:', error)
           }
 
-          // Update map center if needed
+          // Update or create driver marker on map
           if (this.map) {
+            if (!this.driverMarker) {
+              // Create driver marker using RIDER.png
+              const createDriverMarker = (iconUrl, isFallback = false) => {
+                this.driverMarker = new window.google.maps.Marker({
+                  position: this.currentLocation,
+                  map: this.map,
+                  title: 'Your Location',
+                  icon: {
+                    url: iconUrl,
+                    scaledSize: new window.google.maps.Size(60, 60),
+                    anchor: new window.google.maps.Point(30, 30)
+                  },
+                  optimized: false
+                })
+                
+                // If using custom image, verify it loads
+                if (!isFallback) {
+                  const testImage = new Image()
+                  testImage.onerror = () => {
+                    console.warn('RIDER.png failed to load, using fallback')
+                    if (this.driverMarker) {
+                      this.driverMarker.setMap(null)
+                      this.driverMarker = null
+                      createDriverMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                        <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="30" cy="30" r="28" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+                          <text x="30" y="38" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🚴</text>
+                        </svg>
+                      `), true)
+                    }
+                  }
+                  testImage.src = iconUrl
+                }
+              }
+              
+              createDriverMarker('/RIDER.png')
+            } else {
+              // Update existing driver marker position
+              this.driverMarker.setPosition(this.currentLocation)
+            }
+            
+            // Update map center to follow driver
             this.map.setCenter(this.currentLocation)
           }
         },

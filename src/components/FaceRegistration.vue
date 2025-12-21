@@ -152,15 +152,6 @@
         >
           Cancel
         </button>
-        <!-- Keep button as fallback but hide it when auto-registering -->
-        <button
-          v-if="!faceDetected || showCooldown"
-          @click="handleRegister"
-          :disabled="!faceDetected || registering || showCooldown || registrationAttempts >= 3"
-          class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {{ registering ? 'Registering...' : 'Register Face' }}
-        </button>
       </div>
       
       <!-- Tap to retry hint -->
@@ -341,7 +332,7 @@ const startDetection = () => {
         if (!livenessChecked.value) {
           livenessStatus.value = liveness.reason
           
-          if (!liveness.isLive && previousDetections.length >= 3) {
+          if (!liveness.isLive && previousDetections.length >= 2) {
             // Not a live face - block immediately
             error.value = liveness.reason || 'Liveness check failed. Please use a live camera, not a photo.'
             showTryAgain.value = true
@@ -352,8 +343,8 @@ const startDetection = () => {
             return
           }
           
-          // If we have enough samples and it's live, mark as checked
-          if (liveness.isLive && previousDetections.length >= 3) {
+          // If we have enough samples and it's live, mark as checked (reduced from 3 to 2 for faster scanning)
+          if (liveness.isLive && previousDetections.length >= 2) {
             livenessChecked.value = true
             livenessStatus.value = 'Live face verified'
           }
@@ -382,13 +373,13 @@ const startDetection = () => {
             detectionTimeout = null
           }
           
-          // Auto-register after face is detected (wait 2 seconds for stability)
+          // Auto-register after face is detected (immediate for faster scanning)
           if (!registering.value && !autoRegisterTimeout) {
             autoRegisterTimeout = setTimeout(() => {
               if (currentDescriptor && !registering.value && !showCooldown.value && faceDetected.value) {
                 handleRegister()
               }
-            }, 2000) // 2 second delay to ensure face is stable
+            }, 300) // 300ms delay for faster scanning
           }
         }
       } else {
@@ -423,7 +414,7 @@ const startDetection = () => {
         scanProgressInterval = null
       }
     }
-  }, 500) // Check every 500ms
+  }, 150) // Check every 150ms for faster scanning
 }
 
 const stopCamera = () => {

@@ -80,67 +80,6 @@
       </div>
     </div>
 
-    <!-- Updated quick actions with gradient backgrounds using color palette -->
-    <div class="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-lg rounded-2xl p-6 md:p-8 shadow-2xl border border-white/40 mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-        <div class="w-8 h-8 bg-gradient-to-br from-[#74E600] to-[#3ED400] rounded-lg flex items-center justify-center mr-3 shadow-lg">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
-        </div>
-        Quick Actions
-      </h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <router-link 
-          to="/user/book" 
-          class="group flex flex-col items-center p-6 bg-gradient-to-br from-[#A8EBI2]/30 to-[#74E600]/20 rounded-2xl hover:from-[#74E600]/40 hover:to-[#3ED400]/30 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/50 backdrop-blur-sm"
-        >
-          <div class="w-16 h-16 bg-gradient-to-br from-[#3ED400] to-[#00C851] rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-xl">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-          </div>
-          <span class="text-sm font-bold text-gray-900 group-hover:text-[#00C851] transition-colors duration-300">Book Service</span>
-        </router-link>
-
-        <router-link 
-          to="/user/orders" 
-          class="group flex flex-col items-center p-6 bg-gradient-to-br from-blue-200/30 to-blue-300/20 rounded-2xl hover:from-blue-300/40 hover:to-blue-400/30 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/50 backdrop-blur-sm"
-        >
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-xl">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-          </div>
-          <span class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors duration-300">View Orders</span>
-        </router-link>
-
-        <router-link 
-          to="/user/chat-messages" 
-          class="group flex flex-col items-center p-6 bg-gradient-to-br from-[#74E600]/30 to-[#3ED400]/20 rounded-2xl hover:from-[#3ED400]/40 hover:to-[#00C851]/30 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/50 backdrop-blur-sm"
-        >
-          <div class="w-16 h-16 bg-gradient-to-br from-[#74E600] to-[#3ED400] rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-xl">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-            </svg>
-          </div>
-          <span class="text-sm font-bold text-gray-900 group-hover:text-[#00C851] transition-colors duration-300">Chat Messages</span>
-        </router-link>
-
-        <router-link 
-          to="/user/profile" 
-          class="group flex flex-col items-center p-6 bg-gradient-to-br from-gray-200/30 to-gray-300/20 rounded-2xl hover:from-gray-300/40 hover:to-gray-400/30 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/50 backdrop-blur-sm"
-        >
-          <div class="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-xl">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-          </div>
-          <span class="text-sm font-bold text-gray-900 group-hover:text-gray-700 transition-colors duration-300">Profile</span>
-        </router-link>
-      </div>
-    </div>
-
     <!-- Updated recent orders section with gradient styling -->
     <div class="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-lg rounded-2xl p-6 md:p-8 shadow-2xl border border-white/40">
       <div class="flex items-center justify-between mb-6">

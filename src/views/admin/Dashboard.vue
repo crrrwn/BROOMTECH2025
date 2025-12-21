@@ -111,7 +111,7 @@
               <span class="text-gray-700">Bad Weather Fee</span>
               <div class="flex items-center space-x-2">
                 <span :class="systemStatus.badWeatherFee ? 'text-red-600' : 'text-gray-500'" class="text-sm">
-                  {{ systemStatus.badWeatherFee ? 'Active (+₱5)' : 'Inactive' }}
+                  {{ systemStatus.badWeatherFee ? 'Active (+₱10)' : 'Inactive' }}
                 </span>
                 <button 
                   @click="toggleWeatherFee"
@@ -225,7 +225,7 @@
                   ₱{{ order.totalAmount.toLocaleString() }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <router-link :to="`/admin/orders`" class="text-primary hover:text-green-600 mr-3">View</router-link>
+                  <router-link :to="`/admin/orders?orderId=${order.id}`" class="text-primary hover:text-green-600 mr-3">View</router-link>
                 </td>
               </tr>
             </tbody>
@@ -455,8 +455,32 @@ export default {
           limit(100)
         )
 
-        const unsubscribe = onSnapshot(recentOrdersQuery, (snapshot) => {
+        const unsubscribe = onSnapshot(recentOrdersQuery, async (snapshot) => {
           const activities = []
+          const userIds = new Set()
+          
+          // Collect all user IDs
+          snapshot.forEach(doc => {
+            const order = doc.data()
+            if (order.userId) {
+              userIds.add(order.userId)
+            }
+          })
+          
+          // Fetch user data
+          const usersMap = {}
+          await Promise.all(Array.from(userIds).map(async (userId) => {
+            try {
+              const userDoc = await getDoc(doc(db, 'users', userId))
+              if (userDoc.exists()) {
+                const userData = userDoc.data()
+                usersMap[userId] = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email || 'Unknown User'
+              }
+            } catch (error) {
+              console.error(`Error fetching user ${userId}:`, error)
+            }
+          }))
+          
           snapshot.forEach(doc => {
             const order = doc.data()
             const serviceNameMap = {
@@ -465,13 +489,18 @@ export default {
               'pickup-drop': 'Pick-up & Drop',
               'gift-delivery': 'Gift Delivery',
               'medicine-delivery': 'Medicine Delivery',
-              'grocery-shopping': 'Grocery Shopping'
+              'grocery-shopping': 'Grocery Shopping',
+              'food': 'Food Delivery',
+              'package': 'Package Delivery',
+              'medicine': 'Medicine Delivery',
+              'grocery': 'Grocery Shopping'
             }
-            const serviceName = serviceNameMap[order.service] || order.service || 'service'
+            const serviceName = serviceNameMap[order.service || order.serviceType] || order.service || order.serviceType || 'service'
+            const userName = order.customerName || usersMap[order.userId] || 'Unknown User'
             activities.push({
               id: doc.id,
               type: 'order',
-              message: `New ${serviceName} order from ${order.customerName || 'customer'}`,
+              message: `New ${serviceName} order from ${userName}`,
               time: formatTimeAgo(order.createdAt?.toDate())
             })
           })
@@ -500,34 +529,63 @@ export default {
       try {
         const liveOrdersQuery = query(
           collection(db, 'orders'),
-          where('status', 'in', ['pending', 'confirmed', 'in-transit']),
+          where('status', 'in', ['pending', 'confirmed', 'in-transit', 'driver_assigned']),
           limit(100)
         )
 
-        const unsubscribe = onSnapshot(liveOrdersQuery, (snapshot) => {
+        const unsubscribe = onSnapshot(liveOrdersQuery, async (snapshot) => {
           const orders = []
+          const userIds = new Set()
+          
+          // Collect all user IDs
+          snapshot.forEach(doc => {
+            const order = doc.data()
+            if (order.userId) {
+              userIds.add(order.userId)
+            }
+          })
+          
+          // Fetch user data
+          const usersMap = {}
+          await Promise.all(Array.from(userIds).map(async (userId) => {
+            try {
+              const userDoc = await getDoc(doc(db, 'users', userId))
+              if (userDoc.exists()) {
+                const userData = userDoc.data()
+                usersMap[userId] = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email || 'Unknown User'
+              }
+            } catch (error) {
+              console.error(`Error fetching user ${userId}:`, error)
+            }
+          }))
+          
           const serviceNameMap = {
             'food-delivery': 'Food Delivery',
             'bill-payments': 'Bill Payments',
             'pickup-drop': 'Pick-up & Drop',
             'gift-delivery': 'Gift Delivery',
             'medicine-delivery': 'Medicine Delivery',
-            'grocery-shopping': 'Grocery Shopping'
+            'grocery-shopping': 'Grocery Shopping',
+            'food': 'Food Delivery',
+            'package': 'Package Delivery',
+            'medicine': 'Medicine Delivery',
+            'grocery': 'Grocery Shopping'
           }
 
           snapshot.forEach(doc => {
             const order = doc.data()
-            const serviceId = order.service || order.serviceType || 'unknown'
-            const serviceName = serviceNameMap[serviceId] || serviceId
+            const serviceId = order.service || order.serviceType || order.serviceId || 'unknown'
+            const serviceName = serviceNameMap[serviceId] || serviceId || 'Unknown Service'
+            const customerName = order.customerName || usersMap[order.userId] || 'Unknown User'
 
             orders.push({
               id: doc.id,
-              customerName: order.customerName || 'Unknown',
+              customerName: customerName,
               service: serviceName,
               driverName: order.driverName || null,
               driverId: order.driverId || null,
               status: order.status,
-              totalAmount: order.totalAmount || 0
+              totalAmount: order.totalAmount || order.pricing?.total || order.priceEstimate?.total || 0
             })
           })
           // Sort manually by createdAt descending
@@ -592,7 +650,7 @@ export default {
         
         toast.success(
           systemStatus.value.badWeatherFee 
-            ? 'Bad Weather Fee enabled (+₱5)' 
+            ? 'Bad Weather Fee enabled (+₱10)' 
             : 'Bad Weather Fee disabled'
         )
       } catch (error) {

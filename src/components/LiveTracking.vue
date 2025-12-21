@@ -334,44 +334,86 @@ export default {
 
         const bounds = new window.google.maps.LatLngBounds()
 
-        // Add pickup marker (green P)
+        // Add pickup marker using pin_location.png image
         if (pickupCoords) {
           bounds.extend(pickupCoords)
-          this.pickupMarker = new window.google.maps.Marker({
-            position: pickupCoords,
-            map: this.map,
-            title: 'Pickup Location',
-            icon: {
-              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
-                  <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">P</text>
-                </svg>
-              `),
-              scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20)
+          
+          // Create marker with pin_location.png, with fallback if image doesn't load
+          const createPickupPinMarker = (iconUrl, isFallback = false) => {
+            this.pickupMarker = new window.google.maps.Marker({
+              position: pickupCoords,
+              map: this.map,
+              title: 'Pickup Location',
+              icon: {
+                url: iconUrl,
+                scaledSize: new window.google.maps.Size(50, 50),
+                anchor: new window.google.maps.Point(25, 50) // Anchor at bottom center of pin
+              }
+            })
+            
+            // If using custom image, verify it loads
+            if (!isFallback) {
+              const testImage = new Image()
+              testImage.onerror = () => {
+                console.warn('pin_location.png failed to load for pickup, removing marker to recreate with fallback')
+                if (this.pickupMarker) {
+                  this.pickupMarker.setMap(null)
+                  this.pickupMarker = null
+                  createPickupPinMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M25 0C11.193 0 0 11.193 0 25c0 25 25 25 25 25s25 0 25-25C50 11.193 38.807 0 25 0z" fill="#10B981"/>
+                      <circle cx="25" cy="25" r="8" fill="#ffffff"/>
+                    </svg>
+                  `), true)
+                }
+              }
+              testImage.src = iconUrl
             }
-          })
+          }
+          
+          // Try to use PIN_LOCATION.png for pickup location
+          createPickupPinMarker('/PIN_LOCATION.png')
         }
 
-        // Add delivery marker (red D)
+        // Add delivery marker using pin_location.png image
         if (deliveryCoords) {
           bounds.extend(deliveryCoords)
-          this.destinationMarker = new window.google.maps.Marker({
-            position: deliveryCoords,
-            map: this.map,
-            title: 'Delivery Location',
-            icon: {
-              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#EF4444" stroke="#ffffff" stroke-width="3"/>
-                  <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="bold">D</text>
-                </svg>
-              `),
-              scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20)
+          
+          // Create marker with pin_location.png, with fallback if image doesn't load
+          const createPinMarker = (iconUrl, isFallback = false) => {
+            this.destinationMarker = new window.google.maps.Marker({
+              position: deliveryCoords,
+              map: this.map,
+              title: 'Delivery Location',
+              icon: {
+                url: iconUrl,
+                scaledSize: new window.google.maps.Size(50, 50),
+                anchor: new window.google.maps.Point(25, 50) // Anchor at bottom center of pin
+              }
+            })
+            
+            // If using custom image, verify it loads
+            if (!isFallback) {
+              const testImage = new Image()
+              testImage.onerror = () => {
+                console.warn('pin_location.png failed to load, removing marker to recreate with fallback')
+                if (this.destinationMarker) {
+                  this.destinationMarker.setMap(null)
+                  this.destinationMarker = null
+                  createPinMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M25 0C11.193 0 0 11.193 0 25c0 25 25 25 25 25s25 0 25-25C50 11.193 38.807 0 25 0z" fill="#10B981"/>
+                      <circle cx="25" cy="25" r="8" fill="#ffffff"/>
+                    </svg>
+                  `), true)
+                }
+              }
+              testImage.src = iconUrl
             }
-          })
+          }
+          
+          // Try to use PIN_LOCATION.png first
+          createPinMarker('/PIN_LOCATION.png')
         }
 
         // Show route between pickup and delivery (same as BookService)
@@ -458,42 +500,75 @@ export default {
           lng: driverLocation.lng
         }
 
-        // Create or update driver marker
+        // Create or update driver marker using rider.png image
         if (!this.driverMarker) {
-          this.driverMarker = new window.google.maps.Marker({
-            position: driverPosition,
-            map: this.map,
-            title: 'Driver Location',
-            icon: {
-              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#3B82F6" stroke="#ffffff" stroke-width="3"/>
-                  <path d="M20 8l6 12-6 12-6-12 6-12z" fill="#ffffff"/>
-                </svg>
-              `),
-              scaledSize: new window.google.maps.Size(40, 40),
-              anchor: new window.google.maps.Point(20, 20)
+          // Create marker with rider.png, with fallback if image doesn't load
+          const createDriverMarker = (iconUrl, isFallback = false) => {
+            this.driverMarker = new window.google.maps.Marker({
+              position: driverPosition,
+              map: this.map,
+              title: 'Driver Location',
+              icon: {
+                url: iconUrl,
+                scaledSize: new window.google.maps.Size(60, 60),
+                anchor: new window.google.maps.Point(30, 30)
+              },
+              optimized: false
+            })
+            
+            // If using custom image, verify it loads
+            if (!isFallback) {
+              const testImage = new Image()
+              testImage.onerror = () => {
+                console.warn('rider.png failed to load, removing marker to recreate with fallback')
+                if (this.driverMarker) {
+                  this.driverMarker.setMap(null)
+                  this.driverMarker = null
+                  createDriverMarker('data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="30" cy="30" r="28" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+                      <text x="30" y="38" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🚴</text>
+                    </svg>
+                  `), true)
+                }
+              }
+              testImage.src = iconUrl
             }
-          })
+          }
+          
+          // Try to use RIDER.png first
+          createDriverMarker('/RIDER.png')
         } else {
-          // Smoothly animate marker to new position
+          // Smoothly animate marker to new position for visible movement
           const startPosition = this.driverMarker.getPosition()
           if (startPosition) {
             const endPosition = new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng)
             
+            // Calculate distance to determine animation steps
+            const distance = Math.sqrt(
+              Math.pow(endPosition.lat() - startPosition.lat(), 2) + 
+              Math.pow(endPosition.lng() - startPosition.lng(), 2)
+            )
+            
+            // More steps for longer distances to show smooth movement
+            const steps = Math.max(15, Math.min(30, Math.ceil(distance * 1000)))
+            
             let step = 0
-            const steps = 10
             const animateMarker = () => {
               step++
               const progress = step / steps
+              // Use easing function for smoother animation
+              const easedProgress = progress < 0.5 
+                ? 2 * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2
 
-              const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * progress
-              const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * progress
+              const lat = startPosition.lat() + (endPosition.lat() - startPosition.lat()) * easedProgress
+              const lng = startPosition.lng() + (endPosition.lng() - startPosition.lng()) * easedProgress
 
               this.driverMarker.setPosition(new window.google.maps.LatLng(lat, lng))
 
               if (step < steps) {
-                setTimeout(animateMarker, 50)
+                setTimeout(animateMarker, 30) // Faster update for smoother movement
               }
             }
             animateMarker()
@@ -531,26 +606,41 @@ export default {
           }
         }
 
-        // Update map bounds to include driver, pickup, and delivery
-        if (this.pickupMarker && this.destinationMarker) {
-          const bounds = new window.google.maps.LatLngBounds()
+        // Pan map to follow driver movement (real-time tracking)
+        if (this.map) {
+          // Smoothly pan to driver location to show movement
+          this.map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
           
-          const pickupPos = this.pickupMarker.getPosition()
-          if (pickupPos) bounds.extend(pickupPos)
-          
-          const dropoffPos = this.destinationMarker.getPosition()
-          if (dropoffPos) bounds.extend(dropoffPos)
-          
-          bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
-          
-          this.map.fitBounds(bounds, { padding: 100 })
-        } else {
-          // If markers not available, just pan to driver
-          setTimeout(() => {
-            if (this.map) {
-              this.map.panTo(driverPosition)
+          // Update map bounds to include driver, pickup, and delivery
+          if (this.pickupMarker && this.destinationMarker) {
+            const bounds = new window.google.maps.LatLngBounds()
+            
+            const pickupPos = this.pickupMarker.getPosition()
+            if (pickupPos) bounds.extend(pickupPos)
+            
+            const dropoffPos = this.destinationMarker.getPosition()
+            if (dropoffPos) bounds.extend(dropoffPos)
+            
+            bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+            
+            // Fit bounds to show all locations - but don't force it, let panTo handle movement
+            // Only fit bounds if driver is far from viewport
+            const mapCenter = this.map.getCenter()
+            if (mapCenter) {
+              const distanceFromCenter = Math.sqrt(
+                Math.pow(driverPosition.lat - mapCenter.lat(), 2) + 
+                Math.pow(driverPosition.lng - mapCenter.lng(), 2)
+              )
+              
+              // If driver is far from center, fit bounds to show everything
+              if (distanceFromCenter > 0.01) {
+                this.map.fitBounds(bounds, { padding: 100 })
+              }
             }
-          }, 500)
+          } else {
+            // If markers not available, just pan to driver
+            this.map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+          }
         }
       }, (error) => {
         console.error('Error listening to driver location:', error)

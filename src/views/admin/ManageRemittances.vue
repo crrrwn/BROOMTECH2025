@@ -59,12 +59,12 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
-            <tr v-if="getFilteredRemittances().length === 0">
+            <tr v-if="getPaginatedRemittances().length === 0 && !loading">
               <td colspan="9" class="px-6 py-8 text-center text-gray-500">
                 No remittances found
               </td>
             </tr>
-            <tr v-for="remittance in getFilteredRemittances()" :key="remittance.id" class="hover:bg-gray-50">
+            <tr v-for="remittance in getPaginatedRemittances()" :key="remittance.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ remittance.driverName }}</td>
               <td class="px-6 py-4 text-sm text-gray-900">₱{{ remittance.amount.toFixed(2) }}</td>
               <td class="px-6 py-4 text-sm text-blue-600 font-medium">₱{{ remittance.driverShare.toFixed(2) }}</td>
@@ -112,6 +112,58 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div v-if="getTotalPages() > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-700">
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, getFilteredRemittances().length) }} of {{ getFilteredRemittances().length }} remittances
+          </span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button
+            @click="previousPage"
+            :disabled="currentPage === 1"
+            :class="[
+              'px-3 py-1 text-sm font-medium rounded-md',
+              currentPage === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            Previous
+          </button>
+          
+          <div class="flex items-center space-x-1">
+            <button
+              v-for="page in getTotalPages()"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'px-3 py-1 text-sm font-medium rounded-md',
+                currentPage === page
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              ]"
+            >
+              {{ page }}
+            </button>
+          </div>
+          
+          <button
+            @click="nextPage"
+            :disabled="currentPage === getTotalPages()"
+            :class="[
+              'px-3 py-1 text-sm font-medium rounded-md',
+              currentPage === getTotalPages()
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
 
@@ -215,7 +267,21 @@ export default {
       unsubscribe: null,
       showNotificationModal: false,
       notificationType: 'approved', // 'approved' or 'rejected'
-      notificationMessage: ''
+      notificationMessage: '',
+      // Pagination
+      currentPage: 1,
+      itemsPerPage: 5
+    }
+  },
+  watch: {
+    statusFilter() {
+      this.currentPage = 1
+    },
+    methodFilter() {
+      this.currentPage = 1
+    },
+    searchQuery() {
+      this.currentPage = 1
     }
   },
   async mounted() {
@@ -318,6 +384,35 @@ export default {
         
         return matchesStatus && matchesMethod && matchesSearch
       })
+    },
+    
+    getPaginatedRemittances() {
+      const filtered = this.getFilteredRemittances()
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return filtered.slice(start, end)
+    },
+    
+    getTotalPages() {
+      return Math.ceil(this.getFilteredRemittances().length / this.itemsPerPage)
+    },
+    
+    goToPage(page) {
+      if (page >= 1 && page <= this.getTotalPages()) {
+        this.currentPage = page
+      }
+    },
+    
+    nextPage() {
+      if (this.currentPage < this.getTotalPages()) {
+        this.currentPage++
+      }
+    },
+    
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--
+      }
     },
 
     viewReceipt(remittance) {

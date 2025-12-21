@@ -43,15 +43,11 @@ class WeatherService {
       }
     }
 
-    if (!this.apiKey) {
-      await this.loadApiKey()
-    }
-
     try {
-      // Use OpenWeather API
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${this.apiKey}&units=metric`,
-      )
+      // Use Open-Meteo API
+      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=weather_code,rain,wind_speed_10m,wind_gusts_10m&current=rain,weather_code,wind_speed_10m,wind_gusts_10m&timezone=Asia%2FSingapore`
+      
+      const response = await fetch(apiUrl)
 
       if (!response.ok) {
         console.error("[v0] Weather API error:", response.status)
@@ -59,31 +55,66 @@ class WeatherService {
       }
 
       const data = await response.json()
-      const weatherMain = data.weather[0].main
-      const weatherDescription = data.weather[0].description
-      const weatherCode = data.weather[0].id
+      
+      // Extract current weather data
+      const current = data.current || {}
+      const weatherCode = current.weather_code || 0
+      const rain = current.rain || 0
+      const windSpeed = current.wind_speed_10m || 0
+      const windGusts = current.wind_gusts_10m || 0
 
-      // OpenWeather codes for bad weather
-      // 2xx: Thunderstorm, 3xx: Drizzle, 5xx: Rain, 6xx: Snow
+      // WMO Weather codes for bad weather:
+      // 61-67: Rain
+      // 71-77: Snow  
+      // 80-82: Rain showers
+      // 95-99: Thunderstorm
       const badWeatherCodes = [
-        // Thunderstorm
-        200, 201, 202, 210, 211, 212, 221, 230, 231, 232,
-        // Drizzle
-        300, 301, 302, 310, 311, 312, 313, 314, 321,
         // Rain
-        500, 501, 502, 503, 504, 511, 520, 521, 522, 531,
+        61, 63, 65, 66, 67,
         // Snow
-        600, 601, 602, 611, 612, 613, 615, 616, 620, 621, 622,
+        71, 73, 75, 77,
+        // Rain showers
+        80, 81, 82,
+        // Thunderstorm
+        95, 96, 99
       ]
 
-      const isBadWeather = badWeatherCodes.includes(weatherCode)
+      // Check if bad weather based on weather code, rain amount, or high winds
+      const isBadWeather = badWeatherCodes.includes(weatherCode) || 
+                          rain > 0.5 || // More than 0.5mm of rain
+                          windSpeed > 15 || // Wind speed > 15 m/s
+                          windGusts > 20 // Wind gusts > 20 m/s
+
+      // Get weather description based on code
+      const weatherDescriptions = {
+        61: 'Slight rain',
+        63: 'Moderate rain',
+        65: 'Heavy rain',
+        66: 'Freezing rain',
+        67: 'Heavy freezing rain',
+        71: 'Slight snow',
+        73: 'Moderate snow',
+        75: 'Heavy snow',
+        77: 'Snow grains',
+        80: 'Slight rain showers',
+        81: 'Moderate rain showers',
+        82: 'Violent rain showers',
+        95: 'Thunderstorm',
+        96: 'Thunderstorm with slight hail',
+        99: 'Thunderstorm with heavy hail'
+      }
+
+      const description = weatherDescriptions[weatherCode] || 
+                         (rain > 0 ? 'Rainy' : 'Clear') ||
+                         (windSpeed > 15 ? 'Windy' : 'Normal')
 
       const weatherData = {
         isBadWeather,
-        description: weatherDescription,
+        description,
         weatherCode,
-        temperature: data.main.temp,
-        windSpeed: data.wind.speed,
+        rain: rain,
+        windSpeed: windSpeed,
+        windGusts: windGusts,
         timestamp: Date.now(),
       }
 

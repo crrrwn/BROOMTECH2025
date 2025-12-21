@@ -32,7 +32,7 @@
           <div>
             <!-- Use translations for toggle labels -->
             <p class="text-sm font-medium text-gray-700">{{ t('systemSettings.badWeatherFee') }}</p>
-            <p class="text-xs text-gray-500">{{ t('systemSettings.badWeatherFeeDesc') }}</p>
+            <p class="text-xs text-gray-500">Add ₱10 surcharge during bad weather</p>
           </div>
           <button 
             @click="toggleBadWeatherFee"
@@ -52,56 +52,102 @@
       </div>
     </div>
 
-    <!-- Application Settings -->
+    <!-- Security Settings -->
     <div class="bg-white rounded-lg p-6 shadow-sm border">
-      <!-- Use translation for section title -->
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('systemSettings.applicationSettings') }}</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <!-- Use translation for label -->
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.name') }}</label>
-          <input 
-            v-model="appSettings.name"
-            type="text" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
+      <div class="space-y-6">
+        <!-- Change Password -->
+        <div class="p-4 border rounded-lg">
+          <h4 class="text-sm font-medium text-gray-900 mb-3">Change Password</h4>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+              <input 
+                v-model="securitySettings.currentPassword"
+                type="password" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+                placeholder="Enter current password"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <input 
+                v-model="securitySettings.newPassword"
+                type="password" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+                placeholder="Enter new password (min. 6 characters)"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+              <input 
+                v-model="securitySettings.confirmPassword"
+                type="password" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+                placeholder="Confirm new password"
+              />
+            </div>
+            <button 
+              @click="changePassword"
+              :disabled="changingPassword"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ changingPassword ? 'Changing...' : 'Change Password' }}
+            </button>
+          </div>
         </div>
-        
-        <div>
-          <!-- Use translation for label -->
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.supportPhone') }}</label>
-          <input 
-            v-model="appSettings.supportPhone"
-            type="tel" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        </div>
-        
-        <div>
-          <!-- Use translation for label -->
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.defaultCurrency') }}</label>
-          <input 
-            type="text"
-            value="Philippine Peso (₱)"
-            disabled
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-          />
-        </div>
-        
-        <div>
-          <!-- Use translation for label -->
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('systemSettings.language') }}</label>
-          <select 
-            v-model="appSettings.language"
-            @change="updateLanguage"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+
+        <!-- Delete Admin Account -->
+        <div class="p-4 border border-red-200 rounded-lg bg-red-50">
+          <h4 class="text-sm font-medium text-red-900 mb-2">Delete Admin Account</h4>
+          <p class="text-xs text-red-700 mb-4">
+            Warning: This will permanently delete your admin account. After deletion, the admin registration page will be available again for creating a new admin account.
+          </p>
+          <button 
+            @click="showDeleteConfirm = true"
+            :disabled="deletingAccount"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <option value="en">{{ t('systemSettings.languageEnglish') }}</option>
-            <option value="tl">{{ t('systemSettings.languageTagalog') }}</option>
-          </select>
+            {{ deletingAccount ? 'Deleting...' : 'Delete Admin Account' }}
+          </button>
         </div>
       </div>
+    </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-red-900 mb-4">Confirm Account Deletion</h3>
+        <p class="text-sm text-gray-700 mb-4">
+          Are you sure you want to delete your admin account? This action cannot be undone. 
+          After deletion, you will be logged out and the admin registration page will be available again.
+        </p>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Enter your password to confirm:</label>
+          <input 
+            v-model="deletePassword"
+            type="password" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-red-500 focus:border-red-500"
+            placeholder="Enter your password"
+          />
+        </div>
+        <div class="flex space-x-3">
+          <button 
+            @click="deleteAdminAccount"
+            :disabled="deletingAccount || !deletePassword"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ deletingAccount ? 'Deleting...' : 'Delete Account' }}
+          </button>
+          <button 
+            @click="showDeleteConfirm = false; deletePassword = ''"
+            :disabled="deletingAccount"
+            class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Notification Settings -->
@@ -237,22 +283,20 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
-import { db } from '@/firebase/config'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { db, auth } from '@/firebase/config'
+import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { reauthenticateWithCredential, EmailAuthProvider, updatePassword, deleteUser } from 'firebase/auth'
 import { loggingService } from '@/services/loggingService'
 
 const toast = useToast()
+const router = useRouter()
+const authStore = useAuthStore()
 const { t, locale } = useI18n()
 
 const defaultSystemStatus = {
   badWeatherFee: false
-}
-
-const defaultAppSettings = {
-  name: 'BroomTech Delivery',
-  supportPhone: '+63 912 345 6789',
-  currency: 'PHP',
-  language: 'en'
 }
 
 const defaultNotificationSettings = {
@@ -266,13 +310,6 @@ const systemStatus = ref({
   badWeatherFee: false
 })
 
-const appSettings = ref({
-  name: 'BroomTech Delivery',
-  supportPhone: '+63 912 345 6789',
-  currency: 'PHP',
-  language: 'en'
-})
-
 const notificationSettings = ref({
   orderConfirmation: true,
   driverAssignment: true,
@@ -282,6 +319,17 @@ const notificationSettings = ref({
 
 const systemLogs = ref([])
 const loadingLogs = ref(false)
+
+// Security Settings
+const securitySettings = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const changingPassword = ref(false)
+const showDeleteConfirm = ref(false)
+const deletePassword = ref('')
+const deletingAccount = ref(false)
 
 const initializeComponent = () => {
   loadSystemSettings()
@@ -330,15 +378,6 @@ const saveSettings = async () => {
       updatedAt: new Date()
     }, { merge: true })
     
-    const appSettingsRef = doc(db, 'settings', 'application')
-    await setDoc(appSettingsRef, {
-      name: appSettings.value.name,
-      supportPhone: appSettings.value.supportPhone,
-      currency: 'PHP',
-      language: appSettings.value.language,
-      updatedAt: new Date()
-    }, { merge: true })
-    
     const notificationSettingsRef = doc(db, 'settings', 'notifications')
     await setDoc(notificationSettingsRef, {
       ...notificationSettings.value,
@@ -362,23 +401,12 @@ const resetSettings = async () => {
   try {
     // Reset all settings to default values
     systemStatus.value = { ...defaultSystemStatus }
-    appSettings.value = { ...defaultAppSettings }
     notificationSettings.value = { ...defaultNotificationSettings }
-    
-    // Update language
-    locale.value = defaultAppSettings.language
     
     // Save to Firebase
     const systemSettingsRef = doc(db, 'settings', 'system')
     await setDoc(systemSettingsRef, {
       ...defaultSystemStatus,
-      updatedAt: new Date()
-    })
-    
-    const appSettingsRef = doc(db, 'settings', 'application')
-    await setDoc(appSettingsRef, {
-      ...defaultAppSettings,
-      currency: 'PHP',
       updatedAt: new Date()
     })
     
@@ -426,27 +454,6 @@ const clearLogs = async () => {
   }
 }
 
-const updateLanguage = async () => {
-  try {
-    locale.value = appSettings.value.language
-    
-    const settingsRef = doc(db, 'settings', 'application')
-    await setDoc(settingsRef, {
-      language: appSettings.value.language,
-      updatedAt: new Date()
-    }, { merge: true })
-    
-    const languageNames = {
-      en: 'English',
-      tl: 'Tagalog'
-    }
-    
-    toast.success(t('systemSettings.languageUpdated', { language: languageNames[appSettings.value.language] }))
-  } catch (error) {
-    console.error('Error updating language:', error)
-    toast.error(t('common.updateFailed'))
-  }
-}
 
 const loadSystemSettings = async () => {
   try {
@@ -456,17 +463,6 @@ const loadSystemSettings = async () => {
     if (settingsDoc.exists()) {
       const settings = settingsDoc.data()
       systemStatus.value.badWeatherFee = settings.badWeatherFee || false
-    }
-    
-    const appSettingsRef = doc(db, 'settings', 'application')
-    const appSettingsDoc = await getDoc(appSettingsRef)
-    
-    if (appSettingsDoc.exists()) {
-      const settings = appSettingsDoc.data()
-      appSettings.value.name = settings.name || 'BroomTech Delivery'
-      appSettings.value.supportPhone = settings.supportPhone || '+63 912 345 6789'
-      appSettings.value.language = settings.language || 'en'
-      locale.value = appSettings.value.language
     }
     
     const notificationSettingsRef = doc(db, 'settings', 'notifications')
@@ -501,5 +497,133 @@ const loadSystemLogs = async () => {
 const refreshLogs = async () => {
   await loadSystemLogs()
   toast.success('Logs refreshed')
+}
+
+const changePassword = async () => {
+  if (!securitySettings.value.currentPassword || !securitySettings.value.newPassword || !securitySettings.value.confirmPassword) {
+    toast.error('Please fill in all password fields')
+    return
+  }
+
+  if (securitySettings.value.newPassword !== securitySettings.value.confirmPassword) {
+    toast.error('New passwords do not match')
+    return
+  }
+
+  if (securitySettings.value.newPassword.length < 6) {
+    toast.error('New password must be at least 6 characters long')
+    return
+  }
+
+  changingPassword.value = true
+  try {
+    const user = auth.currentUser
+    if (!user || !user.email) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    // Reauthenticate user
+    const credential = EmailAuthProvider.credential(user.email, securitySettings.value.currentPassword)
+    await reauthenticateWithCredential(user, credential)
+
+    // Update password
+    await updatePassword(user, securitySettings.value.newPassword)
+
+    // Clear form
+    securitySettings.value = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+
+    toast.success('Password changed successfully')
+    
+    // Log the activity
+    await loggingService.info(
+      'Admin password changed',
+      loggingService.USER_TYPES.ADMIN,
+      user.uid,
+      { action: 'password_changed' }
+    )
+
+    await loadSystemLogs()
+  } catch (error) {
+    console.error('Error changing password:', error)
+    if (error.code === 'auth/wrong-password') {
+      toast.error('Current password is incorrect')
+    } else if (error.code === 'auth/weak-password') {
+      toast.error('New password is too weak')
+    } else {
+      toast.error('Failed to change password: ' + error.message)
+    }
+  } finally {
+    changingPassword.value = false
+  }
+}
+
+const deleteAdminAccount = async () => {
+  if (!deletePassword.value) {
+    toast.error('Please enter your password to confirm deletion')
+    return
+  }
+
+  deletingAccount.value = true
+  try {
+    const user = auth.currentUser
+    if (!user || !user.email) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    // Reauthenticate user
+    const credential = EmailAuthProvider.credential(user.email, deletePassword.value)
+    await reauthenticateWithCredential(user, credential)
+
+    // Delete admin document from Firestore
+    const adminRef = doc(db, 'admins', user.uid)
+    await deleteDoc(adminRef)
+
+    // Reset adminExists flag to allow new admin registration
+    const settingsRef = doc(db, 'settings', 'system')
+    await updateDoc(settingsRef, {
+      adminExists: false,
+      updatedAt: new Date()
+    })
+
+    // Delete Firebase Auth user
+    await deleteUser(user)
+
+    toast.success('Admin account deleted successfully. You will be redirected to the registration page.')
+    
+    // Log the activity before logout
+    try {
+      await loggingService.info(
+        'Admin account deleted',
+        loggingService.USER_TYPES.ADMIN,
+        user.uid,
+        { action: 'admin_deleted' }
+      )
+    } catch (logError) {
+      console.error('Error logging deletion:', logError)
+    }
+
+    // Sign out and redirect
+    await authStore.logout()
+    router.push('/admin/register')
+  } catch (error) {
+    console.error('Error deleting admin account:', error)
+    if (error.code === 'auth/wrong-password') {
+      toast.error('Password is incorrect')
+    } else if (error.code === 'auth/requires-recent-login') {
+      toast.error('Please log out and log back in before deleting your account')
+    } else {
+      toast.error('Failed to delete account: ' + error.message)
+    }
+    showDeleteConfirm.value = false
+    deletePassword.value = ''
+  } finally {
+    deletingAccount.value = false
+  }
 }
 </script>

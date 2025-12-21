@@ -115,9 +115,37 @@
     <section class="py-16 bg-gray-50 relative z-10">
       <div class="container mx-auto px-4 max-w-6xl">
         <div class="text-center mb-10"><h2 class="text-2xl font-bold text-[#05103B]">Customer Reviews</h2></div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div v-if="testimonials.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div v-for="t in testimonials" :key="t.id" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border-l-4 border-[#74E600]">
-            <div class="flex items-center mb-4"><div class="w-10 h-10 bg-[#74E600] rounded-full flex items-center justify-center text-white font-bold mr-3 shadow-md">{{ t.initials }}</div><div><h4 class="font-bold text-[#05103B]">{{ t.name }}</h4><div class="flex text-[#3ED400] text-xs">★★★★★</div></div></div><p class="text-gray-600 italic text-sm">"{{ t.comment }}"</p>
+            <div class="flex items-center mb-4">
+              <div class="w-10 h-10 bg-[#74E600] rounded-full flex items-center justify-center text-white font-bold mr-3 shadow-md">{{ t.initials }}</div>
+              <div>
+                <h4 class="font-bold text-[#05103B]">{{ t.name }}</h4>
+                <div class="flex text-yellow-400 text-xs">
+                  <svg v-for="i in 5" :key="i" 
+                       :class="i <= (t.rating || 5) ? 'text-yellow-400' : 'text-gray-300'" 
+                       class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-600 italic text-sm">"{{ t.comment }}"</p>
+          </div>
+        </div>
+        <div v-else class="text-center py-12">
+          <div class="inline-block p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            <p class="text-gray-500 font-medium mb-4">No reviews yet. Be the first to share your experience!</p>
+            <button 
+              @click="loadReviews()" 
+              class="px-4 py-2 bg-[#74E600] text-white rounded-lg hover:bg-[#63c400] transition-colors text-sm font-medium"
+            >
+              Refresh Reviews
+            </button>
+            <p class="text-xs text-gray-400 mt-2">Check browser console (F12) for details</p>
           </div>
         </div>
       </div>
@@ -177,6 +205,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import FloatingChatbot from '@/components/FloatingChatbot.vue'
+import { db } from '@/firebase/config'
+import { collection, query, getDocs, orderBy, limit, where, onSnapshot } from 'firebase/firestore'
 
 export default {
   name: 'HomePage',
@@ -219,9 +249,17 @@ export default {
       showScrollBottom.value = scrollTop < documentHeight - windowHeight - 100
     }
 
+    let reviewsUnsubscribe = null
+    
     onMounted(() => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:247',message:'onMounted called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       window.addEventListener('scroll', handleScroll)
       handleScroll() 
+      
+      // Load reviews from Firestore with real-time listener
+      reviewsUnsubscribe = loadReviews()
       
       const video = videoRef.value;
       if (video) {
@@ -237,6 +275,10 @@ export default {
 
     onUnmounted(() => {
       window.removeEventListener('scroll', handleScroll)
+      if (reviewsUnsubscribe) {
+        reviewsUnsubscribe()
+        console.log('🛑 Unsubscribed from reviews listener')
+      }
     })
 
     const services = ref([
@@ -248,11 +290,227 @@ export default {
       { id: 6, name: 'Surprise Gifts', description: 'Send gifts to loved ones', price: '55' }
     ])
 
-    const testimonials = ref([
-      { id: 1, name: 'Juliana Juan JulSeb', initials: 'JJJ', comment: 'You can ask them to buy anything you want to as long as it is available in your town. As of now at para sa akin Legit at maayos ang service nila. Five star ⭐ for Broooom Delivery Services.' },
-      { id: 2, name: 'Rhane Cielo-Blanca', initials: 'RC', comment: 'Very accommodating. Fast transaction. Thank you for the good service.' },
-      { id: 3, name: 'Jenny Joy Bensurto', initials: 'JJB', comment: 'Thank you so much, Broooom! Napaka-bilis magreply ng admin and laging nag-uupdate si rider. Very smooth ang transaction!' }
-    ])
+    // Initialize with empty array - will be populated from Firestore
+    const testimonials = ref([])
+
+    // Process reviews from snapshot
+    const processReviews = (snapshot) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:294',message:'processReviews called',data:{snapshotSize:snapshot?.size||0,isEmpty:snapshot?.empty||false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      console.log(`📊 Processing ${snapshot.size} documents from reviews collection`)
+      
+      if (!snapshot || snapshot.empty) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:298',message:'No documents found',data:{snapshotExists:!!snapshot,isEmpty:snapshot?.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        console.log('⚠️ No documents found in reviews collection')
+        testimonials.value = []
+        return
+      }
+      
+      const fetchedReviews = []
+      
+      snapshot.forEach((doc) => {
+        try {
+          const reviewData = doc.data()
+          
+          // Log each review for debugging
+          console.log('📝 Review document:', {
+            id: doc.id,
+            approved: reviewData.approved,
+            hasComment: !!reviewData.comment,
+            commentLength: reviewData.comment?.length || 0,
+            rating: reviewData.rating,
+            ratingType: typeof reviewData.rating,
+            userName: reviewData.userName,
+            userInitials: reviewData.userInitials,
+            createdAt: reviewData.createdAt,
+            allKeys: Object.keys(reviewData)
+          })
+          
+          // Very lenient filtering - just need comment and rating
+          const hasComment = reviewData.comment && 
+                            typeof reviewData.comment === 'string' && 
+                            reviewData.comment.trim().length > 0
+          
+          const ratingValue = reviewData.rating
+          const hasRating = ratingValue !== undefined && 
+                           ratingValue !== null && 
+                           !isNaN(Number(ratingValue)) && 
+                           Number(ratingValue) > 0
+          
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:334',message:'Review filtering check',data:{docId:doc.id,hasComment,hasRating,ratingValue,commentType:typeof reviewData.comment,commentLength:reviewData.comment?.length,allKeys:Object.keys(reviewData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
+          console.log(`🔍 Review ${doc.id} check: hasComment=${hasComment}, hasRating=${hasRating}, rating=${ratingValue}`)
+          
+          // Include if it has comment and rating
+          if (hasComment && hasRating) {
+            const rating = Number(ratingValue)
+            const comment = String(reviewData.comment).trim()
+            const userName = reviewData.userName || 'Anonymous'
+            
+            // Generate initials if not provided
+            let userInitials = reviewData.userInitials
+            if (!userInitials || userInitials.trim() === '') {
+              if (userName && userName !== 'Anonymous') {
+                const nameParts = userName.trim().split(/\s+/)
+                if (nameParts.length >= 2) {
+                  userInitials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+                } else if (nameParts.length === 1) {
+                  userInitials = nameParts[0].substring(0, 2).toUpperCase()
+                } else {
+                  userInitials = 'A'
+                }
+              } else {
+                userInitials = 'A'
+              }
+            }
+            
+            fetchedReviews.push({
+              id: doc.id,
+              name: userName,
+              initials: userInitials,
+              comment: comment,
+              rating: rating,
+              createdAt: reviewData.createdAt
+            })
+            
+            console.log(`✅ Added review: ${userName} (${userInitials}) - ${rating} stars - "${comment.substring(0, 50)}..."`)
+          } else {
+            console.log(`⏭️ Skipped review ${doc.id}: hasComment=${hasComment}, hasRating=${hasRating}`)
+          }
+        } catch (docError) {
+          console.error(`❌ Error processing review document ${doc.id}:`, docError)
+        }
+      })
+      
+      console.log(`📈 Total valid reviews found: ${fetchedReviews.length}`)
+      
+      // Sort by createdAt (most recent first)
+      if (fetchedReviews.length > 0) {
+        fetchedReviews.sort((a, b) => {
+          let aTime = 0
+          let bTime = 0
+          
+          if (a.createdAt) {
+            if (a.createdAt.toDate && typeof a.createdAt.toDate === 'function') {
+              aTime = a.createdAt.toDate().getTime()
+            } else if (a.createdAt.seconds) {
+              aTime = a.createdAt.seconds * 1000
+            } else if (a.createdAt instanceof Date) {
+              aTime = a.createdAt.getTime()
+            }
+          }
+          
+          if (b.createdAt) {
+            if (b.createdAt.toDate && typeof b.createdAt.toDate === 'function') {
+              bTime = b.createdAt.toDate().getTime()
+            } else if (b.createdAt.seconds) {
+              bTime = b.createdAt.seconds * 1000
+            } else if (b.createdAt instanceof Date) {
+              bTime = b.createdAt.getTime()
+            }
+          }
+          
+          return bTime - aTime // Most recent first
+        })
+        
+        testimonials.value = fetchedReviews.slice(0, 6) // Show up to 6 reviews
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:408',message:'testimonials.value set',data:{count:testimonials.value.length,reviews:testimonials.value.map(r=>({id:r.id,name:r.name,rating:r.rating}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        console.log(`✅ Successfully loaded ${testimonials.value.length} reviews:`, testimonials.value.map(r => `${r.name} (${r.rating}⭐)`))
+      } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:411',message:'No valid reviews after filtering',data:{snapshotSize:snapshot.size,fetchedCount:fetchedReviews.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        testimonials.value = []
+        console.log('⚠️ No valid reviews found after filtering (checked', snapshot.size, 'documents)')
+      }
+    }
+
+    // Fetch reviews from Firestore - try multiple methods
+    const loadReviews = async () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:417',message:'loadReviews called',data:{dbExists:!!db},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      console.log('🔄 Loading reviews from Firestore...')
+      
+      // Method 1: Try onSnapshot first (real-time)
+      try {
+        const reviewsRef = collection(db, 'reviews')
+        const reviewsQuery = query(reviewsRef, limit(50))
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:425',message:'Attempting onSnapshot',data:{collectionName:'reviews'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.log('📡 Attempting onSnapshot...')
+        const unsubscribe = onSnapshot(
+          reviewsQuery,
+          (snapshot) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:428',message:'onSnapshot success',data:{size:snapshot.size,empty:snapshot.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            console.log(`📊 onSnapshot received: ${snapshot.size} documents`)
+            processReviews(snapshot)
+          },
+          (error) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:432',message:'onSnapshot error',data:{message:error.message,code:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            console.error('❌ onSnapshot error:', error)
+            console.error('Error details:', {
+              message: error.message,
+              code: error.code
+            })
+            // Fallback to getDocs
+            console.log('🔄 Falling back to getDocs...')
+            loadReviewsWithGetDocs()
+          }
+        )
+        
+        // Store unsubscribe for cleanup
+        return unsubscribe
+      } catch (error) {
+        console.error('❌ Error setting up onSnapshot:', error)
+        // Fallback to getDocs
+        console.log('🔄 Falling back to getDocs...')
+        loadReviewsWithGetDocs()
+        return null
+      }
+    }
+
+    // Fallback method using getDocs
+    const loadReviewsWithGetDocs = async () => {
+      try {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:456',message:'Attempting getDocs',data:{collectionName:'reviews'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.log('📡 Attempting getDocs...')
+        const reviewsRef = collection(db, 'reviews')
+        const reviewsQuery = query(reviewsRef, limit(50))
+        
+        const snapshot = await getDocs(reviewsQuery)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:462',message:'getDocs success',data:{size:snapshot.size,empty:snapshot.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.log(`📊 getDocs received: ${snapshot.size} documents`)
+        processReviews(snapshot)
+      } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:465',message:'getDocs error',data:{message:error.message,code:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.error('❌ Error with getDocs:', error)
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        })
+        testimonials.value = []
+      }
+    }
 
     return {
       handleNavigation,
@@ -262,7 +520,8 @@ export default {
       showScrollBottom,
       scrollToTop,
       scrollToBottom,
-      videoRef
+      videoRef,
+      loadReviews
     }
   }
 }

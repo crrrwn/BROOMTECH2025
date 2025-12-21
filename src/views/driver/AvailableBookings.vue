@@ -35,7 +35,7 @@
         </div>
         <div class="ml-3">
           <p class="text-sm font-medium text-yellow-800">
-            Bad Weather Alert: {{ currentWeather }} - All bookings include ₱5 surcharge
+            Bad Weather Alert: {{ currentWeather }} - All bookings include ₱10 surcharge
           </p>
         </div>
       </div>
