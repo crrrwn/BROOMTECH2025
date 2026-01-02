@@ -277,6 +277,12 @@ export default {
     document.removeEventListener('click', this.handleClickOutside)
   },
   methods: {
+    // Validate if location is within Calapan City bounds
+    isLocationWithinCalapanCity(lat, lng) {
+      // Calapan City bounds: lat 13.3000-13.4500, lng 121.0800-121.2500
+      return lat >= 13.3000 && lat <= 13.4500 && lng >= 121.0800 && lng <= 121.2500
+    },
+    
     async loadDriverStatus() {
       try {
         const user = this.authStore.user
@@ -361,9 +367,19 @@ export default {
 
             this.locationWatchId = navigator.geolocation.watchPosition(
               async (position) => {
+                const lat = position.coords.latitude
+                const lng = position.coords.longitude
+                
+                // Validate location is within Calapan City bounds
+                if (!this.isLocationWithinCalapanCity(lat, lng)) {
+                  console.warn('[v0] Location outside Calapan City bounds:', { lat, lng })
+                  this.$toast.warning('Location is outside Calapan City area. Location not saved.')
+                  return
+                }
+                
                 this.currentLocation = {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
+                  lat: lat,
+                  lng: lng,
                   accuracy: position.coords.accuracy,
                   timestamp: new Date()
                 }

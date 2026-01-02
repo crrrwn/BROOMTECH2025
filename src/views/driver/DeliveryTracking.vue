@@ -191,6 +191,58 @@
             </div>
           </div>
 
+          <!-- Additional Orders Section -->
+          <div v-if="order?.additionalOrders && order.additionalOrders.length > 0" class="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm">
+            <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-4">Additional Orders ({{ order.additionalOrders.length }})</h4>
+            <div class="space-y-4">
+              <div v-for="(additionalOrder, index) in order.additionalOrders" :key="index" class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-3 pb-3 border-b border-blue-200">
+                  <div>
+                    <p class="text-sm font-black text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</p>
+                    <p v-if="additionalOrder.createdAt" class="text-xs text-gray-500 font-medium mt-1">
+                      Added: {{ formatAdditionalOrderDate(additionalOrder.createdAt) }}
+                    </p>
+                  </div>
+                  <span :class="['px-2 py-1 text-[10px] font-bold uppercase rounded-lg', additionalOrder.status === 'pending' ? 'bg-orange-100 text-orange-700' : additionalOrder.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700']">
+                    {{ additionalOrder.status || 'pending' }}
+                  </span>
+                </div>
+
+                <!-- Locations -->
+                <div v-if="getAdditionalOrderPickupLocation(additionalOrder) !== 'N/A' || getAdditionalOrderDeliveryLocation(additionalOrder) !== 'N/A'" class="mb-3">
+                  <div class="space-y-2">
+                    <div v-if="getAdditionalOrderPickupLocation(additionalOrder) !== 'N/A'" class="relative pl-3 border-l-2 border-green-400">
+                      <p class="text-xs text-gray-500">Pickup</p>
+                      <p class="text-sm font-bold text-gray-900">{{ getAdditionalOrderPickupLocation(additionalOrder) }}</p>
+                    </div>
+                    <div v-if="getAdditionalOrderDeliveryLocation(additionalOrder) !== 'N/A'" class="relative pl-3 border-l-2 border-gray-400">
+                      <p class="text-xs text-gray-500">Delivery</p>
+                      <p class="text-sm font-bold text-gray-900">{{ getAdditionalOrderDeliveryLocation(additionalOrder) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Booking Details -->
+                <div v-if="additionalOrder.details && Object.keys(additionalOrder.details).length > 0" class="mb-3">
+                  <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Booking Details</p>
+                  <div class="space-y-3">
+                    <div v-for="detail in getAdditionalOrderBookingDetails(additionalOrder)" :key="detail.key" class="flex flex-col gap-1 pb-2 border-b border-blue-100 last:border-0">
+                      <span class="text-xs font-bold text-gray-500 uppercase">{{ detail.label }}</span>
+                      <span class="text-sm font-medium text-gray-800">{{ detail.value }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Price -->
+                <div class="flex justify-between items-center pt-3 border-t border-blue-200">
+                  <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Amount</span>
+                  <span class="text-sm font-black text-[#3ED400]">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing?.total || 0).toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Customer Feedback Section -->
           <div v-if="order?.feedback && order.status === 'delivered'" class="bg-gradient-to-br from-yellow-50 to-orange-50 p-5 rounded-2xl border border-yellow-200 shadow-sm">
             <h4 class="text-xs font-black text-yellow-600 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -487,6 +539,12 @@ export default {
     }
   },
   methods: {
+    // Validate if location is within Calapan City bounds
+    isLocationWithinCalapanCity(lat, lng) {
+      // Calapan City bounds: lat 13.3000-13.4500, lng 121.0800-121.2500
+      return lat >= 13.3000 && lat <= 13.4500 && lng >= 121.0800 && lng <= 121.2500
+    },
+    
     async loadOrderData() {
       try {
         if (!this.orderId) {
@@ -962,9 +1020,19 @@ export default {
 
       this.locationWatchId = navigator.geolocation.watchPosition(
         async (position) => {
+          const lat = position.coords.latitude
+          const lng = position.coords.longitude
+          
+          // Validate location is within Calapan City bounds
+          if (!this.isLocationWithinCalapanCity(lat, lng)) {
+            console.warn('[v0] Location outside Calapan City bounds:', { lat, lng })
+            this.toast.warning('Location is outside Calapan City area. Location not saved.')
+            return
+          }
+          
           this.currentLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
+            lat: lat,
+            lng: lng,
             accuracy: position.coords.accuracy
           }
 
@@ -1237,6 +1305,85 @@ export default {
         .replace(/Receiver Name/i, 'Receiver Name')
         .replace(/Receiver Contact/i, 'Receiver Contact')
         .replace(/Preferred Time/i, 'Preferred Time')
+    },
+    
+    getAdditionalOrderPickupLocation(additionalOrder) {
+      if (!additionalOrder?.details) return additionalOrder?.pickupAddress || 'N/A'
+      const details = additionalOrder.details
+      return (
+        additionalOrder.pickupAddress ||
+        details.pickupAddress ||
+        details.restaurantAddress ||
+        details.storeAddress ||
+        'N/A'
+      )
+    },
+    
+    getAdditionalOrderDeliveryLocation(additionalOrder) {
+      if (!additionalOrder?.details) return additionalOrder?.deliveryAddress || 'N/A'
+      const details = additionalOrder.details
+      return (
+        additionalOrder.deliveryAddress ||
+        details.deliveryAddress ||
+        details.returnAddress ||
+        details.dropoffAddress ||
+        'N/A'
+      )
+    },
+    
+    getAdditionalOrderBookingDetails(additionalOrder) {
+      if (!additionalOrder?.details) return []
+      const details = additionalOrder.details
+      const serviceType = additionalOrder.serviceId || additionalOrder.serviceType
+      const bookingDetails = []
+
+      // Define which fields to show for each service type
+      const serviceFieldMappings = {
+        'food-delivery': ['restaurantName', 'restaurantAddress', 'foodOrderDetails', 'specialInstructions', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
+        'food': ['restaurantName', 'restaurantAddress', 'foodOrderDetails', 'specialInstructions', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
+        'bill-payments': ['billerName', 'accountName', 'accountNumber', 'amountToPay', 'dueDate', 'preferredSchedule', 'billReceiptUrl'],
+        'grocery-shopping': ['shoppingList', 'storePreference', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
+        'grocery': ['shoppingList', 'storePreference', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
+        'gift-delivery': ['giftType', 'specialInstructions', 'budgetRange', 'recipientName', 'recipientContact', 'storeName', 'storeAddress', 'preferredDateTime'],
+        'medicine-delivery': ['medicineNames', 'quantity', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
+        'medicine': ['medicineNames', 'quantity', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
+        'pickup-drop': ['itemDescription', 'itemType', 'pickupContact', 'preferredPickupDateTime']
+      }
+
+      const fieldsToShow = serviceFieldMappings[serviceType] || []
+      
+      fieldsToShow.forEach(key => {
+        const value = details[key]
+        if (value && typeof value === 'string' && value.trim().length > 0) {
+          bookingDetails.push({
+            key,
+            label: this.formatFieldLabel(key),
+            value: key === 'billReceiptUrl' ? value : (value.length > 100 ? value.substring(0, 100) + '...' : value),
+            isLink: key === 'billReceiptUrl'
+          })
+        } else if (value && typeof value === 'number') {
+          bookingDetails.push({
+            key,
+            label: this.formatFieldLabel(key),
+            value: value.toString()
+          })
+        }
+      })
+
+      // If no fields matched, show all available fields (fallback)
+      if (bookingDetails.length === 0) {
+        Object.entries(details).forEach(([key, value]) => {
+          if (value && typeof value === 'string' && value.length > 0 && key !== 'pickupAddress' && key !== 'deliveryAddress' && key !== 'restaurantAddress' && key !== 'storeAddress') {
+            bookingDetails.push({
+              key,
+              label: this.formatFieldLabel(key),
+              value: value.substring(0, 100)
+            })
+          }
+        })
+      }
+
+      return bookingDetails
     },
     
     formatAdditionalOrderDate(dateValue) {
