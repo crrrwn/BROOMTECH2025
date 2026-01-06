@@ -337,9 +337,32 @@
                       :alt="driver.firstName + ' ' + driver.lastName"
                       @error="handleImageError"
                     >
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-900">{{ driver.firstName }} {{ driver.lastName }}</p>
+                    <div class="ml-3 flex-1">
+                      <div class="flex items-center gap-2">
+                        <p class="text-sm font-medium text-gray-900">{{ driver.firstName }} {{ driver.lastName }}</p>
+                        <span 
+                          v-if="isDriverCurrentlyScheduled(driver)"
+                          class="px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700"
+                          title="Currently on scheduled duty"
+                        >
+                          On Duty
+                        </span>
+                      </div>
                       <p class="text-xs text-gray-500">{{ driver.vehicleType }} • {{ Number(driver.rating || 0).toFixed(1) }}⭐</p>
+                      <!-- Schedule Display -->
+                      <div v-if="getFormattedSchedule(driver)" class="mt-1 space-y-0.5">
+                        <div 
+                          v-for="(scheduleItem, index) in getFormattedSchedule(driver)" 
+                          :key="index"
+                          class="text-xs text-gray-600"
+                        >
+                          <span class="font-medium">{{ scheduleItem.days }}:</span>
+                          <span class="ml-1">{{ scheduleItem.time }}</span>
+                        </div>
+                      </div>
+                      <div v-else class="mt-1 text-xs text-gray-400 italic">
+                        No schedule set
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -521,12 +544,34 @@
                       </div>
                       <div class="ml-3 flex-1">
                         <div class="flex items-center gap-2">
+                          <!-- Schedule indicator -->
+                          <span 
+                            v-if="isDriverCurrentlyScheduled(driver)"
+                            class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700"
+                            title="Currently on scheduled duty"
+                          >
+                            On Duty
+                          </span>
                           <!-- CHANGE: Enhanced driver name display -->
                           <p class="text-sm font-medium text-gray-900">
                             {{ getDriverDisplayName(driver) }}
                           </p>
                         </div>
                         <p class="text-sm text-gray-500">{{ driver.phone }}</p>
+                        <!-- Schedule Display -->
+                        <div v-if="getFormattedSchedule(driver)" class="mt-1 space-y-0.5">
+                          <div 
+                            v-for="(scheduleItem, index) in getFormattedSchedule(driver)" 
+                            :key="index"
+                            class="text-xs text-gray-600"
+                          >
+                            <span class="font-medium">{{ scheduleItem.days }}:</span>
+                            <span class="ml-1">{{ scheduleItem.time }}</span>
+                          </div>
+                        </div>
+                        <div v-else class="mt-1 text-xs text-gray-400 italic">
+                          No schedule set
+                        </div>
                       </div>
                     </div>
                     <div class="text-right">
@@ -541,13 +586,7 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex justify-between">
-            <div class="flex items-center gap-2 text-sm text-gray-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span>Admin can override AI recommendations</span>
-            </div>
+          <div class="flex justify-end">
             <div class="flex space-x-3">
               <button
                 @click="closeAssignModal"
@@ -1214,18 +1253,153 @@ export default {
 
     const unassignedOrders = computed(() => orders.value.filter(order => !order.driverId && order.status !== 'cancelled'))
 
+    // Helper function to check if driver is currently scheduled
+    const isDriverCurrentlyScheduled = (driver) => {
+      const schedule = driver.raw?.schedule || driver.schedule
+      if (!schedule || Object.keys(schedule).length === 0) return false
+
+      const now = new Date()
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+      const currentTime = now.toTimeString().slice(0, 5) // HH:MM format
+
+      const daySchedule = schedule[currentDay]
+      if (!daySchedule || !daySchedule.enabled) return false
+
+      const startTime = daySchedule.startTime || '00:00'
+      const endTime = daySchedule.endTime || '23:59'
+
+      // Compare times as strings (works for HH:MM format)
+      return currentTime >= startTime && currentTime <= endTime
+    }
+
+    // Format schedule for display
+    const getFormattedSchedule = (driver) => {
+      const schedule = driver.raw?.schedule || driver.schedule
+      if (!schedule || Object.keys(schedule).length === 0) {
+        return null
+      }
+
+      const dayLabels = {
+        monday: 'Mon',
+        tuesday: 'Tue',
+        wednesday: 'Wed',
+        thursday: 'Thu',
+        friday: 'Fri',
+        saturday: 'Sat',
+        sunday: 'Sun'
+      }
+
+      const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      
+      // Group days by time slots
+      const timeGroups = {}
+      dayOrder.forEach(day => {
+        if (schedule[day]?.enabled) {
+          const timeKey = `${schedule[day].startTime || '08:00'}-${schedule[day].endTime || '17:00'}`
+          if (!timeGroups[timeKey]) {
+            timeGroups[timeKey] = []
+          }
+          timeGroups[timeKey].push(day)
+        }
+      })
+
+      // Format each time group
+      const formatted = []
+      Object.keys(timeGroups).forEach(timeKey => {
+        const days = timeGroups[timeKey]
+        if (days.length === 0) return
+
+        // Sort days by order
+        days.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b))
+
+        // Group consecutive days
+        let dayRange = ''
+        let startDay = days[0]
+        let endDay = days[0]
+
+        for (let i = 1; i < days.length; i++) {
+          const currentIndex = dayOrder.indexOf(days[i])
+          const prevIndex = dayOrder.indexOf(days[i - 1])
+          
+          if (currentIndex === prevIndex + 1) {
+            // Consecutive day
+            endDay = days[i]
+          } else {
+            // Not consecutive, output previous range
+            if (startDay === endDay) {
+              dayRange += (dayRange ? ', ' : '') + dayLabels[startDay]
+            } else {
+              dayRange += (dayRange ? ', ' : '') + `${dayLabels[startDay]}-${dayLabels[endDay]}`
+            }
+            startDay = days[i]
+            endDay = days[i]
+          }
+        }
+
+        // Output final range
+        if (startDay === endDay) {
+          dayRange += (dayRange ? ', ' : '') + dayLabels[startDay]
+        } else {
+          dayRange += (dayRange ? ', ' : '') + `${dayLabels[startDay]}-${dayLabels[endDay]}`
+        }
+
+        formatted.push({
+          days: dayRange,
+          time: timeKey
+        })
+      })
+
+      return formatted.length > 0 ? formatted : null
+    }
+
+    // Helper function to get schedule priority (lower number = higher priority)
+    const getSchedulePriority = (driver) => {
+      const schedule = driver.raw?.schedule || driver.schedule
+      if (!schedule || Object.keys(schedule).length === 0) return 999 // No schedule = lowest priority
+
+      const now = new Date()
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+      const currentTime = now.toTimeString().slice(0, 5)
+
+      const daySchedule = schedule[currentDay]
+      if (!daySchedule || !daySchedule.enabled) return 500 // Scheduled but not today = medium priority
+
+      const startTime = daySchedule.startTime || '00:00'
+      const endTime = daySchedule.endTime || '23:59'
+
+      if (currentTime >= startTime && currentTime <= endTime) {
+        return 0 // Currently on duty = highest priority
+      } else if (currentTime < startTime) {
+        // Before shift starts - calculate minutes until shift
+        const [currentH, currentM] = currentTime.split(':').map(Number)
+        const [startH, startM] = startTime.split(':').map(Number)
+        const minutesUntilShift = (startH * 60 + startM) - (currentH * 60 + currentM)
+        return Math.min(100 + minutesUntilShift, 499) // Soon to start = high priority
+      } else {
+        return 500 // Shift already ended = medium priority
+      }
+    }
+
     const filteredAvailableDrivers = computed(() => {
       // Filter only online drivers
-      const onlineDrivers = availableDrivers.value.filter(driver => driver.isOnline)
+      let onlineDrivers = availableDrivers.value.filter(driver => driver.isOnline)
       
-      if (!driverSearchQuery.value) return onlineDrivers
+      // Apply search filter if exists
+      if (driverSearchQuery.value) {
+        const query = driverSearchQuery.value.toLowerCase()
+        onlineDrivers = onlineDrivers.filter(driver =>
+          `${driver.firstName} ${driver.lastName}`.toLowerCase().includes(query) ||
+          (driver.phone || '').toLowerCase().includes(query) ||
+          (driver.vehicleType || '').toLowerCase().includes(query)
+        )
+      }
 
-      const query = driverSearchQuery.value.toLowerCase()
-      return onlineDrivers.filter(driver =>
-        `${driver.firstName} ${driver.lastName}`.toLowerCase().includes(query) ||
-        (driver.phone || '').toLowerCase().includes(query) ||
-        (driver.vehicleType || '').toLowerCase().includes(query)
-      )
+      // Sort by schedule priority (scheduled drivers first)
+      return onlineDrivers.sort((a, b) => {
+        const priorityA = getSchedulePriority(a)
+        const priorityB = getSchedulePriority(b)
+        return priorityA - priorityB
+      })
     })
 
     const filteredOrders = computed(() => {
@@ -1441,6 +1615,11 @@ export default {
               banned: Boolean(driverData.banned),
               isOnline: Boolean(driverData.isOnline || driverData.online),
               location: driverData.location || driverData.currentLocation,
+              schedule: driverData.schedule || null,
+              raw: {
+                ...driverData,
+                schedule: driverData.schedule || null
+              }
             })
             console.log('[v0] Updated driver from drivers collection:', fullName || 'No Name', doc.id)
           })
@@ -3485,6 +3664,9 @@ export default {
       formatAssignmentTime,
       fetchAllDriversForLookup,
       getDriverDisplayName,
+      isDriverCurrentlyScheduled,
+      getSchedulePriority,
+      getFormattedSchedule,
       showNotification,
       closeNotificationModal,
       trackDriver, // Keep trackDriver for map tracking functionality

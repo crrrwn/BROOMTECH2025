@@ -40,6 +40,7 @@
                 id="firstName"
                 v-model="form.firstName"
                 type="text"
+                autocomplete="given-name"
                 required
                 pattern="[A-Za-z\s\-]+"
                 @blur="validateField('firstName')"
@@ -63,6 +64,7 @@
                 id="lastName"
                 v-model="form.lastName"
                 type="text"
+                autocomplete="family-name"
                 required
                 pattern="[A-Za-z\s\-]+"
                 @blur="validateField('lastName')"
@@ -87,6 +89,7 @@
               id="middleName"
               v-model="form.middleName"
               type="text"
+              autocomplete="additional-name"
               pattern="[A-Za-z\s\-]*"
               class="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-2 border-transparent rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#3ED400] focus:ring-4 focus:ring-[#3ED400]/20 transition-all duration-300"
               placeholder="Middle name"
@@ -104,6 +107,7 @@
               id="contact"
               v-model="form.contact"
               type="tel"
+              autocomplete="tel"
               required
               pattern="^(09|\+639)\d{9}$"
               @blur="validateField('contact')"
@@ -128,6 +132,7 @@
                 id="address"
                 v-model="form.address"
                 type="text"
+                autocomplete="street-address"
                 required
                 minlength="10"
                 @blur="validateField('address')"
@@ -179,6 +184,7 @@
               id="email"
               v-model="form.email"
               type="email"
+              autocomplete="email"
               required
               @blur="validateField('email')"
               :class="[
@@ -201,6 +207,7 @@
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
+              autocomplete="new-password"
               required
               @input="checkPasswordStrength"
               @blur="validateField('password')"

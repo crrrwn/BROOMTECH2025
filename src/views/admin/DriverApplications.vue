@@ -7,9 +7,6 @@
         <p class="text-gray-600">Review and manage driver applications</p>
       </div>
       <div class="flex items-center space-x-4">
-        <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
-          Export Applications
-        </button>
       </div>
     </div>
 

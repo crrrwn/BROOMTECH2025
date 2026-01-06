@@ -14,6 +14,9 @@
             src="https://scontent.fmnl7-2.fna.fbcdn.net/v/t1.15752-9/514071591_1252432816270252_1243204019946633211_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeEne1_QgvnzPimBbfxq_loR-tDfpI8SJXz60N-kjxIlfByb9W5QUiBtwAWWz58nuc7ZAQLaDdcR5XLMXSyYpi5e&_nc_ohc=22TieV_Z_voQ7kNvwEBjgNT&_nc_oc=AdmJoOb5TZPB2UkZ578pEyqjn4tdhSMxb3cDlReTD7jSlZjkBve5-yz6nF0muTBRlD4&_nc_zt=23&_nc_ht=scontent.fmnl7-2.fna&oh=03_Q7cD4AFN1-ZJ3iUsGG3W2txeNI23-eE-tCCECL3b4wKZE1CQAQ&oe=695CED92" 
             alt="BroomTech Logo"
             class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white ring-4 ring-[#74E600]/30 shadow-xl transform group-hover:scale-105 transition-transform duration-300"
+            @error="handleImageError"
+            loading="lazy"
+            onerror="this.style.display='none'; return false;"
           />
         </div>
         <div>
@@ -230,6 +233,11 @@ export default {
       acceptTerms: false
     })
 
+    const handleImageError = (event) => {
+      // Hide image on error (403, etc.)
+      event.target.style.display = 'none'
+    }
+
     const handleFileUpload = (event, documentType) => {
       const file = event.target.files[0]
       if (file) {
@@ -294,6 +302,7 @@ export default {
       formData,
       showPassword,
       loading,
+      handleImageError,
       handleRegister,
       handleFileUpload
     }

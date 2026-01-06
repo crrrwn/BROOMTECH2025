@@ -16,6 +16,7 @@
               src="https://placehold.co/150x150/3ED400/ffffff?text=B" 
               alt="BroomTech Logo"
               class="w-full h-full object-cover"
+              @error="handleImageError"
             />
           </div>
         </div>
@@ -41,6 +42,7 @@
                 id="email"
                 v-model="form.email"
                 type="email"
+                autocomplete="email"
                 required
                 class="w-full pl-11 pr-4 py-3.5 text-sm bg-gray-50/50 border border-gray-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#3ED400] focus:ring-4 focus:ring-[#3ED400]/10 transition-all duration-300 shadow-sm"
                 placeholder="name@example.com"
@@ -58,6 +60,7 @@
                 id="password"
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'"
+                autocomplete="current-password"
                 required
                 class="w-full pl-11 pr-12 py-3.5 text-sm bg-gray-50/50 border border-gray-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#3ED400] focus:ring-4 focus:ring-[#3ED400]/10 transition-all duration-300 shadow-sm"
                 placeholder="Enter password"
@@ -500,6 +503,11 @@ const handleFaceVerificationFailed = async (attempts) => {
     await authStore.logout()
     showNotification('error', 'Face verification failed. Access denied. Please log in again.')
   }
+}
+
+const handleImageError = (event) => {
+  // Hide image on error (403, etc.)
+  event.target.style.display = 'none'
 }
 
 const handleFaceVerificationCancel = async () => {

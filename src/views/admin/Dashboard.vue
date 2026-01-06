@@ -1,30 +1,30 @@
 <template>
-  <div class="space-y-6">
-     Loading State 
+  <div class="space-y-4 sm:space-y-6">
+    <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
     </div>
 
     <div v-else>
-       Overview Stats 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
+      <!-- Overview Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
           <div class="flex items-center">
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
               </svg>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Total Orders</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ stats.totalOrders }}</p>
+            <div class="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p class="text-xs sm:text-sm font-medium text-gray-600">Total Orders</p>
+              <p class="text-xl sm:text-2xl font-semibold text-gray-900">{{ stats.totalOrders }}</p>
               <p class="text-xs text-green-600">+{{ stats.ordersGrowth }}% from yesterday</p>
             </div>
           </div>
         </div>
 
         <!-- Updated to show 20% commission (admin's share) -->
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
+        <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
         </div>
 
         <!-- Changed "Active Drivers" to "Online Drivers" -->
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
+        <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
+        <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,11 +71,11 @@
         </div>
       </div>
 
-       Quick Actions & Alerts 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         Pending Approvals 
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Pending Approvals</h3>
+      <!-- Quick Actions & Alerts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Pending Approvals -->
+        <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
+          <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Pending Approvals</h3>
           <div class="space-y-3">
             <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
               <div>
@@ -104,7 +104,7 @@
         </div>
 
          System Status 
-        <div class="bg-white rounded-lg p-6 shadow-sm border">
+        <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
@@ -282,6 +282,7 @@ export default {
     const liveOrders = ref([])
     const listeners = ref([])
     const allOrders = ref([])
+    const remittancesAdminShare = ref(0) // Admin share from approved remittances
 
     const setupSystemSettingsListener = () => {
       try {
@@ -432,19 +433,77 @@ export default {
           })
 
           stats.value.revenueToday = todayRevenue
-          stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20)
+          // Calculate admin revenue: 20% of orders + admin share from approved remittances
+          stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20) + remittancesAdminShare.value
 
 
         }, (error) => {
           console.log('[v0] Orders listener error:', error.message)
           stats.value.totalOrders = 0
           stats.value.revenueToday = 0
-          stats.value.adminRevenueToday = 0
+          stats.value.adminRevenueToday = remittancesAdminShare.value // Keep remittances share even if orders fail
         })
 
         listeners.value.push(unsubscribe)
       } catch (error) {
         console.error('[v0] Error setting up orders listener:', error)
+      }
+    }
+
+    const setupRemittancesListener = () => {
+      try {
+        const remittancesQuery = query(
+          collection(db, 'remittances'),
+          where('status', '==', 'approved')
+        )
+
+        const unsubscribe = onSnapshot(remittancesQuery, (snapshot) => {
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          
+          let totalAdminShareToday = 0
+
+          snapshot.forEach(doc => {
+            const remittance = doc.data()
+            
+            // Check if remittance was approved today
+            let approvalDate
+            if (remittance.approvedAt) {
+              approvalDate = remittance.approvedAt.toDate ? remittance.approvedAt.toDate() : new Date(remittance.approvedAt)
+            } else if (remittance.date) {
+              approvalDate = remittance.date.toDate ? remittance.date.toDate() : new Date(remittance.date)
+            } else if (remittance.createdAt) {
+              approvalDate = remittance.createdAt.toDate ? remittance.createdAt.toDate() : new Date(remittance.createdAt)
+            } else {
+              return // Skip if no date
+            }
+            
+            // Only count remittances approved today
+            if (approvalDate >= today) {
+              // Use adminShare if available, otherwise calculate 20% of amount
+              const adminShare = remittance.adminShare || (remittance.amount * 0.2)
+              totalAdminShareToday += Number(adminShare) || 0
+            }
+          })
+
+          remittancesAdminShare.value = Math.round(totalAdminShareToday)
+          
+          // Update admin revenue to include remittances
+          const todayRevenue = stats.value.revenueToday
+          stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20) + remittancesAdminShare.value
+          
+          console.log('[v0] Remittances admin share updated:', remittancesAdminShare.value)
+        }, (error) => {
+          console.log('[v0] Remittances listener error:', error.message)
+          remittancesAdminShare.value = 0
+          // Recalculate admin revenue without remittances
+          const todayRevenue = stats.value.revenueToday
+          stats.value.adminRevenueToday = Math.round(todayRevenue * 0.20)
+        })
+
+        listeners.value.push(unsubscribe)
+      } catch (error) {
+        console.error('[v0] Error setting up remittances listener:', error)
       }
     }
 
@@ -670,6 +729,7 @@ export default {
         setupUsersListener()
         setupDriversListener()
         setupOrdersListener()
+        setupRemittancesListener()
         setupRecentActivityListener()
         setupLiveOrdersListener()
         

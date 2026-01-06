@@ -252,14 +252,17 @@ export default {
     let reviewsUnsubscribe = null
     
     onMounted(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:247',message:'onMounted called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       window.addEventListener('scroll', handleScroll)
       handleScroll() 
       
       // Load reviews from Firestore with real-time listener
-      reviewsUnsubscribe = loadReviews()
+      loadReviews().then((unsubscribe) => {
+        if (unsubscribe && typeof unsubscribe === 'function') {
+          reviewsUnsubscribe = unsubscribe
+        }
+      }).catch((error) => {
+        console.error('Error loading reviews:', error)
+      })
       
       const video = videoRef.value;
       if (video) {
@@ -275,7 +278,7 @@ export default {
 
     onUnmounted(() => {
       window.removeEventListener('scroll', handleScroll)
-      if (reviewsUnsubscribe) {
+      if (reviewsUnsubscribe && typeof reviewsUnsubscribe === 'function') {
         reviewsUnsubscribe()
         console.log('🛑 Unsubscribed from reviews listener')
       }
@@ -295,15 +298,9 @@ export default {
 
     // Process reviews from snapshot
     const processReviews = (snapshot) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:294',message:'processReviews called',data:{snapshotSize:snapshot?.size||0,isEmpty:snapshot?.empty||false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       console.log(`📊 Processing ${snapshot.size} documents from reviews collection`)
       
       if (!snapshot || snapshot.empty) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:298',message:'No documents found',data:{snapshotExists:!!snapshot,isEmpty:snapshot?.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         console.log('⚠️ No documents found in reviews collection')
         testimonials.value = []
         return
@@ -340,9 +337,6 @@ export default {
                            !isNaN(Number(ratingValue)) && 
                            Number(ratingValue) > 0
           
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:334',message:'Review filtering check',data:{docId:doc.id,hasComment,hasRating,ratingValue,commentType:typeof reviewData.comment,commentLength:reviewData.comment?.length,allKeys:Object.keys(reviewData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
           console.log(`🔍 Review ${doc.id} check: hasComment=${hasComment}, hasRating=${hasRating}, rating=${ratingValue}`)
           
           // Include if it has comment and rating
@@ -418,14 +412,8 @@ export default {
         })
         
         testimonials.value = fetchedReviews.slice(0, 6) // Show up to 6 reviews
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:408',message:'testimonials.value set',data:{count:testimonials.value.length,reviews:testimonials.value.map(r=>({id:r.id,name:r.name,rating:r.rating}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         console.log(`✅ Successfully loaded ${testimonials.value.length} reviews:`, testimonials.value.map(r => `${r.name} (${r.rating}⭐)`))
       } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:411',message:'No valid reviews after filtering',data:{snapshotSize:snapshot.size,fetchedCount:fetchedReviews.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         testimonials.value = []
         console.log('⚠️ No valid reviews found after filtering (checked', snapshot.size, 'documents)')
       }
@@ -433,9 +421,6 @@ export default {
 
     // Fetch reviews from Firestore - try multiple methods
     const loadReviews = async () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:417',message:'loadReviews called',data:{dbExists:!!db},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       console.log('🔄 Loading reviews from Firestore...')
       
       // Method 1: Try onSnapshot first (real-time)
@@ -443,23 +428,14 @@ export default {
         const reviewsRef = collection(db, 'reviews')
         const reviewsQuery = query(reviewsRef, limit(50))
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:425',message:'Attempting onSnapshot',data:{collectionName:'reviews'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.log('📡 Attempting onSnapshot...')
         const unsubscribe = onSnapshot(
           reviewsQuery,
           (snapshot) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:428',message:'onSnapshot success',data:{size:snapshot.size,empty:snapshot.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
             console.log(`📊 onSnapshot received: ${snapshot.size} documents`)
             processReviews(snapshot)
           },
           (error) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:432',message:'onSnapshot error',data:{message:error.message,code:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
             console.error('❌ onSnapshot error:', error)
             console.error('Error details:', {
               message: error.message,
@@ -485,23 +461,14 @@ export default {
     // Fallback method using getDocs
     const loadReviewsWithGetDocs = async () => {
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:456',message:'Attempting getDocs',data:{collectionName:'reviews'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.log('📡 Attempting getDocs...')
         const reviewsRef = collection(db, 'reviews')
         const reviewsQuery = query(reviewsRef, limit(50))
         
         const snapshot = await getDocs(reviewsQuery)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:462',message:'getDocs success',data:{size:snapshot.size,empty:snapshot.empty},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.log(`📊 getDocs received: ${snapshot.size} documents`)
         processReviews(snapshot)
       } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9c6fc4b6-46d4-4e81-88fa-e2fb0d9dd1c6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePage.vue:465',message:'getDocs error',data:{message:error.message,code:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.error('❌ Error with getDocs:', error)
         console.error('Error details:', {
           message: error.message,

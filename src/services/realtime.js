@@ -88,6 +88,7 @@ export class RealtimeService {
 
   // Subscribe to user orders
   subscribeToUserOrders(userId, callback) {
+    // Try with orderBy first (requires index)
     const ordersQuery = query(collection(db, "orders"), where("userId", "==", userId), orderBy("createdAt", "desc"))
 
     const unsubscribe = onSnapshot(
@@ -97,10 +98,49 @@ export class RealtimeService {
         snapshot.forEach((doc) => {
           orders.push({ id: doc.id, ...doc.data() })
         })
+        // Sort client-side as fallback
+        orders.sort((a, b) => {
+          const aTime = a.createdAt?.toDate?.()?.getTime() || a.createdAt?.seconds * 1000 || 0
+          const bTime = b.createdAt?.toDate?.()?.getTime() || b.createdAt?.seconds * 1000 || 0
+          return bTime - aTime
+        })
         callback(orders)
       },
       (error) => {
-        console.error("User orders subscription error:", error)
+        // If index error, fallback to query without orderBy
+        if (error.code === 'failed-precondition' && error.message?.includes('index')) {
+          console.warn("Firestore index missing. Using fallback query. Please create the index. Error:", error.message)
+          // Unsubscribe from the failed query first
+          if (unsubscribe) {
+            unsubscribe()
+          }
+          // Set up fallback query
+          const fallbackQuery = query(collection(db, "orders"), where("userId", "==", userId))
+          const fallbackUnsubscribe = onSnapshot(
+            fallbackQuery,
+            (snapshot) => {
+              const orders = []
+              snapshot.forEach((doc) => {
+                orders.push({ id: doc.id, ...doc.data() })
+              })
+              // Sort client-side
+              orders.sort((a, b) => {
+                const aTime = a.createdAt?.toDate?.()?.getTime() || a.createdAt?.seconds * 1000 || 0
+                const bTime = b.createdAt?.toDate?.()?.getTime() || b.createdAt?.seconds * 1000 || 0
+                return bTime - aTime
+              })
+              callback(orders)
+            },
+            (fallbackError) => {
+              console.error("User orders subscription error (fallback):", fallbackError)
+              callback([]) // Return empty array on error
+            },
+          )
+          this.listeners.set(`user_orders_${userId}`, fallbackUnsubscribe)
+        } else {
+          console.error("User orders subscription error:", error)
+          callback([]) // Return empty array on error
+        }
       },
     )
 

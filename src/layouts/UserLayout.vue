@@ -16,9 +16,10 @@
       <div class="h-20 flex items-center px-8 border-b border-gray-100">
         <div class="flex items-center space-x-3">
           <img 
-            src="https://scontent.fmnl7-2.fna.fbcdn.net/v/t1.15752-9/514071591_1252432816270252_1243204019946633211_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeEne1_QgvnzPimBbfxq_loR-tDfpI8SJXz60N-kjxIlfByb9W5QUiBtwAWWz58nuc7ZAQLaDdcR5XLMXSyYpi5e&_nc_ohc=Z2MtLp4I_nIQ7kNvwGjEqRH&_nc_oc=AdlW1joxM16GAk8osLpxm86ruX_2cZ8qFxvWkKoFoGQW5UcUL3PiO6FB5KEvFBr0z1o&_nc_zt=23&_nc_ht=scontent.fmnl7-2.fna&oh=03_Q7cD4AE-HhtPzzzdURQul2Z4mlCen24maOimsa0KoTIw7wwBlQ&oe=695A82D2" 
+            src="/LOGO.jpg" 
             alt="BroomTech Logo"
             class="w-10 h-10 rounded-full object-cover shadow-lg shadow-green-200 border-2 border-[#3ED400]"
+            @error="handleImageError"
           />
           <div>
             <span class="text-xl font-bold text-gray-800 tracking-tight block leading-none">BroomTech</span>
@@ -354,6 +355,11 @@ export default {
       if (diffDays < 7) return `${diffDays}d ago`
       
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    },
+    
+    handleImageError(event) {
+      // Hide image on error (403, etc.)
+      event.target.style.display = 'none'
     }
   },
   mounted() {

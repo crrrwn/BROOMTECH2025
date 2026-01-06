@@ -190,13 +190,13 @@
                   <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Restaurant Info</label>
                   <div class="space-y-4">
                     <div>
-                      <label class="block text-sm font-semibold text-gray-700 mb-1">Restaurant Name *</label>
-                      <input type="text" v-model.trim="bookingForm.restaurantName" @input="onRestaurantNameInput" @blur="validateRestaurantName" required class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="restaurantNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'" placeholder="Where should we buy?"/>
+                      <label for="restaurantName" class="block text-sm font-semibold text-gray-700 mb-1">Restaurant Name *</label>
+                      <input id="restaurantName" type="text" v-model.trim="bookingForm.restaurantName" autocomplete="organization" @input="onRestaurantNameInput" @blur="validateRestaurantName" required class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="restaurantNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'" placeholder="Where should we buy?"/>
                       <p v-if="restaurantNameWarning" class="text-yellow-500 text-xs mt-1">{{ restaurantNameWarning }}</p>
                     </div>
                     <div>
-                      <label class="block text-sm font-semibold text-gray-700 mb-1">Restaurant Address *</label>
-                      <input type="text" v-model.trim="bookingForm.restaurantAddress" ref="restaurantAddressInput" @input="onAddressManualInput" @focus="onRestaurantAddressFocus" required class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="restaurantAddressWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'" placeholder="Restaurant location"/>
+                      <label for="restaurantAddress" class="block text-sm font-semibold text-gray-700 mb-1">Restaurant Address *</label>
+                      <input id="restaurantAddress" type="text" v-model.trim="bookingForm.restaurantAddress" ref="restaurantAddressInput" autocomplete="address-line1" @input="onAddressManualInput" @focus="onRestaurantAddressFocus" required class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="restaurantAddressWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'" placeholder="Restaurant location"/>
                        <p v-if="restaurantAddressWarning" class="text-yellow-500 text-xs mt-1">{{ restaurantAddressWarning }}</p>
                     </div>
                   </div>
@@ -234,17 +234,17 @@
                   <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Bill Information</label>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label class="block text-sm font-semibold text-gray-700 mb-1">Biller Name *</label>
-                      <input type="text" v-model.trim="bookingForm.billerName" ref="billerNameInput" @input="onBillerNameInput" @focus="onBillerNameFocus" required placeholder="e.g. MERALCO" class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="billerNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'"/>
+                      <label for="billerName" class="block text-sm font-semibold text-gray-700 mb-1">Biller Name *</label>
+                      <input id="billerName" type="text" v-model.trim="bookingForm.billerName" ref="billerNameInput" autocomplete="organization" @input="onBillerNameInput" @focus="onBillerNameFocus" required placeholder="e.g. MERALCO" class="w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm" :class="billerNameWarning ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'"/>
                        <p v-if="billerNameWarning" class="text-yellow-500 text-xs mt-1">{{ billerNameWarning }}</p>
                     </div>
                     <div>
-                      <label class="block text-sm font-semibold text-gray-700 mb-1">Account Name *</label>
-                      <input type="text" v-model.trim="bookingForm.accountName" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      <label for="accountName" class="block text-sm font-semibold text-gray-700 mb-1">Account Name *</label>
+                      <input id="accountName" type="text" v-model.trim="bookingForm.accountName" autocomplete="name" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
                     </div>
                     <div>
-                      <label class="block text-sm font-semibold text-gray-700 mb-1">Account Number *</label>
-                      <input type="text" v-model.trim="bookingForm.accountNumber" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
+                      <label for="accountNumber" class="block text-sm font-semibold text-gray-700 mb-1">Account Number *</label>
+                      <input id="accountNumber" type="text" v-model.trim="bookingForm.accountNumber" autocomplete="off" required class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"/>
                     </div>
                     <div>
                       <label class="block text-sm font-semibold text-gray-700 mb-1">Amount *</label>
@@ -480,16 +480,18 @@
                   </div>
 
                   <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                    <label :for="selectedService.id === 'pickup-drop' ? 'dropoffAddress' : 'deliveryAddress'" class="block text-sm font-semibold text-gray-700 mb-1">
                       {{ selectedService.id === 'pickup-drop' ? 'Drop-off Address' : 'Delivery Address' }} *
                     </label>
                     <input 
                       v-if="selectedService.id === 'pickup-drop'"
-                      type="text" v-model.trim="bookingForm.dropoffAddress" required ref="dropoffAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                      id="dropoffAddress"
+                      type="text" v-model.trim="bookingForm.dropoffAddress" autocomplete="address-line1" required ref="dropoffAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
                     />
                     <input 
                       v-else
-                      type="text" v-model.trim="bookingForm.deliveryAddress" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
+                      id="deliveryAddress"
+                      type="text" v-model.trim="bookingForm.deliveryAddress" autocomplete="address-line1" required ref="deliveryAddressInput" @input="onAddressManualInput" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all shadow-sm text-sm"
                     />
                   </div>
 
@@ -1068,22 +1070,58 @@ export default {
 
     // ... (Map logic remains mostly standard but ensured) ...
     loadGoogleMapsAPI() {
-      if (window.google && window.google.maps) {
+      if (window.google && window.google.maps && window.google.maps.Map) {
         this.mapsReady = true
+        if (this.selectedService) {
+          this.$nextTick(() => {
+            this.initializeMap()
+            this.initializeAutocomplete()
+          })
+        }
         return
       }
-      if (document.getElementById('gmaps-script')) return
+      if (document.getElementById('gmaps-script')) {
+        // Script is loading, wait for it
+        const checkInterval = setInterval(() => {
+          if (window.google && window.google.maps && window.google.maps.Map) {
+            clearInterval(checkInterval)
+            this.mapsReady = true
+            if (this.selectedService) {
+              this.$nextTick(() => {
+                this.initializeMap()
+                this.initializeAutocomplete()
+              })
+            }
+          }
+        }, 100)
+        // Clear interval after 10 seconds to avoid infinite loop
+        setTimeout(() => clearInterval(checkInterval), 10000)
+        return
+      }
       const script = document.createElement('script')
       script.id = 'gmaps-script'
       script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=places,geometry&v=weekly&loading=async`
       script.async = true
       script.defer = true
       script.onload = () => {
-        this.mapsReady = true
-        if (this.selectedService) {
-          this.initializeMap()
-          this.initializeAutocomplete()
-        }
+        // Wait a bit to ensure all Google Maps classes are available
+        setTimeout(() => {
+          if (window.google && window.google.maps && window.google.maps.Map) {
+            this.mapsReady = true
+            if (this.selectedService) {
+              this.$nextTick(() => {
+                this.initializeMap()
+                this.initializeAutocomplete()
+              })
+            }
+          } else {
+            console.warn('[BookService] Google Maps API loaded but Map constructor not available')
+          }
+        }, 100)
+      }
+      script.onerror = () => {
+        console.error('[BookService] Failed to load Google Maps API')
+        this.mapsReady = false
       }
       document.head.appendChild(script)
     },
@@ -1091,10 +1129,19 @@ export default {
     initializeMap() {
       const mapElement = document.getElementById('map')
       if (!mapElement || !this.mapsReady) return
+      
+      // Ensure Google Maps API is fully loaded
+      if (!window.google || !window.google.maps || !window.google.maps.Map) {
+        console.warn('[BookService] Google Maps API not fully loaded yet, retrying...')
+        setTimeout(() => this.initializeMap(), 100)
+        return
+      }
+      
       const calapanCenter = { lat: 13.3771, lng: 121.1646 }
       const calapanBounds = { north: 13.4500, south: 13.3000, east: 121.2500, west: 121.0800 }
 
-      this.map = new window.google.maps.Map(mapElement, {
+      try {
+        this.map = new window.google.maps.Map(mapElement, {
         center: calapanCenter,
         zoom: 13,
         mapTypeControl: false,
@@ -1103,21 +1150,38 @@ export default {
         restriction: { latLngBounds: calapanBounds, strictBounds: true }
       })
 
-      this.directionsService = new window.google.maps.DirectionsService()
-      this.directionsRenderer = new window.google.maps.DirectionsRenderer({ draggable: false, suppressMarkers: true, preserveViewport: false })
-      this.directionsRenderer.setMap(this.map)
-      this.geocoder = new window.google.maps.Geocoder()
-      this.distanceService = new window.google.maps.DistanceMatrixService()
-      
-      if (window.google && window.google.maps && window.google.maps.places) {
-        this.jollibeePlacesService = new window.google.maps.places.PlacesService(this.map)
+        this.directionsService = new window.google.maps.DirectionsService()
+        this.directionsRenderer = new window.google.maps.DirectionsRenderer({ draggable: false, suppressMarkers: true, preserveViewport: false })
+        this.directionsRenderer.setMap(this.map)
+        this.geocoder = new window.google.maps.Geocoder()
+        this.distanceService = new window.google.maps.DistanceMatrixService()
+        
+        if (window.google && window.google.maps && window.google.maps.places) {
+          this.jollibeePlacesService = new window.google.maps.places.PlacesService(this.map)
+        }
+        window.selectJollibeeLocation = (address, name) => { this.selectJollibeeLocation(address, name) }
+        window.selectBillerLocation = (name, address) => { this.selectBillerLocation(name, address) }
+      } catch (error) {
+        console.error('[BookService] Error initializing map:', error)
+        // Retry after a short delay if initialization fails
+        setTimeout(() => {
+          if (this.mapsReady && window.google && window.google.maps && window.google.maps.Map) {
+            this.initializeMap()
+          }
+        }, 500)
       }
-      window.selectJollibeeLocation = (address, name) => { this.selectJollibeeLocation(address, name) }
-      window.selectBillerLocation = (name, address) => { this.selectBillerLocation(name, address) }
     },
 
     initializeAutocomplete() {
       if (!this.mapsReady) return
+      
+      // Ensure Google Maps API is fully loaded
+      if (!window.google || !window.google.maps || !window.google.maps.places || !window.google.maps.places.Autocomplete) {
+        console.warn('[BookService] Google Maps Places API not fully loaded yet, retrying...')
+        setTimeout(() => this.initializeAutocomplete(), 100)
+        return
+      }
+      
       const refs = [
         'restaurantAddressInput', 'deliveryAddressInput', 'pickupAddressInput', 'returnAddressInput',
         'dropoffAddressInput', 'storeAddressInput', 'storePreferenceInput', 'billerNameInput'
@@ -1285,6 +1349,10 @@ export default {
 
     getCurrentLocation() {
       if (!navigator.geolocation) return
+      if (!window.google || !window.google.maps || !this.map) {
+        console.warn('[BookService] Google Maps not ready for getCurrentLocation')
+        return
+      }
       const calapanBounds = new window.google.maps.LatLngBounds(
         new window.google.maps.LatLng(13.3000, 121.0800),
         new window.google.maps.LatLng(13.4500, 121.2500)
@@ -1563,7 +1631,15 @@ export default {
   },
   watch: {
     selectedService() {
-      this.$nextTick(() => { this.initializeMap(); this.initializeAutocomplete() })
+      if (this.selectedService && this.mapsReady) {
+        this.$nextTick(() => { 
+          this.initializeMap()
+          this.initializeAutocomplete() 
+        })
+      } else if (this.selectedService && !this.mapsReady) {
+        // Load maps API if not already loaded
+        this.loadGoogleMapsAPI()
+      }
     },
     'bookingForm.paymentMethod'() {
       this.calculateDeliveryFee(); this.saveFormData()

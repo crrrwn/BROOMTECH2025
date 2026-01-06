@@ -104,17 +104,17 @@
                   <input type="text" v-model="profile.middleName" pattern="[A-Za-z\s\-]*" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm" placeholder="Enter middle name" />
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contact Number</label>
-                  <input type="tel" v-model="profile.contact" required pattern="^(09|\+639)\d{9}$" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm" placeholder="09XXXXXXXXX" />
+                  <label for="profileContact" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contact Number</label>
+                  <input id="profileContact" type="tel" v-model="profile.contact" autocomplete="tel" required pattern="^(09|\+639)\d{9}$" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm" placeholder="09XXXXXXXXX" />
                 </div>
                 <div class="md:col-span-2">
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
-                  <input type="email" v-model="profile.email" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed text-sm outline-none" />
+                  <label for="profileEmail" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+                  <input id="profileEmail" type="email" v-model="profile.email" autocomplete="email" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed text-sm outline-none" />
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Barangay</label>
+                  <label for="profileBarangay" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Barangay</label>
                   <div class="relative">
-                     <select v-model="profile.barangay" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm appearance-none cursor-pointer">
+                     <select id="profileBarangay" v-model="profile.barangay" autocomplete="address-level2" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm appearance-none cursor-pointer">
                         <option value="">Select Barangay</option>
                         <option v-for="barangay in barangays" :key="barangay" :value="barangay">{{ barangay }}</option>
                       </select>
@@ -124,8 +124,8 @@
                   </div>
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Street Address</label>
-                  <input type="text" v-model="profile.address" required minlength="10" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm" placeholder="House No., Street" />
+                  <label for="profileStreetAddress" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Street Address</label>
+                  <input id="profileStreetAddress" type="text" v-model="profile.address" autocomplete="street-address" required minlength="10" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-800 text-sm" placeholder="House No., Street" />
                 </div>
               </div>
 

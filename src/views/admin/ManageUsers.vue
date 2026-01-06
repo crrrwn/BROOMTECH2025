@@ -7,25 +7,6 @@
         <p class="text-gray-600">Review and manage user accounts and approvals</p>
       </div>
       <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-2">
-          <span class="text-sm text-gray-600">Auto-Accept Users</span>
-          <button 
-            @click="toggleAutoAccept"
-            :disabled="loading"
-            :class="[
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              autoAcceptEnabled ? 'bg-primary' : 'bg-gray-300',
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            ]"
-          >
-            <span 
-              :class="[
-                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                autoAcceptEnabled ? 'translate-x-6' : 'translate-x-1'
-              ]"
-            />
-          </button>
-        </div>
       </div>
     </div>
 
@@ -146,7 +127,7 @@
           @click="exportUsers"
           class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
         >
-          Export CSV
+          Export PDF
         </button>
       </div>
     </div>
@@ -495,6 +476,10 @@ import { useAuthStore } from '@/stores/auth'
 import { collection, query, where, getDocs, getCountFromServer, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
 import { loggingService } from '@/services/loggingService'
+import jsPDF from 'jspdf'
+import { applyPlugin, autoTable } from 'jspdf-autotable'
+
+applyPlugin(jsPDF)
 
 export default {
   name: 'ManageUsers',
@@ -502,7 +487,6 @@ export default {
     const toast = useToast()
     const authStore = useAuthStore()
 
-    const autoAcceptEnabled = ref(false)
     const loading = ref(false)
     const searchQuery = ref('')
     const statusFilter = ref('')
@@ -910,45 +894,125 @@ export default {
       closeUserDetailsModal()
     }
 
-    const toggleAutoAccept = async () => {
-      loading.value = true
+    const exportUsers = async () => {
       try {
-        const newValue = !autoAcceptEnabled.value
-        const result = await authStore.updateAutoAcceptSetting(newValue)
+        console.log('[Export] Creating PDF document...')
         
-        if (result.success) {
-          autoAcceptEnabled.value = newValue
-          toast.success(
-            newValue 
-              ? 'Auto-Accept Users enabled - new verified users will be automatically approved' 
-              : 'Auto-Accept Users disabled - manual approval required'
-          )
-        } else {
-          toast.error(result.message)
-        }
-      } catch (error) {
-        toast.error('Failed to update auto-accept setting')
-      } finally {
-        loading.value = false
-      }
-    }
+        // Create PDF document in landscape orientation
+        const pdfDoc = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4'
+        })
+        
+        // Add title
+        pdfDoc.setFontSize(18)
+        pdfDoc.setFont('helvetica', 'bold')
+        pdfDoc.text('Users Report', 14, 15)
+        
+        // Add export date
+        pdfDoc.setFontSize(10)
+        pdfDoc.setFont('helvetica', 'normal')
+        pdfDoc.setTextColor(100, 100, 100)
+        pdfDoc.text(`Exported on: ${new Date().toLocaleString('en-US')}`, 14, 22)
+        pdfDoc.text(`Total Users: ${users.value.length}`, 14, 27)
+        
+        // Reset text color
+        pdfDoc.setTextColor(0, 0, 0)
+        
+        // Prepare table data
+        console.log('[Export] Preparing table data...')
+        const tableData = users.value.map((user) => {
+          try {
+            return [
+              String(user.name || 'N/A'),
+              String(user.email || 'N/A'),
+              String(user.contact || 'N/A'),
+              String(user.barangay || 'N/A'),
+              String(user.status || 'N/A'),
+              String(user.registeredDate || 'N/A'),
+              String(user.totalOrders || 0),
+              String(user.cancelledOrders || 0)
+            ]
+          } catch (e) {
+            console.error(`[Export] Error processing user ${user?.id || 'unknown'}:`, e)
+            return ['Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error']
+          }
+        })
 
-    const exportUsers = () => {
-      const csvContent = "data:text/csv;charset=utf-8," 
-        + "Name,Email,Contact,Barangay,Status,Registered,Total Orders,Cancelled Orders\n"
-        + users.value.map(user => 
-            `"${user.name}","${user.email}","${user.contact}","${user.barangay}","${user.status}","${user.registeredDate}","${user.totalOrders}","${user.cancelledOrders}"`
-          ).join("\n")
-      
-      const encodedUri = encodeURI(csvContent)
-      const link = document.createElement("a")
-      link.setAttribute("href", encodedUri)
-      link.setAttribute("download", `users_export_${new Date().toISOString().split('T')[0]}.csv`)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      toast.success('User data exported to CSV')
+        console.log('[Export] Table data prepared:', tableData.length, 'rows')
+
+        // Add table
+        console.log('[Export] Adding table to PDF...')
+        
+        const tableOptions = {
+          startY: 32,
+          head: [[
+            'Name',
+            'Email',
+            'Contact',
+            'Barangay',
+            'Status',
+            'Registered',
+            'Total Orders',
+            'Cancelled Orders'
+          ]],
+          body: tableData,
+          styles: { 
+            fontSize: 7, 
+            cellPadding: 2,
+            overflow: 'linebreak',
+            cellWidth: 'wrap'
+          },
+          headStyles: { 
+            fillColor: [34, 197, 94], 
+            textColor: 255, 
+            fontStyle: 'bold',
+            fontSize: 8,
+            halign: 'center'
+          },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { top: 32, left: 10, right: 10 },
+          tableWidth: 277,
+          columnStyles: {
+            0: { cellWidth: 35, fontSize: 7, overflow: 'linebreak' }, // Name
+            1: { cellWidth: 40, fontSize: 6, overflow: 'linebreak' }, // Email
+            2: { cellWidth: 25, fontSize: 7, overflow: 'linebreak' }, // Contact
+            3: { cellWidth: 30, fontSize: 7, overflow: 'linebreak' }, // Barangay
+            4: { cellWidth: 20, fontSize: 7, overflow: 'linebreak' }, // Status
+            5: { cellWidth: 30, fontSize: 6, overflow: 'linebreak' }, // Registered
+            6: { cellWidth: 25, fontSize: 7, overflow: 'linebreak' }, // Total Orders
+            7: { cellWidth: 25, fontSize: 7, overflow: 'linebreak' }  // Cancelled Orders
+          }
+        }
+        
+        // Use autoTable
+        if (typeof pdfDoc.autoTable === 'function') {
+          console.log('[Export] Using pdfDoc.autoTable method')
+          pdfDoc.autoTable(tableOptions)
+        } else if (typeof autoTable === 'function') {
+          console.log('[Export] Using autoTable standalone function')
+          autoTable(pdfDoc, tableOptions)
+        } else {
+          throw new Error('PDF table plugin not loaded. Please refresh the page and try again.')
+        }
+        
+        console.log('[Export] Table added successfully')
+        
+        // Save PDF directly using jsPDF's save method (ensures proper PDF format)
+        // Ensure file extension is .pdf
+        const dateStr = new Date().toISOString().split('T')[0]
+        const fileName = `users_export_${dateStr}.pdf`
+        
+        // Use jsPDF's save method which handles PDF MIME type correctly
+        pdfDoc.save(fileName, { returnPromise: false })
+        
+        console.log('[Export] PDF saved:', fileName)
+        toast.success('User data exported to PDF successfully')
+      } catch (error) {
+        console.error('[Export] Error exporting users:', error)
+        toast.error(`Failed to export users: ${error.message || 'Please try again.'}`)
+      }
     }
 
     const loadFraudSettings = async () => {
@@ -1082,10 +1146,7 @@ export default {
       window.addEventListener('realtimeUpdate', handleRealtimeUpdate)
       
       try {
-        await Promise.all([
-          loadUsers(),
-          loadAutoAcceptSetting()
-        ])
+        await loadUsers()
         console.log('[v0] ManageUsers initialization complete')
       } catch (error) {
         console.error('[v0] Error during ManageUsers initialization:', error)
@@ -1097,18 +1158,7 @@ export default {
       window.removeEventListener('realtimeUpdate', handleRealtimeUpdate)
     })
 
-    const loadAutoAcceptSetting = async () => {
-      try {
-        console.log('[v0] Loading auto-accept setting...')
-        autoAcceptEnabled.value = await authStore.getAutoAcceptSetting()
-        console.log('[v0] Auto-accept setting loaded:', autoAcceptEnabled.value)
-      } catch (error) {
-        console.error('[v0] Error loading auto-accept setting:', error)
-      }
-    }
-
     return {
-      autoAcceptEnabled,
       loading,
       searchQuery,
       statusFilter,
@@ -1131,7 +1181,6 @@ export default {
       flaggedUsersCount,
       showFlaggedOnly,
       loadUsers,
-      toggleAutoAccept,
       approveUser,
       rejectUser,
       flagUser,

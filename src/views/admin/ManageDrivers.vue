@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
@@ -27,79 +27,79 @@
     <!-- Main Content -->
     <div v-else>
       <!-- Header -->
-      <div class="flex justify-between items-center">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Manage Drivers</h1>
-          <p class="text-gray-600">Monitor and manage driver performance</p>
-          <p class="text-sm text-gray-500 mt-1">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Manage Drivers</h1>
+          <p class="text-sm sm:text-base text-gray-600">Monitor and manage driver performance</p>
+          <p class="text-xs sm:text-sm text-gray-500 mt-1">
             {{ drivers.length }} drivers loaded from Firestore (users + drivers)
           </p>
         </div>
-        <div class="flex gap-3">
-          <button @click="loadDrivers" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            Refresh Data
+        <div class="flex flex-wrap gap-2 sm:gap-3">
+          <button @click="loadDrivers" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Refresh
           </button>
-          <button @click="openAddDriverModal" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+          <button @click="openAddDriverModal" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Add Driver
           </button>
-          <button @click="exportReport" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Export Report
+          <button @click="exportReport" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Export
           </button>
         </div>
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm border">
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-600">Total Drivers</p>
-              <p class="text-2xl font-bold text-gray-900">{{ totalDrivers }}</p>
+              <p class="text-xs sm:text-sm text-gray-600">Total Drivers</p>
+              <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ totalDrivers }}</p>
             </div>
-            <div class="p-3 bg-blue-100 rounded-lg">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-2 sm:p-3 bg-blue-100 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-sm border">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-600">Online Now</p>
-              <p class="text-2xl font-bold text-green-600">{{ onlineDrivers }}</p>
+              <p class="text-xs sm:text-sm text-gray-600">Online Now</p>
+              <p class="text-xl sm:text-2xl font-bold text-green-600">{{ onlineDrivers }}</p>
             </div>
-            <div class="p-3 bg-green-100 rounded-lg">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-2 sm:p-3 bg-green-100 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-sm border">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-600">Pending Applications</p>
-              <p class="text-2xl font-bold text-orange-600">{{ pendingApplications }}</p>
+              <p class="text-xs sm:text-sm text-gray-600">Pending Applications</p>
+              <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ pendingApplications }}</p>
             </div>
-            <div class="p-3 bg-orange-100 rounded-lg">
-              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-2 sm:p-3 bg-orange-100 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-sm border">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-600">Total Earnings</p>
-              <p class="text-2xl font-bold text-purple-600">₱{{ totalEarnings }}</p>
+              <p class="text-xs sm:text-sm text-gray-600">Total Earnings</p>
+              <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-600">₱{{ totalEarnings }}</p>
             </div>
-            <div class="p-3 bg-purple-100 rounded-lg">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-2 sm:p-3 bg-purple-100 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
@@ -108,8 +108,8 @@
       </div>
 
       <!-- Filters -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
             <select v-model="filters.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
@@ -165,22 +165,23 @@
           </div>
         </div>
 
-        <div v-else class="overflow-x-auto">
+        <!-- Desktop Table View (hidden on mobile) -->
+        <div v-else class="hidden lg:block overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <!-- Removed Rating column header -->
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="driver in paginatedDrivers" :key="driver.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <img class="h-10 w-10 rounded-full" :src="driver.profilePicture || '/placeholder.svg?height=40&width=40'" :alt="(driver.firstName + ' ' + driver.lastName).trim() || driver.email">
                     <div class="ml-4">
@@ -194,14 +195,13 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900">{{ driver.raw?.driverInfo?.motorcycleInfo?.brand || 'Brand not specified' }}</div>
                   <div class="text-sm text-gray-500">{{ driver.raw?.driverInfo?.motorcycleInfo?.model || 'Model N/A' }}</div>
                   <div class="text-xs text-gray-400">{{ driver.plateNumber || 'No plate' }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center space-x-2">
-                    <!-- Added real-time online status indicator -->
                     <div class="flex items-center space-x-1">
                       <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400' ]"></div>
                       <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-green-600' : 'text-gray-500' ]">
@@ -213,15 +213,34 @@
                     </span>
                   </div>
                 </td>
-                <!-- Removed Rating column data cell -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ driver.deliveries || 0 }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   ₱{{ Number(driver.earnings || 0).toLocaleString() }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button @click="suspendDriver(driver)" class="text-red-600 hover:text-red-900">
+                <td class="px-4 lg:px-6 py-4 text-sm text-gray-900">
+                  <div class="max-w-xs">
+                    <div v-if="getFormattedSchedule(driver)" class="space-y-1">
+                      <div 
+                        v-for="(scheduleItem, index) in getFormattedSchedule(driver)" 
+                        :key="index"
+                        class="text-xs"
+                      >
+                        <span class="font-medium text-gray-700">{{ scheduleItem.days }}:</span>
+                        <span class="text-gray-600 ml-1">{{ scheduleItem.time }}</span>
+                      </div>
+                    </div>
+                    <div v-else class="text-xs text-gray-400 italic">
+                      No schedule set
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <button @click="openScheduleModal(driver)" class="text-blue-600 hover:text-blue-900 mr-2 text-xs lg:text-sm">
+                    Set Schedule
+                  </button>
+                  <button @click="suspendDriver(driver)" class="text-red-600 hover:text-red-900 text-xs lg:text-sm">
                     {{ driver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
                   </button>
                 </td>
@@ -230,28 +249,129 @@
           </table>
         </div>
 
+        <!-- Mobile Card View (visible on mobile/tablet) -->
+        <div v-if="filteredDrivers.length > 0" class="lg:hidden space-y-4">
+          <div 
+            v-for="driver in paginatedDrivers" 
+            :key="driver.id"
+            class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3"
+          >
+            <!-- Driver Info Header -->
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-3 flex-1">
+                <img 
+                  class="h-12 w-12 rounded-full object-cover" 
+                  :src="driver.profilePicture || '/placeholder.svg?height=48&width=48'" 
+                  :alt="(driver.firstName + ' ' + driver.lastName).trim() || driver.email"
+                >
+                <div class="flex-1 min-w-0">
+                  <div class="text-base font-semibold text-gray-900 truncate">
+                    {{ (driver.firstName || '') + ' ' + (driver.lastName || '') || 'Unnamed Driver' }}
+                  </div>
+                  <div class="text-sm text-gray-500 truncate">{{ driver.phone || 'No phone' }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ driver.email }}</div>
+                </div>
+              </div>
+              <!-- Status Badge -->
+              <div class="flex flex-col items-end space-y-1">
+                <div class="flex items-center space-x-1">
+                  <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400' ]"></div>
+                  <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-green-600' : 'text-gray-500' ]">
+                    {{ driver.raw?.isOnline ? 'ONLINE' : 'OFFLINE' }}
+                  </span>
+                </div>
+                <span :class="getStatusClass(driver.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                  {{ driver.status || 'active' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Vehicle Info -->
+            <div class="border-t border-gray-100 pt-3">
+              <div class="text-xs font-medium text-gray-500 mb-1">Vehicle</div>
+              <div class="text-sm text-gray-900">{{ driver.raw?.driverInfo?.motorcycleInfo?.brand || 'Brand not specified' }}</div>
+              <div class="text-xs text-gray-500">{{ driver.raw?.driverInfo?.motorcycleInfo?.model || 'Model N/A' }}</div>
+              <div class="text-xs text-gray-400">{{ driver.plateNumber || 'No plate' }}</div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
+              <div>
+                <div class="text-xs font-medium text-gray-500 mb-1">Deliveries</div>
+                <div class="text-lg font-semibold text-gray-900">{{ driver.deliveries || 0 }}</div>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-500 mb-1">Earnings</div>
+                <div class="text-lg font-semibold text-gray-900">₱{{ Number(driver.earnings || 0).toLocaleString() }}</div>
+              </div>
+            </div>
+
+            <!-- Schedule -->
+            <div class="border-t border-gray-100 pt-3">
+              <div class="text-xs font-medium text-gray-500 mb-2">Schedule</div>
+              <div v-if="getFormattedSchedule(driver)" class="space-y-1">
+                <div 
+                  v-for="(scheduleItem, index) in getFormattedSchedule(driver)" 
+                  :key="index"
+                  class="text-xs bg-gray-50 rounded px-2 py-1"
+                >
+                  <span class="font-medium text-gray-700">{{ scheduleItem.days }}:</span>
+                  <span class="text-gray-600 ml-1">{{ scheduleItem.time }}</span>
+                </div>
+              </div>
+              <div v-else class="text-xs text-gray-400 italic">
+                No schedule set
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row gap-2 border-t border-gray-100 pt-3">
+              <button 
+                @click="openScheduleModal(driver)" 
+                class="flex-1 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors"
+              >
+                Set Schedule
+              </button>
+              <button 
+                @click="suspendDriver(driver)" 
+                class="flex-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium transition-colors"
+              >
+                {{ driver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Pagination -->
-        <div v-if="filteredDrivers.length > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div v-if="filteredDrivers.length > itemsPerPage" class="bg-white px-3 sm:px-4 md:px-6 py-3 flex items-center justify-between border-t border-gray-200">
           <div class="flex-1 flex justify-between sm:hidden">
-            <button @click="previousPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+            <button @click="previousPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-3 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
               Previous
             </button>
-            <button @click="nextPage" :disabled="currentPage === totalPages" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+            <div class="flex items-center">
+              <span class="text-xs text-gray-600 px-2">
+                Page {{ currentPage }} of {{ totalPages }}
+              </span>
+            </div>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="relative inline-flex items-center px-3 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
               Next
             </button>
           </div>
           <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-              <p class="text-sm text-gray-700">
+              <p class="text-xs sm:text-sm text-gray-700">
                 Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredDrivers.length) }} of {{ filteredDrivers.length }} results
               </p>
             </div>
             <div>
               <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button @click="previousPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                <button @click="previousPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                   Previous
                 </button>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                <span class="relative inline-flex items-center px-3 sm:px-4 py-2 border-t border-b border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                  {{ currentPage }} / {{ totalPages }}
+                </span>
+                <button @click="nextPage" :disabled="currentPage === totalPages" class="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                   Next
                 </button>
               </nav>
@@ -551,6 +671,100 @@
       </div>
     </div>
 
+    <!-- Schedule Management Modal -->
+    <div v-if="showScheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Set Driver Schedule</h3>
+            <p class="text-sm text-gray-500">{{ selectedDriverForSchedule?.firstName }} {{ selectedDriverForSchedule?.lastName }}</p>
+          </div>
+          <button @click="closeScheduleModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Schedule Instructions -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-800">
+              <strong>Instructions:</strong> Select the days and time slots when this driver is on duty. 
+              Drivers with matching schedules will be prioritized when assigning orders.
+            </p>
+          </div>
+
+          <!-- Schedule for each day -->
+          <div class="space-y-4">
+            <div v-for="day in daysOfWeek" :key="day.value" class="border border-gray-200 rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    :checked="isDaySelected(day.value)"
+                    @change="toggleDay(day.value)"
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span class="font-medium text-gray-900">{{ day.label }}</span>
+                </label>
+              </div>
+
+              <div v-if="isDaySelected(day.value)" class="mt-3 space-y-3">
+                <!-- Time Slots -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      :value="getDaySchedule(day.value)?.startTime || '08:00'"
+                      @change="updateDayTime(day.value, 'startTime', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      :value="getDaySchedule(day.value)?.endTime || '17:00'"
+                      @change="updateDayTime(day.value, 'endTime', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Schedule Summary -->
+          <div v-if="hasSchedule" class="bg-gray-50 rounded-lg p-4">
+            <h4 class="font-medium text-gray-900 mb-2">Current Schedule Summary</h4>
+            <div class="space-y-1 text-sm text-gray-600">
+              <div v-for="day in daysOfWeek" :key="day.value">
+                <span v-if="isDaySelected(day.value)" class="font-medium">{{ day.label }}:</span>
+                <span v-if="isDaySelected(day.value)">
+                  {{ getDaySchedule(day.value)?.startTime || '08:00' }} - {{ getDaySchedule(day.value)?.endTime || '17:00' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+          <button @click="closeScheduleModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button 
+            @click="saveSchedule" 
+            :disabled="savingSchedule"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ savingSchedule ? 'Saving...' : 'Save Schedule' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Driver Modal -->
     <div v-if="showAddDriverModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div class="bg-white rounded-lg max-w-4xl w-full my-8">
@@ -737,6 +951,22 @@ export default {
 
     const showAddDriverModal = ref(false)
     const isSubmitting = ref(false)
+    
+    // Schedule management
+    const showScheduleModal = ref(false)
+    const selectedDriverForSchedule = ref(null)
+    const driverSchedule = ref({})
+    const savingSchedule = ref(false)
+    const daysOfWeek = [
+      { label: 'Monday', value: 'monday' },
+      { label: 'Tuesday', value: 'tuesday' },
+      { label: 'Wednesday', value: 'wednesday' },
+      { label: 'Thursday', value: 'thursday' },
+      { label: 'Friday', value: 'friday' },
+      { label: 'Saturday', value: 'saturday' },
+      { label: 'Sunday', value: 'sunday' }
+    ]
+    
     const newDriver = ref({
       firstName: '',
       lastName: '',
@@ -1676,6 +1906,209 @@ export default {
     const previousPage = () => { if (currentPage.value > 1) currentPage.value-- }
     const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 
+    // Schedule Management Methods
+    const openScheduleModal = async (driver) => {
+      selectedDriverForSchedule.value = driver
+      showScheduleModal.value = true
+      
+      // Load existing schedule from Firestore
+      try {
+        const col = driver.source === 'drivers' ? 'drivers' : 'users'
+        const driverDocRef = doc(db, col, driver.id)
+        const driverDocSnap = await getDocs(query(collection(db, col), where('__name__', '==', driver.id)))
+        
+        // Try to get schedule from driver.raw first (already loaded)
+        if (driver.raw?.schedule) {
+          driverSchedule.value = { ...driver.raw.schedule }
+        } else if (!driverDocSnap.empty) {
+          const driverData = driverDocSnap.docs[0].data()
+          if (driverData.schedule) {
+            driverSchedule.value = { ...driverData.schedule }
+          } else {
+            driverSchedule.value = {}
+          }
+        } else {
+          driverSchedule.value = {}
+        }
+      } catch (err) {
+        console.error('Error loading driver schedule:', err)
+        driverSchedule.value = {}
+      }
+    }
+
+    const closeScheduleModal = () => {
+      showScheduleModal.value = false
+      selectedDriverForSchedule.value = null
+      driverSchedule.value = {}
+    }
+
+    const isDaySelected = (day) => {
+      return driverSchedule.value[day]?.enabled || false
+    }
+
+    const toggleDay = (day) => {
+      if (!driverSchedule.value[day]) {
+        driverSchedule.value[day] = {
+          enabled: true,
+          startTime: '08:00',
+          endTime: '17:00'
+        }
+      } else {
+        driverSchedule.value[day].enabled = !driverSchedule.value[day].enabled
+      }
+    }
+
+    const getDaySchedule = (day) => {
+      return driverSchedule.value[day] || { startTime: '08:00', endTime: '17:00' }
+    }
+
+    const updateDayTime = (day, timeType, value) => {
+      if (!driverSchedule.value[day]) {
+        driverSchedule.value[day] = {
+          enabled: true,
+          startTime: '08:00',
+          endTime: '17:00'
+        }
+      }
+      driverSchedule.value[day][timeType] = value
+    }
+
+    const hasSchedule = computed(() => {
+      return Object.keys(driverSchedule.value).some(day => driverSchedule.value[day]?.enabled)
+    })
+
+    const saveSchedule = async () => {
+      if (!selectedDriverForSchedule.value) return
+
+      try {
+        savingSchedule.value = true
+        const driver = selectedDriverForSchedule.value
+        const col = driver.source === 'drivers' ? 'drivers' : 'users'
+        
+        // Prepare schedule data (only include enabled days)
+        const scheduleData = {}
+        daysOfWeek.forEach(day => {
+          if (driverSchedule.value[day.value]?.enabled) {
+            scheduleData[day.value] = {
+              enabled: true,
+              startTime: driverSchedule.value[day.value].startTime || '08:00',
+              endTime: driverSchedule.value[day.value].endTime || '17:00'
+            }
+          }
+        })
+
+        await updateDoc(doc(db, col, driver.id), {
+          schedule: scheduleData,
+          scheduleUpdatedAt: new Date().toISOString()
+        })
+
+        // Update local driver data
+        const idx = drivers.value.findIndex(d => d.id === driver.id)
+        if (idx !== -1) {
+          if (!drivers.value[idx].raw) {
+            drivers.value[idx].raw = {}
+          }
+          drivers.value[idx].raw.schedule = scheduleData
+        }
+
+        const driverName = `${driver.firstName} ${driver.lastName}`.trim()
+        await loggingService.success(
+          `Driver schedule updated: ${driverName}`,
+          loggingService.USER_TYPES.ADMIN,
+          authStore.user?.uid,
+          { action: 'driver_schedule_update', driverId: driver.id, driverName, schedule: scheduleData }
+        )
+
+        toast.success('Schedule saved successfully!')
+        closeScheduleModal()
+      } catch (err) {
+        console.error('Error saving schedule:', err)
+        toast.error('Failed to save schedule. Please try again.')
+      } finally {
+        savingSchedule.value = false
+      }
+    }
+
+    // Format schedule for display in table
+    const getFormattedSchedule = (driver) => {
+      const schedule = driver.raw?.schedule || driver.schedule
+      if (!schedule || Object.keys(schedule).length === 0) {
+        return null
+      }
+
+      const dayLabels = {
+        monday: 'Mon',
+        tuesday: 'Tue',
+        wednesday: 'Wed',
+        thursday: 'Thu',
+        friday: 'Fri',
+        saturday: 'Sat',
+        sunday: 'Sun'
+      }
+
+      const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      
+      // Group days by time slots
+      const timeGroups = {}
+      dayOrder.forEach(day => {
+        if (schedule[day]?.enabled) {
+          const timeKey = `${schedule[day].startTime || '08:00'}-${schedule[day].endTime || '17:00'}`
+          if (!timeGroups[timeKey]) {
+            timeGroups[timeKey] = []
+          }
+          timeGroups[timeKey].push(day)
+        }
+      })
+
+      // Format each time group
+      const formatted = []
+      Object.keys(timeGroups).forEach(timeKey => {
+        const days = timeGroups[timeKey]
+        if (days.length === 0) return
+
+        // Sort days by order
+        days.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b))
+
+        // Group consecutive days
+        let dayRange = ''
+        let startDay = days[0]
+        let endDay = days[0]
+
+        for (let i = 1; i < days.length; i++) {
+          const currentIndex = dayOrder.indexOf(days[i])
+          const prevIndex = dayOrder.indexOf(days[i - 1])
+          
+          if (currentIndex === prevIndex + 1) {
+            // Consecutive day
+            endDay = days[i]
+          } else {
+            // Not consecutive, output previous range
+            if (startDay === endDay) {
+              dayRange += (dayRange ? ', ' : '') + dayLabels[startDay]
+            } else {
+              dayRange += (dayRange ? ', ' : '') + `${dayLabels[startDay]}-${dayLabels[endDay]}`
+            }
+            startDay = days[i]
+            endDay = days[i]
+          }
+        }
+
+        // Output final range
+        if (startDay === endDay) {
+          dayRange += (dayRange ? ', ' : '') + dayLabels[startDay]
+        } else {
+          dayRange += (dayRange ? ', ' : '') + `${dayLabels[startDay]}-${dayLabels[endDay]}`
+        }
+
+        formatted.push({
+          days: dayRange,
+          time: timeKey
+        })
+      })
+
+      return formatted.length > 0 ? formatted : null
+    }
+
     const trackDriver = async (driver) => {
       trackedDriver.value = driver
       showTrackingModal.value = true
@@ -1822,6 +2255,22 @@ export default {
       uploadProgress,
       handleFileUpload,
       submitAddDriver,
+      
+      // Schedule Management
+      showScheduleModal,
+      selectedDriverForSchedule,
+      driverSchedule,
+      savingSchedule,
+      daysOfWeek,
+      openScheduleModal,
+      closeScheduleModal,
+      isDaySelected,
+      toggleDay,
+      getDaySchedule,
+      updateDayTime,
+      hasSchedule,
+      saveSchedule,
+      getFormattedSchedule,
       
       // Export Report
       exportReport
