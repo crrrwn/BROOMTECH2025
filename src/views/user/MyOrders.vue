@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen w-full bg-gray-50/50 overflow-x-hidden font-sans pb-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 md:space-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 md:space-y-8">
 
       <div class="relative overflow-hidden bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg text-white transform transition hover:scale-[1.005] duration-500">
         <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 md:w-64 md:h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
@@ -82,7 +82,7 @@
         <div v-else-if="filteredOrders.length === 0" class="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-200">
           <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
             <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002-2h2a2 0 002 2M9 5a2 0 012-2h2a2 0 012 2"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002-2h2a2 2 0 002 2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-800 mb-2">No orders found</h3>
@@ -119,7 +119,7 @@
                 </div>
                 <div class="text-right">
                   <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
-                  <p class="text-3xl font-black text-[#3ED400]">₱{{ order.pricing?.total || order.totalAmount || '0.00' }}</p>
+                  <p class="text-3xl font-black text-[#3ED400]">₱{{ order.pricing?.total || order.priceEstimate?.total || '0.00' }}</p>
                 </div>
               </div>
 
@@ -140,7 +140,7 @@
                 </div>
               </div>
 
-              <div v-if="(order.driverId || order.driver)" class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-white rounded-2xl border border-blue-100 mb-6">
+              <div v-if="order.driverId || order.driver" class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-white rounded-2xl border border-blue-100 mb-6">
                 <div class="flex items-center gap-4">
                   <div class="relative">
                     <img v-if="order.driver?.avatar" :src="order.driver.avatar" :alt="order.driver.name" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md">
@@ -169,77 +169,6 @@
                 <LiveTracking :order-id="order.id" />
               </div>
 
-              <div v-if="order.additionalOrders && order.additionalOrders.length > 0" class="mb-6">
-                <div class="flex items-center gap-2 mb-4">
-                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  <h4 class="text-lg font-bold text-gray-800">Added Orders ({{ order.additionalOrders.length }})</h4>
-                </div>
-                
-                <div class="space-y-4">
-                  <div v-for="(addOn, index) in order.additionalOrders" :key="index"
-                       class="p-5 bg-blue-50 border-l-4 border-blue-400 rounded-xl shadow-sm">
-                    <!-- Header -->
-                    <div class="flex justify-between items-start mb-4 pb-4 border-b border-blue-200">
-                      <div>
-                        <p class="text-base font-bold text-blue-900">{{ addOn.serviceName }}</p>
-                        <p v-if="addOn.createdAt" class="text-xs text-gray-500 mt-1">
-                          Added: {{ formatDate(addOn.createdAt) }}
-                        </p>
-                      </div>
-                      <div class="text-right">
-                        <span class="text-xl font-black text-blue-600">₱{{ (addOn.pricing?.total || addOn.totalAmount || 54).toFixed(2) }}</span>
-                        <span class="block px-3 py-1 mt-2 text-xs font-bold uppercase rounded-full" :class="
-                          addOn.status === 'pending' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                          addOn.status === 'delivered' ? 'bg-green-100 text-green-700 border-green-200' :
-                          'bg-gray-100 text-gray-700 border-gray-200'
-                        ">
-                          {{ addOn.status || 'Pending' }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- Locations -->
-                    <div v-if="getAdditionalOrderPickupLocation(addOn) || getAdditionalOrderDeliveryLocation(addOn)" class="mb-4">
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div v-if="getAdditionalOrderPickupLocation(addOn)" class="bg-white p-3 rounded-lg border border-blue-200">
-                          <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Pickup Location</p>
-                          <p class="text-sm font-medium text-gray-800">{{ getAdditionalOrderPickupLocation(addOn) }}</p>
-                        </div>
-                        <div v-if="getAdditionalOrderDeliveryLocation(addOn)" class="bg-white p-3 rounded-lg border border-blue-200">
-                          <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Delivery Location</p>
-                          <p class="text-sm font-medium text-gray-800">{{ getAdditionalOrderDeliveryLocation(addOn) }}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Booking Details -->
-                    <div v-if="addOn.details && Object.keys(addOn.details).length > 0" class="mb-4">
-                      <p class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3">Booking Details</p>
-                      <div class="bg-white p-4 rounded-lg border border-blue-200 space-y-3">
-                        <div v-for="detail in getAdditionalOrderBookingDetails(addOn)" :key="detail.key" class="flex flex-col gap-1 pb-2 border-b border-gray-100 last:border-0">
-                          <span class="text-xs font-bold text-gray-500 uppercase">{{ detail.label }}</span>
-                          <span class="text-sm font-medium text-gray-800">{{ detail.value }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Receipt (for bill payments) -->
-                    <div v-if="addOn.serviceId === 'bill-payments' && addOn.details.billReceiptUrl" class="mb-4">
-                      <p class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">Bill Receipt</p>
-                      <a :href="addOn.details.billReceiptUrl" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-blue-700">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        View Receipt
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <div v-if="order.status === 'delivered'" class="mb-6">
                 <div v-if="!order.feedback" class="p-5 bg-green-50 rounded-2xl border border-green-200 flex items-center justify-between">
                   <div>
@@ -259,7 +188,7 @@
                     <span class="text-xs font-bold text-gray-400">{{ formatDate(order.feedback.createdAt) }}</span>
                   </div>
                   <div class="flex items-center gap-1 mb-2">
-                    <svg v-for="i in 5" :key="i" :class="i <= order.feedback.rating ? 'text-yellow-400' : 'text-gray-300'" class="w-5 h-5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    <svg v-for="i in 5" :key="i" :class="i <= order.feedback.rating ? 'text-yellow-400' : 'text-gray-300'" class="w-5 h-5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 0 00.951-.69l1.07-3.292z"></path></svg>
                     <span class="ml-2 font-bold text-gray-700">{{ order.feedback.rating }}.0</span>
                   </div>
                   <p v-if="order.feedback.comment" class="text-gray-600 text-sm italic">"{{ order.feedback.comment }}"</p>
@@ -274,17 +203,6 @@
                 </button>
 
                 <div class="flex items-center space-x-3">
-                  <button
-                    v-if="order.status !== 'delivered' && order.status !== 'cancelled' && (order.driverId || order.driver)"
-                    @click="openAddAnotherOrderModal(order)"
-                    class="px-4 py-2 text-sm font-bold text-green-600 bg-green-50 rounded-lg hover:bg-green-100 border border-green-200 transition-colors flex items-center gap-2"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Add Another Order
-                  </button>
-                  
                   <template v-if="order.status === 'pending'">
                     <button
                       v-if="canCancel(order)"
@@ -560,15 +478,6 @@
       </div>
     </div>
 
-    <AddAnotherOrderModal
-      :show-modal="showAddOrderModal"
-      :order-id="selectedOrderForAddAnother"
-      :driver-id="selectedDriverId"
-      :driver-name="selectedDriverName"
-      @close="showAddOrderModal = false"
-      @order-added="handleOrderAdded"
-    />
-
     <div v-if="showChatModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm">
       <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[80vh] flex flex-col overflow-hidden border border-gray-100">
         <div class="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between shadow-sm z-10">
@@ -630,6 +539,7 @@
 </template>
 
 <script>
+// --- LOGIC MO (EXACTLY AS PROVIDED) ---
 import { realtimeService } from '@/services/realtime'
 import { useAuthStore } from '@/stores/auth'
 import { db } from '@/firebase/config'
@@ -637,14 +547,12 @@ import { doc, updateDoc, serverTimestamp, getDoc, collection, addDoc, getDocs, q
 import LiveTracking from '@/components/LiveTracking.vue'
 import ChatWindow from '@/components/ChatWindow.vue'
 import { chatService } from '@/services/chatService'
-import AddAnotherOrderModal from '@/components/AddAnotherOrderModal.vue'
 
 export default {
   name: 'MyOrders',
   components: {
     LiveTracking,
-    ChatWindow,
-    AddAnotherOrderModal
+    ChatWindow
   },
   setup() {
     const authStore = useAuthStore()
@@ -678,7 +586,9 @@ export default {
         { value: 'others', label: 'Others (please specify)' }
       ],
       cancelling: false,
-      cancelCountdowns: {},
+
+      // ⏱ per-order cancellation timers (seconds remaining)
+      cancelCountdowns: {}, // { [orderId]: secondsRemaining }
       timersInterval: null,
 
       // feedback modal state
@@ -696,11 +606,7 @@ export default {
       chatId: null,
       chatPartner: null,
 
-      // add order modal state
-      showAddOrderModal: false,
-      selectedOrderForAddAnother: null,
-      selectedDriverId: null,
-      selectedDriverName: null,
+      // add order modal state - REMOVED
 
       // notification modal state
       showNotificationModal: false,
@@ -716,7 +622,7 @@ export default {
         'Fast Delivery', 'Professional Driver', 'Great Communication', 
         'On Time', 'Careful Handling', 'Friendly Service', 
         'Clean Vehicle', 'Easy to Contact'
-      ],
+      ]
     }
   },
   computed: {
@@ -730,6 +636,7 @@ export default {
       }
       return true
     },
+    // remaining seconds for the order currently open in the modal
     modalRemaining() {
       return this.cancelOrderId ? (this.cancelCountdowns[this.cancelOrderId] ?? 0) : 0
     }
@@ -743,6 +650,7 @@ export default {
     if (this.timersInterval) clearInterval(this.timersInterval)
   },
   methods: {
+    // ====== ATTACHMENT HELPERS ======
     isImageUrl(url) {
       if (!url) return false
       const u = url.toLowerCase()
@@ -754,11 +662,14 @@ export default {
         return decodeURIComponent(clean.substring(clean.lastIndexOf('/') + 1))
       } catch (e) { return '' }
     },
+
+    // ====== CANCEL TIMER CORE ======
     getCreatedAtMs(order) {
       const ts = order.createdAt
       if (!ts) return null
       try {
         if (typeof ts.toDate === 'function') return ts.toDate().getTime()
+        // support string/number fallback
         const d = new Date(ts)
         return isNaN(d.getTime()) ? null : d.getTime()
       } catch {
@@ -779,7 +690,9 @@ export default {
       this.cancelCountdowns = next
     },
     setupCancelTimers() {
+      // compute immediately
       this.recomputeCountdowns()
+      // start a single 1s interval (idempotent)
       if (this.timersInterval) return
       this.timersInterval = setInterval(() => {
         this.recomputeCountdowns()
@@ -791,7 +704,7 @@ export default {
       return remain > 0
     },
 
-    // Cancel Modal Logic
+    // ====== CANCEL MODAL ======
     showCancelModal(orderId) {
       this.cancelOrderId = orderId
       this.showCancelDialog = true
@@ -805,6 +718,7 @@ export default {
       this.customCancelReason = ''
     },
     async confirmCancelOrder() {
+      // hard-stop if window expired (security on client)
       if (this.modalRemaining <= 0) {
         this.showNotification('error', 'Cancellation window has expired. You can no longer cancel this order.')
         return
@@ -837,13 +751,17 @@ export default {
         this.closeCancelModal()
       } catch (error) {
         console.error('Error cancelling order:', error)
-        this.showNotification('error', 'Error cancelling order.')
+        let msg = 'Error cancelling order. Please try again.'
+        if (error.code === 'permission-denied') msg = 'Permission denied. Please contact support.'
+        else if (error.code === 'not-found') msg = 'Order not found.'
+        else if (error.code === 'unavailable') msg = 'Service temporarily unavailable. Try again later.'
+        this.showNotification('error', msg)
       } finally {
         this.cancelling = false
       }
     },
 
-    // Feedback Logic
+    // ====== FEEDBACK MODAL ======
     showFeedbackModal(orderId) {
       this.feedbackOrderId = orderId
       this.showFeedbackDialog = true
@@ -852,6 +770,7 @@ export default {
       this.feedbackAspects = {}
       this.selectedTags = []
     },
+
     closeFeedbackModal() {
       this.showFeedbackDialog = false
       this.feedbackOrderId = null
@@ -860,6 +779,7 @@ export default {
       this.feedbackAspects = {}
       this.selectedTags = []
     },
+
     toggleFeedbackTag(tag) {
       const index = this.selectedTags.indexOf(tag)
       if (index > -1) {
@@ -868,17 +788,27 @@ export default {
         this.selectedTags.push(tag)
       }
     },
+
     getRatingText(rating) {
-      const texts = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Excellent' }
+      const texts = {
+        1: 'Poor',
+        2: 'Fair', 
+        3: 'Good',
+        4: 'Very Good',
+        5: 'Excellent'
+      }
       return texts[rating] || 'Select a rating'
     },
+
     async submitFeedback() {
       if (!this.feedbackRating) {
         alert('Please provide a rating')
         return
       }
+
       this.submittingFeedback = true
       try {
+        // Get user information
         const userRef = doc(db, 'users', this.authStore.user.uid)
         const userSnap = await getDoc(userRef)
         let userName = 'Anonymous'
@@ -892,15 +822,19 @@ export default {
           userInitials = `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'A'
         }
 
+        // Get order information for driver and admin visibility
         const orderRef = doc(db, 'orders', this.feedbackOrderId)
         const orderSnap = await getDoc(orderRef)
         
         if (!orderSnap.exists()) {
-          alert('Order not found.')
+          alert('Order not found. Please refresh the page and try again.')
+          this.submittingFeedback = false
           return
         }
         
         const orderData = orderSnap.data()
+
+        // Prepare feedback data, ensuring all fields are valid and properly formatted
         const feedbackData = {
           rating: Number(this.feedbackRating),
           comment: String(this.feedbackComment || '').trim(),
@@ -915,33 +849,94 @@ export default {
           serviceType: orderData.service || orderData.serviceType || null
         }
         
-        // Remove nulls
+        // Remove null/undefined values that might cause Firestore issues
         Object.keys(feedbackData).forEach(key => {
           if (feedbackData[key] === null || feedbackData[key] === undefined) {
             delete feedbackData[key]
           }
         })
+        
+        // Validate required fields
+        if (!feedbackData.rating || feedbackData.rating < 1 || feedbackData.rating > 5) {
+          alert('Please provide a valid rating (1-5 stars)')
+          this.submittingFeedback = false
+          return
+        }
+        
+        if (!feedbackData.userId) {
+          alert('User authentication error. Please log in again.')
+          this.submittingFeedback = false
+          return
+        }
 
-        // Update Order
+        // Save feedback to order (for driver and admin to see)
+        console.log('Saving feedback to order:', this.feedbackOrderId, feedbackData)
         await updateDoc(orderRef, {
           feedback: feedbackData,
           updatedAt: serverTimestamp()
         })
+        console.log('Feedback saved to order successfully')
 
-        // Add to Reviews Collection
-        const reviewData = {
+        // Also save to reviews collection for HomePage display
+        // Save review even if no comment (use default message)
+        try {
+          const reviewComment = this.feedbackComment && this.feedbackComment.trim() 
+            ? this.feedbackComment.trim() 
+            : `Rated ${this.feedbackRating} stars`
+          
+          const reviewData = {
             rating: Number(this.feedbackRating) || 0,
-            comment: this.feedbackComment ? this.feedbackComment.trim() : `Rated ${this.feedbackRating} stars`,
+            comment: reviewComment,
             userName: userName || 'Anonymous',
             userInitials: userInitials || 'A',
             userId: this.authStore.user.uid,
             orderId: this.feedbackOrderId,
             createdAt: serverTimestamp(),
-            approved: true
+            approved: true // Auto-approve for display
+          }
+          
+          console.log('Saving review to reviews collection:', reviewData)
+          const reviewRef = await addDoc(collection(db, 'reviews'), reviewData)
+          console.log('✅ Review saved successfully with ID:', reviewRef.id)
+          
+          // Verify the review was saved
+          const verifyReviewSnap = await getDoc(reviewRef)
+          if (verifyReviewSnap.exists()) {
+            console.log('✅ Review verification successful:', verifyReviewSnap.data())
+          } else {
+            console.error('❌ Review verification failed: Document not found after save')
+          }
+        } catch (reviewError) {
+          // Log but don't fail the entire feedback submission if review save fails
+          console.error('❌ Error saving review to reviews collection:', reviewError)
+          console.error('Review error details:', {
+            message: reviewError.message,
+            code: reviewError.code,
+            stack: reviewError.stack
+          })
+          // Show user-friendly error but don't block feedback submission
+          console.warn('⚠️ Review was not saved to public collection, but feedback was saved to order')
         }
-        await addDoc(collection(db, 'reviews'), reviewData)
 
-        // Update Local State
+        // Verify the feedback was saved by reading it back
+        const verifySnap = await getDoc(orderRef)
+        if (verifySnap.exists()) {
+          const savedData = verifySnap.data()
+          console.log('Verification - Feedback saved in order:', savedData.feedback)
+          
+          if (!savedData.feedback) {
+            throw new Error('Feedback was not saved to order document. Please check Firestore permissions.')
+          }
+          
+          // Verify the rating was saved
+          if (!savedData.feedback.rating) {
+            throw new Error('Rating was not saved. Please try again.')
+          }
+        } else {
+          throw new Error('Order document not found after save attempt')
+        }
+
+        // Update local order
         const orderIndex = this.orders.findIndex(o => o.id === this.feedbackOrderId)
         if (orderIndex !== -1) {
           this.orders[orderIndex].feedback = {
@@ -950,111 +945,133 @@ export default {
           }
         }
         this.filterOrders()
+
+        console.log('Feedback submission completed successfully')
         alert('Thank you for your feedback!')
         this.closeFeedbackModal()
       } catch (error) {
         console.error('Error submitting feedback:', error)
-        alert('Error submitting feedback.')
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        })
+        // Show more detailed error message for debugging
+        const errorMessage = error.message || 'Unknown error occurred'
+        const errorCode = error.code || 'unknown'
+        console.error('Full error object:', error)
+        alert(`Error submitting feedback: ${errorMessage} (Code: ${errorCode}). Please check console for details.`)
       } finally {
         this.submittingFeedback = false
       }
     },
 
-    // Chat Logic
+    // ====== STANDALONE CHAT MODAL (NOT CONNECTED TO CHATMESSAGES PAGE) ======
+    // This opens a standalone chat modal for real-time communication with driver
+    // Real-time updates are handled by ChatWindow component using Firestore onSnapshot
     async openChatWithDriver(order) {
+      console.log('[v0] Opening standalone chat modal for order:', order?.id, 'driverId:', order?.driverId, 'driver:', order?.driver)
+      
+      // Validate order
+      if (!order || !order.id) {
+        console.error('[v0] Invalid order object')
+        this.showNotification('error', 'Order information is invalid')
+        return
+      }
+
+      // Check if driver is assigned
       if (!order.driverId && !order.driver) {
+        console.warn('[v0] No driver assigned to order:', order.id)
         this.showNotification('error', 'No driver assigned to this order yet')
         return
       }
+
+      // Check if user is authenticated
+      if (!this.authStore.user || !this.authStore.user.uid) {
+        console.error('[v0] User not authenticated')
+        this.showNotification('error', 'Please log in to chat with driver')
+        return
+      }
+
       try {
+        // Get driver ID from order
         const driverId = order.driverId || order.driver?.uid || order.driver?.id
+        
+        if (!driverId) {
+          console.error('[v0] Driver ID not found in order:', order)
+          this.showNotification('error', 'Driver information not available')
+          return
+        }
+
+        console.log('[v0] Creating/getting chat room - userId:', this.authStore.user.uid, 'driverId:', driverId, 'orderId:', order.id)
+
+        // Create or get chat room with driver (real-time enabled)
         const chatRoomId = await chatService.createChatRoom(
           this.authStore.user.uid,
           driverId,
           order.id
         )
+
+        console.log('[v0] Chat room created/retrieved:', chatRoomId)
+
+        if (!chatRoomId) {
+          throw new Error('Failed to create chat room')
+        }
+
+        // Set chat modal state for standalone modal
         this.chatOrderId = order.id
         this.chatId = chatRoomId
+        
+        // Set chat partner info with fallback values
         this.chatPartner = {
           id: driverId,
-          name: order.driver?.name || 'Driver',
+          name: order.driver?.name || order.driver?.firstName || 'Driver',
           role: 'driver',
-          phone: order.driver?.phone || ''
+          phone: order.driver?.phone || order.driver?.contact || ''
         }
+
+        console.log('[v0] Chat partner set:', this.chatPartner)
+
+        // Show standalone chat modal (NOT navigating to ChatMessages page)
         this.showChatModal = true
+        console.log('[v0] Chat modal opened successfully')
       } catch (error) {
-        console.error('Error opening chat:', error)
-        this.showNotification('error', 'Error opening chat')
+        console.error('[v0] Error opening chat:', error)
+        console.error('[v0] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          orderId: order?.id,
+          driverId: order?.driverId,
+          userId: this.authStore.user?.uid
+        })
+        this.showNotification('error', `Error opening chat: ${error.message || 'Please try again'}`)
       }
     },
 
     loadGoogleMapsAPI() {
       return new Promise((resolve, reject) => {
-        // Check if already loaded
-        if (window.google && window.google.maps && window.google.maps.places) {
+        if (window.google && window.google.maps) {
           this.mapsReady = true
           resolve()
           return
         }
-        
-        // Check if script is already being loaded
-        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
-        if (existingScript) {
-          // Wait for existing script to load
-          const checkInterval = setInterval(() => {
-            if (window.google && window.google.maps && window.google.maps.places) {
-              clearInterval(checkInterval)
-              this.mapsReady = true
-              resolve()
-            }
-          }, 100)
-          // Timeout after 10 seconds
-          setTimeout(() => {
-            clearInterval(checkInterval)
-            if (!this.mapsReady) {
-              reject(new Error('Google Maps API loading timeout'))
-            }
-          }, 10000)
-          return
-        }
-        
         const script = document.createElement('script')
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o'}&libraries=places&loading=async`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`
         script.async = true
         script.defer = true
-        
-        script.onerror = () => {
-          console.error('Failed to load Google Maps API')
-          // Retry after 2 seconds
-          setTimeout(() => {
-            const retryScript = document.querySelector('script[src*="maps.googleapis.com"]')
-            if (retryScript) {
-              retryScript.remove()
-            }
-            this.loadGoogleMapsAPI().then(resolve).catch(reject)
-          }, 2000)
-        }
-        
+        script.onerror = () => reject(new Error('Failed to load Google Maps API'))
         script.onload = () => {
-          // Double check that Google Maps is actually loaded
-          const checkGoogle = () => {
-            if (window.google && window.google.maps && window.google.maps.places) {
-              this.mapsReady = true
-              resolve()
-            } else {
-              // Retry check after 100ms
-              setTimeout(checkGoogle, 100)
-            }
-          }
-          checkGoogle()
+          this.mapsReady = true
+          resolve()
         }
-        
         document.head.appendChild(script)
       })
     },
+    
 
     async fetchDriverInfo(order) {
       if (!order.driverId || order.driver) return
+      
       try {
         const driverDoc = await getDoc(doc(db, 'users', order.driverId))
         if (driverDoc.exists()) {
@@ -1064,25 +1081,26 @@ export default {
             name: `${driverData.firstName} ${driverData.lastName}`,
             phone: driverData.contact,
             vehicle: driverData.vehicleType || 'Vehicle',
-            avatar: driverData.photoURL
+            avatar: driverData.photoURL || `https://ui-avatars.com/api/?name=${driverData.firstName}+${driverData.lastName}`
           }
         }
       } catch (error) {
-        console.error('Error fetching driver info:', error)
+        console.error('[v0] Error fetching driver info:', error)
       }
     },
 
     async loadOrders() {
       try {
         realtimeService.subscribeToUserOrders(this.authStore.user.uid, async (orders) => {
-          for (const order of orders) {
+          this.orders = orders
+          
+          // Fetch driver info for orders that have driverId but no driver object
+          for (const order of this.orders) {
             if (order.driverId && !order.driver) {
               await this.fetchDriverInfo(order)
             }
-            // IMPORTANT: Removed fetchLinkedOrders since we now use nested additionalOrders array
           }
           
-          this.orders = orders
           this.filterOrders()
           this.loading = false
           this.setupCancelTimers()
@@ -1116,6 +1134,7 @@ export default {
       }
       this.filteredOrders = filtered
       this.currentPage = 1
+      // we keep timers running globally; counts recomputed each tick
     },
 
     getStatusClass(status) {
@@ -1148,103 +1167,6 @@ export default {
         hour: '2-digit', minute: '2-digit'
       })
     },
-    getAdditionalOrderPickupLocation(additionalOrder) {
-      if (!additionalOrder?.details) return additionalOrder?.pickupAddress || ''
-      const details = additionalOrder.details
-      return (
-        additionalOrder.pickupAddress ||
-        details.pickupAddress ||
-        details.restaurantAddress ||
-        details.storeAddress ||
-        ''
-      )
-    },
-    getAdditionalOrderDeliveryLocation(additionalOrder) {
-      if (!additionalOrder?.details) return additionalOrder?.deliveryAddress || ''
-      const details = additionalOrder.details
-      return (
-        additionalOrder.deliveryAddress ||
-        details.deliveryAddress ||
-        details.returnAddress ||
-        details.dropoffAddress ||
-        ''
-      )
-    },
-    getAdditionalOrderBookingDetails(additionalOrder) {
-      if (!additionalOrder?.details) return []
-      const details = additionalOrder.details
-      const serviceType = additionalOrder.serviceId || additionalOrder.serviceType
-      const bookingDetails = []
-
-      // Define which fields to show for each service type
-      const serviceFieldMappings = {
-        'food-delivery': ['restaurantName', 'restaurantAddress', 'foodOrderDetails', 'specialInstructions', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
-        'food': ['restaurantName', 'restaurantAddress', 'foodOrderDetails', 'specialInstructions', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
-        'bill-payments': ['billerName', 'accountName', 'accountNumber', 'amountToPay', 'dueDate', 'preferredSchedule'],
-        'grocery-shopping': ['shoppingList', 'storePreference', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
-        'grocery': ['shoppingList', 'storePreference', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
-        'gift-delivery': ['giftType', 'specialInstructions', 'budgetRange', 'recipientName', 'recipientContact', 'storeName', 'storeAddress', 'preferredDateTime'],
-        'medicine-delivery': ['medicineNames', 'quantity', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
-        'medicine': ['medicineNames', 'quantity', 'budgetRange', 'receiverName', 'receiverContact', 'landmark', 'preferredTime'],
-        'pickup-drop': ['itemDescription', 'itemType', 'pickupContact', 'preferredPickupDateTime']
-      }
-
-      const fieldsToShow = serviceFieldMappings[serviceType] || []
-      
-      fieldsToShow.forEach(key => {
-        const value = details[key]
-        if (value && typeof value === 'string' && value.trim().length > 0 && key !== 'billReceiptUrl') {
-          bookingDetails.push({
-            key,
-            label: this.formatFieldLabel(key),
-            value: value.length > 150 ? value.substring(0, 150) + '...' : value
-          })
-        } else if (value && typeof value === 'number') {
-          bookingDetails.push({
-            key,
-            label: this.formatFieldLabel(key),
-            value: key === 'amountToPay' ? `₱${value}` : value.toString()
-          })
-        }
-      })
-
-      return bookingDetails
-    },
-    formatFieldLabel(key) {
-      const labelMappings = {
-        restaurantName: 'Restaurant Name',
-        restaurantAddress: 'Restaurant Address',
-        foodOrderDetails: 'Food Order Details',
-        specialInstructions: 'Special Instructions',
-        budgetRange: 'Budget Range',
-        receiverName: 'Receiver Name',
-        receiverContact: 'Receiver Contact',
-        deliveryAddress: 'Delivery Address',
-        landmark: 'Landmark',
-        preferredTime: 'Preferred Time',
-        billerName: 'Biller Name',
-        accountName: 'Account Name',
-        accountNumber: 'Account Number',
-        amountToPay: 'Amount to Pay',
-        dueDate: 'Due Date',
-        pickupAddress: 'Pickup Address',
-        returnAddress: 'Return Address',
-        preferredSchedule: 'Preferred Schedule',
-        shoppingList: 'Shopping List',
-        storePreference: 'Store Preference',
-        giftType: 'Gift Type',
-        recipientName: 'Recipient Name',
-        recipientContact: 'Recipient Contact',
-        preferredDateTime: 'Preferred Date/Time',
-        medicineNames: 'Medicine Names',
-        quantity: 'Quantity',
-        pickupContact: 'Pickup Contact',
-        itemDescription: 'Item Description',
-        itemType: 'Item Type',
-        dropoffAddress: 'Drop-off Address'
-      }
-      return labelMappings[key] || key.replace(/([A-Z])/g, ' $1').trim()
-    },
     viewOrder(id) {
       this.expandedOrderId = this.expandedOrderId === id ? null : id
     },
@@ -1254,10 +1176,18 @@ export default {
     },
 
     showNotification(type, message) {
+      console.log('[MyOrders] showNotification called:', type, message)
       this.notificationType = type
       this.notificationMessage = message
+      
+      // Show notification modal immediately - no delay
       this.showNotificationModal = true
+      console.log('[MyOrders] Notification modal state:', this.showNotificationModal)
+      
+      // Force Vue to update DOM immediately
       this.$forceUpdate()
+      
+      // Double check after nextTick to ensure it's visible
       this.$nextTick(() => {
         if (!this.showNotificationModal) {
           this.showNotificationModal = true
@@ -1269,21 +1199,6 @@ export default {
     closeNotificationModal() {
       this.showNotificationModal = false
       this.notificationMessage = ''
-    },
-    
-    openAddAnotherOrderModal(order) {
-      if (!order.driverId && !order.driver) {
-        alert('Driver not yet assigned to this order')
-        return
-      }
-      this.selectedOrderForAddAnother = order.id
-      this.selectedDriverId = order.driverId || order.driver?.id
-      this.selectedDriverName = order.driver?.name || 'Driver'
-      this.showAddOrderModal = true
-    },
-    
-    handleOrderAdded(orderId) {
-      this.showNotification('success', 'Order added successfully!')
     }
   }
 }

@@ -762,8 +762,7 @@
               <h4 class="font-medium text-gray-900 mb-3">Additional Orders</h4>
               <div class="space-y-4">
                 <div v-for="(additionalOrder, index) in selectedOrderForDetails.additionalOrders" :key="index" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <!-- Service Name and Status -->
-                  <div class="flex justify-between items-start mb-3">
+                  <div class="flex justify-between items-start mb-2">
                     <div>
                       <h5 class="font-medium text-gray-900">{{ additionalOrder.serviceName || 'Additional Order' }}</h5>
                       <p class="text-xs text-gray-500 mt-1">
@@ -778,68 +777,32 @@
                       {{ additionalOrder.status || 'pending' }}
                     </span>
                   </div>
-
-                  <!-- Location Information -->
-                  <div v-if="additionalOrder.pickupAddress || additionalOrder.deliveryAddress || getAdditionalOrderPickupLocation(additionalOrder) || getAdditionalOrderDeliveryLocation(additionalOrder)" class="mb-3 p-3 bg-white rounded-lg border border-blue-100">
-                    <h6 class="text-xs font-medium text-gray-700 mb-2">Location Information</h6>
-                    <div class="space-y-2 text-sm">
-                      <div v-if="additionalOrder.pickupAddress || getAdditionalOrderPickupLocation(additionalOrder)">
-                        <p class="text-gray-600 text-xs">Pickup Location</p>
-                        <p class="font-medium">{{ additionalOrder.pickupAddress || getAdditionalOrderPickupLocation(additionalOrder) }}</p>
-                      </div>
-                      <div v-if="additionalOrder.deliveryAddress || getAdditionalOrderDeliveryLocation(additionalOrder)">
-                        <p class="text-gray-600 text-xs">Delivery Location</p>
-                        <p class="font-medium">{{ additionalOrder.deliveryAddress || getAdditionalOrderDeliveryLocation(additionalOrder) }}</p>
-                      </div>
+                  
+                  <div v-if="additionalOrder.pickupAddress || additionalOrder.deliveryAddress" class="mt-2 text-sm">
+                    <div v-if="additionalOrder.pickupAddress" class="text-gray-600">
+                      <span class="font-medium">Pickup:</span> {{ additionalOrder.pickupAddress }}
                     </div>
-                    <div v-if="additionalOrder.routeInfo" class="mt-2 text-xs text-gray-500 pt-2 border-t border-gray-100">
-                      <span>Distance: {{ additionalOrder.routeInfo.distance }}</span>
-                      <span class="ml-3">ETA: {{ additionalOrder.routeInfo.duration }}</span>
+                    <div v-if="additionalOrder.deliveryAddress" class="text-gray-600 mt-1">
+                      <span class="font-medium">Delivery:</span> {{ additionalOrder.deliveryAddress }}
                     </div>
                   </div>
                   
-                  <!-- Booking Details -->
-                  <div v-if="additionalOrder.details && Object.keys(additionalOrder.details).length > 0" class="mb-3 p-3 bg-white rounded-lg border border-blue-100">
-                    <h6 class="text-xs font-medium text-gray-700 mb-2">Booking Details</h6>
-                    <div class="space-y-2 text-sm">
-                      <div v-for="field in getFilteredBookingDetails({ formData: additionalOrder.details, serviceType: additionalOrder.serviceId, serviceId: additionalOrder.serviceId })" :key="field.key" class="flex justify-between">
-                        <span class="text-gray-600">{{ field.label }}:</span>
-                        <span class="font-medium">
-                          <a v-if="field.isLink" :href="field.value" target="_blank" class="text-blue-600 hover:underline">View Receipt</a>
-                          <span v-else>{{ field.value }}</span>
-                        </span>
-                      </div>
+                  <div v-if="additionalOrder.routeInfo" class="mt-2 text-xs text-gray-500">
+                    <span>Distance: {{ additionalOrder.routeInfo.distance }}</span>
+                    <span class="ml-3">ETA: {{ additionalOrder.routeInfo.duration }}</span>
+                  </div>
+                  
+                  <div v-if="additionalOrder.pricing" class="mt-3 pt-3 border-t border-blue-200">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Order Total:</span>
+                      <span class="font-medium text-green-600">₱{{ (additionalOrder.totalAmount || additionalOrder.pricing.total || 0).toFixed(2) }}</span>
                     </div>
                   </div>
                   
-                  <!-- Price Breakdown -->
-                  <div v-if="additionalOrder.pricing" class="mb-3 p-3 bg-white rounded-lg border border-blue-100">
-                    <h6 class="text-xs font-medium text-gray-700 mb-2">Price Breakdown</h6>
-                    <div class="space-y-1 text-sm">
-                      <div v-if="additionalOrder.pricing.baseCharge" class="flex justify-between">
-                        <span class="text-gray-600">Base Charge:</span>
-                        <span>₱{{ additionalOrder.pricing.baseCharge.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="additionalOrder.pricing.distanceFee" class="flex justify-between">
-                        <span class="text-gray-600">Distance Fee:</span>
-                        <span>₱{{ additionalOrder.pricing.distanceFee.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="additionalOrder.pricing.badWeatherFee" class="flex justify-between">
-                        <span class="text-gray-600">Bad Weather Fee:</span>
-                        <span>₱{{ additionalOrder.pricing.badWeatherFee.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="additionalOrder.pricing.itemsTotal" class="flex justify-between">
-                        <span class="text-gray-600">Items Total:</span>
-                        <span class="text-blue-600 font-medium">₱{{ additionalOrder.pricing.itemsTotal.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="additionalOrder.pricing.gcashFee" class="flex justify-between">
-                        <span class="text-gray-600">GCash Fee:</span>
-                        <span>₱{{ additionalOrder.pricing.gcashFee.toFixed(2) }}</span>
-                      </div>
-                      <div class="flex justify-between font-medium text-green-600 pt-2 border-t border-gray-200">
-                        <span>Total:</span>
-                        <span>₱{{ (additionalOrder.totalAmount || additionalOrder.pricing.total || 0).toFixed(2) }}</span>
-                      </div>
+                  <div v-if="additionalOrder.formData" class="mt-2 text-xs text-gray-600">
+                    <div v-for="(value, key) in additionalOrder.formData" :key="key" v-if="value && typeof value === 'string' && value.trim()" class="mt-1">
+                      <span class="font-medium">{{ key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim() }}:</span>
+                      {{ value.length > 50 ? value.substring(0, 50) + '...' : value }}
                     </div>
                   </div>
                 </div>
@@ -2661,50 +2624,6 @@ export default {
       }
     }
 
-    // Helper functions for additional orders (which use 'details' instead of 'formData')
-    const getAdditionalOrderPickupLocation = (additionalOrder) => {
-      if (!additionalOrder?.details) return additionalOrder?.pickupAddress || ''
-      const details = additionalOrder.details
-      const serviceType = additionalOrder.serviceId || additionalOrder.serviceType
-
-      switch (serviceType) {
-        case 'food-delivery':
-        case 'food':
-          return details.restaurantAddress || ''
-        case 'bill-payments':
-        case 'pickup-drop':
-        case 'package':
-          return details.pickupAddress || ''
-        default:
-          return details.pickupAddress || ''
-      }
-    }
-
-    const getAdditionalOrderDeliveryLocation = (additionalOrder) => {
-      if (!additionalOrder?.details) return additionalOrder?.deliveryAddress || ''
-      const details = additionalOrder.details
-      const serviceType = additionalOrder.serviceId || additionalOrder.serviceType
-
-      switch (serviceType) {
-        case 'food-delivery':
-        case 'food':
-        case 'grocery-shopping':
-        case 'grocery':
-        case 'medicine-delivery':
-        case 'medicine':
-          return details.deliveryAddress || ''
-        case 'gift-delivery':
-          return details.deliveryAddress || ''
-        case 'bill-payments':
-          return details.returnAddress || ''
-        case 'pickup-drop':
-        case 'package':
-          return details.dropoffAddress || ''
-        default:
-          return details.deliveryAddress || ''
-      }
-    }
-
 
     // CHANGE: Enhanced viewOrder function to show complete booking details
     const viewOrder = (order) => {
@@ -3544,8 +3463,6 @@ export default {
       getServiceDetails,
       getPickupLocation,
       getDeliveryLocation,
-      getAdditionalOrderPickupLocation,
-      getAdditionalOrderDeliveryLocation,
       viewOrder,
       // trackOrder, // Removed as it's now superseded by trackDriver
       cancelOrder,

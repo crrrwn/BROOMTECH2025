@@ -1068,111 +1068,40 @@ export default {
 
     // ... (Map logic remains mostly standard but ensured) ...
     loadGoogleMapsAPI() {
-      // Check if already loaded
-      if (window.google && window.google.maps && window.google.maps.places) {
+      if (window.google && window.google.maps) {
         this.mapsReady = true
-        if (this.selectedService) {
-          this.$nextTick(() => {
-            this.initializeMap()
-            this.initializeAutocomplete()
-          })
-        }
         return
       }
-      
-      // Check if script is already being loaded
-      if (document.getElementById('gmaps-script')) {
-        // Wait for script to load
-        const checkInterval = setInterval(() => {
-          if (window.google && window.google.maps && window.google.maps.places) {
-            clearInterval(checkInterval)
-            this.mapsReady = true
-            if (this.selectedService) {
-              this.$nextTick(() => {
-                this.initializeMap()
-                this.initializeAutocomplete()
-              })
-            }
-          }
-        }, 100)
-        // Timeout after 10 seconds
-        setTimeout(() => clearInterval(checkInterval), 10000)
-        return
-      }
-      
+      if (document.getElementById('gmaps-script')) return
       const script = document.createElement('script')
       script.id = 'gmaps-script'
       script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDAY9tsXQublAc2y54vPqMy2bZuXYY6I5o&libraries=places,geometry&v=weekly&loading=async`
       script.async = true
       script.defer = true
-      
-      script.onerror = () => {
-        console.error('Failed to load Google Maps API')
-        // Retry after 2 seconds
-        setTimeout(() => {
-          const existingScript = document.getElementById('gmaps-script')
-          if (existingScript) {
-            existingScript.remove()
-          }
-          this.loadGoogleMapsAPI()
-        }, 2000)
-      }
-      
       script.onload = () => {
-        // Double check that Google Maps is actually loaded
-        const checkGoogle = () => {
-          if (window.google && window.google.maps && window.google.maps.places) {
-            this.mapsReady = true
-            if (this.selectedService) {
-              this.$nextTick(() => {
-                this.initializeMap()
-                this.initializeAutocomplete()
-              })
-            }
-          } else {
-            // Retry check after 100ms
-            setTimeout(checkGoogle, 100)
-          }
+        this.mapsReady = true
+        if (this.selectedService) {
+          this.initializeMap()
+          this.initializeAutocomplete()
         }
-        checkGoogle()
       }
-      
       document.head.appendChild(script)
     },
 
     initializeMap() {
       const mapElement = document.getElementById('map')
-      if (!mapElement || !this.mapsReady || !window.google || !window.google.maps) {
-        // Retry initialization if map element exists but API not ready
-        if (mapElement && !this.mapsReady) {
-          setTimeout(() => this.initializeMap(), 500)
-        }
-        return
-      }
-      
-      // Clear any existing map
-      if (this.map) {
-        this.map = null
-      }
-      
+      if (!mapElement || !this.mapsReady) return
       const calapanCenter = { lat: 13.3771, lng: 121.1646 }
       const calapanBounds = { north: 13.4500, south: 13.3000, east: 121.2500, west: 121.0800 }
 
-      try {
-        this.map = new window.google.maps.Map(mapElement, {
-          center: calapanCenter,
-          zoom: 13,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          restriction: { latLngBounds: calapanBounds, strictBounds: true }
-        })
-      } catch (error) {
-        console.error('Error initializing map:', error)
-        // Retry after 1 second
-        setTimeout(() => this.initializeMap(), 1000)
-        return
-      }
+      this.map = new window.google.maps.Map(mapElement, {
+        center: calapanCenter,
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        restriction: { latLngBounds: calapanBounds, strictBounds: true }
+      })
 
       this.directionsService = new window.google.maps.DirectionsService()
       this.directionsRenderer = new window.google.maps.DirectionsRenderer({ draggable: false, suppressMarkers: true, preserveViewport: false })
