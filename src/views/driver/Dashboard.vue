@@ -38,16 +38,16 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <div class="grid grid-cols-1 gap-4 md:gap-6">
         
-        <div class="lg:col-span-2 relative overflow-hidden rounded-[2rem] shadow-lg transition-all duration-300 group hover:shadow-xl min-h-[220px]">
+        <div class="relative overflow-hidden rounded-[2rem] shadow-lg transition-all duration-300 group hover:shadow-xl min-h-[220px]">
            <div :class="['absolute inset-0 z-0 transition-colors duration-500', driverStore.hasRemitted ? 'bg-gradient-to-br from-[#1e293b] to-[#0f172a]' : 'bg-gray-800']"></div>
            <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -mr-10 -mt-10"></div>
 
            <div class="relative z-10 p-6 md:p-8 flex flex-col justify-between h-full">
               <div class="flex justify-between items-start mb-6">
                  <div>
-                    <h2 class="text-gray-400 font-medium text-xs md:text-sm uppercase tracking-wider mb-1">Today's Net Income</h2>
+                    <h2 class="text-gray-400 font-medium text-xs md:text-sm uppercase tracking-wider mb-1">Today's Income</h2>
                     <p v-if="!driverStore.hasRemitted" class="text-yellow-400 text-[10px] md:text-xs font-bold flex items-center mt-1 bg-yellow-400/10 px-2 py-1 rounded w-fit">
                        Remittance Required
                     </p>
@@ -79,28 +79,6 @@
            </div>
         </div>
 
-        <div class="lg:col-span-1 bg-white rounded-[2rem] shadow-lg border border-gray-100 p-6 flex flex-col justify-center">
-           <h3 class="text-gray-400 font-bold text-xs uppercase tracking-wider mb-6">Weekly Performance</h3>
-           <div class="space-y-5">
-              <div class="flex items-center justify-between">
-                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                    <span class="text-sm text-gray-600">Gross</span>
-                 </div>
-                 <span class="font-bold text-gray-900">₱{{ driverStore.weeklyEarnings.total || '0.00' }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[#3ED400]"></span>
-                    <span class="text-sm text-gray-600">Net Income</span>
-                 </div>
-                 <span class="font-bold text-[#3ED400]">₱{{ driverStore.weeklyEarnings.driverShare || '0.00' }}</span>
-              </div>
-           </div>
-           <div class="mt-6 pt-6 border-t border-gray-100">
-              <button class="w-full py-3 bg-gray-50 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-100 transition-colors">See History</button>
-           </div>
-        </div>
 
       </div>
 

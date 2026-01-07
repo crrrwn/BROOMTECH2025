@@ -55,9 +55,6 @@
           
           <div>
             <h3 class="text-xl font-black text-gray-800 leading-tight">{{ driverName }}</h3>
-            <span class="inline-block px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-wider rounded-md mt-1 border border-green-100">
-              Courier
-            </span>
           </div>
         </div>
 
@@ -433,10 +430,28 @@ export default {
   },
   computed: {
     driverName() {
+      // Prioritize fullName from driverProfile
       if (this.driverProfile) {
-        return `${this.driverProfile.firstName || ''} ${this.driverProfile.lastName || ''}`.trim() || 'Driver'
+        if (this.driverProfile.fullName) {
+          return this.driverProfile.fullName
+        }
+        // Fallback to firstName + lastName
+        const constructedName = `${this.driverProfile.firstName || ''} ${this.driverProfile.lastName || ''}`.trim()
+        if (constructedName) {
+          return constructedName
+        }
       }
-      return this.authStore.userProfile?.fullName || 'Driver'
+      // Fallback to authStore userProfile
+      if (this.authStore.userProfile) {
+        if (this.authStore.userProfile.fullName) {
+          return this.authStore.userProfile.fullName
+        }
+        const constructedName = `${this.authStore.userProfile.firstName || ''} ${this.authStore.userProfile.lastName || ''}`.trim()
+        if (constructedName) {
+          return constructedName
+        }
+      }
+      return 'Driver'
     },
     driverInitials() {
       const name = this.driverName
@@ -585,7 +600,24 @@ export default {
         const driverSnap = await getDoc(driverRef)
         
         if (driverSnap.exists()) {
-          this.driverProfile = driverSnap.data()
+          const data = driverSnap.data()
+          this.driverProfile = {
+            ...data,
+            // Ensure fullName is available
+            fullName: data.fullName || 
+                     (data.firstName && data.lastName ? `${data.firstName} ${data.lastName}`.trim() : '') ||
+                     data.name || '',
+            // Also ensure profilePicture is available
+            profilePicture: data.profilePictureUrl || 
+                           data.profilePicture || 
+                           data.driverInfo?.documents?.profilePicture || ''
+          }
+          
+          console.log('[v0] Driver profile loaded:', {
+            fullName: this.driverProfile.fullName,
+            firstName: this.driverProfile.firstName,
+            lastName: this.driverProfile.lastName
+          })
           
           // Get current location from Firestore if available (more accurate)
           if (this.driverProfile.currentLocation) {
@@ -597,10 +629,13 @@ export default {
           }
         } else {
           // Fallback to user profile
-          this.driverProfile = this.authStore.userProfile
+          this.driverProfile = this.authStore.userProfile || {}
+          console.log('[v0] Using authStore userProfile as fallback')
         }
       } catch (error) {
         console.error('[v0] Error loading driver profile:', error)
+        // Fallback to authStore profile on error
+        this.driverProfile = this.authStore.userProfile || {}
       }
     },
 
@@ -655,13 +690,17 @@ export default {
         })
 
         // Set up ResizeObserver to handle container size changes
-        if (window.ResizeObserver && mapElement) {
-          const resizeObserver = new ResizeObserver(() => {
-            if (this.map) {
-              window.google.maps.event.trigger(this.map, 'resize')
-            }
-          })
-          resizeObserver.observe(mapElement)
+        if (window.ResizeObserver && mapElement && mapElement instanceof Element) {
+          try {
+            const resizeObserver = new ResizeObserver(() => {
+              if (this.map) {
+                window.google.maps.event.trigger(this.map, 'resize')
+              }
+            })
+            resizeObserver.observe(mapElement)
+          } catch (error) {
+            console.warn('[v0] ResizeObserver setup failed:', error)
+          }
         }
 
         // Add markers and route immediately (this will set the proper bounds to show pickup/delivery)
@@ -1052,7 +1091,24 @@ export default {
           }
         },
         (error) => {
-          console.error('[v0] Location tracking error:', error)
+          // Handle different geolocation error codes
+          // Code 1: PERMISSION_DENIED - User denied location permission
+          // Code 2: POSITION_UNAVAILABLE - Location unavailable
+          // Code 3: TIMEOUT - Request timeout (common, expected - don't log as error)
+          if (error.code === 3) {
+            // Timeout is expected and common - just log as debug, don't show error
+            console.log('[v0] Location tracking timeout (expected):', error.message)
+            return
+          }
+          
+          // Only log actual errors (permission denied, position unavailable)
+          if (error.code === 1) {
+            console.warn('[v0] Location permission denied:', error.message)
+          } else if (error.code === 2) {
+            console.warn('[v0] Location unavailable:', error.message)
+          } else {
+            console.warn('[v0] Location tracking error:', error.message)
+          }
         },
         {
           enableHighAccuracy: true,

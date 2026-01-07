@@ -239,6 +239,12 @@
       @cancel="handleFaceRegistrationCancel"
     />
 
+    <ValidIdUpload
+      v-if="showValidIdUpload"
+      @uploaded="handleValidIdUploaded"
+      @cancel="handleValidIdCancel"
+    />
+
     <FaceVerification
       v-if="showFaceVerification"
       :registered-descriptor="registeredFaceDescriptor"
@@ -256,6 +262,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import FaceRegistration from '@/components/FaceRegistration.vue'
 import FaceVerification from '@/components/FaceVerification.vue'
+import ValidIdUpload from '@/components/ValidIdUpload.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -281,6 +288,8 @@ const showFaceRegistration = ref(false)
 const showFaceVerification = ref(false)
 const registeredFaceDescriptor = ref(null)
 const pendingLoginSuccess = ref(false)
+const showValidIdUpload = ref(false)
+const capturedFaceImage = ref(null)
 
 const showNotification = (type, message) => {
   notificationType.value = type
@@ -370,20 +379,26 @@ const handleForgotPassword = async () => {
 }
 
 // Face Registration Handlers
-const handleFaceRegistered = async (descriptor) => {
+const handleFaceRegistered = async (data) => {
   try {
-    const result = await authStore.saveFaceDescriptor(authStore.user.uid, descriptor)
+    // data can be either descriptor (old format) or { descriptor, faceImage } (new format)
+    const descriptor = data.descriptor || data
+    const faceImage = data.faceImage || null
+    
+    const result = await authStore.saveFaceDescriptor(authStore.user.uid, descriptor, faceImage)
     
     if (result.success) {
       // Reset registration attempts on success
       await authStore.resetFaceAttempts(authStore.user.uid, 'registration')
       showFaceRegistration.value = false
-      showNotification('success', 'Face registered successfully!')
       
-      // Redirect to dashboard
-      setTimeout(() => {
-        router.push('/user')
-      }, 1500)
+      // Store face image for later use
+      if (faceImage) {
+        capturedFaceImage.value = faceImage
+      }
+      
+      // Show valid ID upload after face registration
+      showValidIdUpload.value = true
     } else {
       // Registration failed - trigger failed handler to track attempts
       await handleFaceRegistrationFailed(0) // 0 means this is a save failure, not an attempt limit
@@ -394,6 +409,32 @@ const handleFaceRegistered = async (descriptor) => {
     await handleFaceRegistrationFailed(0)
     showNotification('error', 'An error occurred during face registration')
   }
+}
+
+// Valid ID Upload Handlers
+const handleValidIdUploaded = async (validIdUrl) => {
+  try {
+    const result = await authStore.saveValidId(authStore.user.uid, validIdUrl)
+    
+    if (result.success) {
+      showValidIdUpload.value = false
+      showNotification('success', 'Valid ID uploaded successfully!')
+      
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push('/user')
+      }, 1500)
+    } else {
+      showNotification('error', result.message || 'Failed to save valid ID. Please try again.')
+    }
+  } catch (error) {
+    showNotification('error', 'An error occurred while saving valid ID')
+  }
+}
+
+const handleValidIdCancel = () => {
+  // User must upload ID - don't allow skipping
+  showNotification('warning', 'Please upload your valid ID to complete registration.')
 }
 
 const handleFaceRegistrationFailed = async (attempts) => {

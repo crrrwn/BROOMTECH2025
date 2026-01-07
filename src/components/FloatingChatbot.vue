@@ -156,16 +156,27 @@ export default {
 2. You'll see all your orders with their current status
 3. Statuses include:
    • Pending - Waiting for driver assignment
-   • Confirmed - Driver has been assigned
-   • In Transit - Driver is on the way
-   • On The Way - Driver is delivering
-   • Delivered - Order completed
+   • Confirmed - Order confirmed, waiting for driver
+   • Driver Assigned - A driver has been assigned to your order
+   • In Transit - Driver is on the way to pickup location
+   • On The Way - Driver is delivering to your address
+   • Delivered - Order completed successfully
    • Cancelled - Order was cancelled
 
-4. Click on an order to see full details
-5. You can chat with your driver, cancel (within 30 seconds), or give feedback
+4. Click on an order to see full details including:
+   • Order information and service type
+   • Pickup and delivery addresses
+   • Driver information (when assigned)
+   • Real-time tracking map
+   • Payment details
 
-💬 You can also contact your assigned driver directly through the chat feature!`,
+5. Features available:
+   • Chat with your assigned driver
+   • Cancel order (within 30 seconds of booking)
+   • Track delivery in real-time
+   • Give feedback after delivery
+
+💬 You can contact your assigned driver directly through the chat feature for updates or special instructions!`,
 
         'Book Service': `How to Book a Service:
 
@@ -173,35 +184,52 @@ export default {
 
 1. Go to 'Book Service' in your dashboard
 2. Select the service type you need:
-   • Food Delivery
-   • Bill Payments
-   • Grocery Shopping
-   • Gift Delivery
-   • Medicine Delivery
-   • Pickup & Drop
+   • Food Delivery - Restaurant orders and food delivery
+   • Bill Payments - Pay your bills and get receipts delivered
+   • Grocery Shopping - Fresh groceries delivered to your door
+   • Gift Delivery - Special gifts delivered with care
+   • Medicine Delivery - Prescription and over-the-counter medicines
+   • Pick-up & Drop - Pick up and deliver items between locations
 
 3. Fill in all required fields (marked with *)
-4. Enter addresses - make sure they're within Calapan City
+4. Enter addresses - make sure they're within Calapan City, Oriental Mindoro
 5. Review the map route and estimated delivery fee
-6. Choose payment method (COD, GCash, etc.)
+6. Choose payment method:
+   • Cash on Delivery (COD)
+   • GCash (with additional charges based on amount)
 7. Submit your booking!
 
 ✅ You'll receive a confirmation and can track your order in 'My Orders'.
 
-💡 Tip: Make sure all addresses are within Calapan City, Oriental Mindoro!`,
+💡 Tips:
+• Make sure all addresses are within Calapan City, Oriental Mindoro
+• The delivery fee is calculated automatically based on distance and location
+• Additional fees may apply for hilltop areas, high floors, or special locations
+• You can see the exact fee breakdown before confirming your booking`,
 
         'Pricing': `💰 Delivery Fee Structure:
 
-• Base Charge (First 3km): ₱55
+• Base Charge (First 3km): ₱54
 • Distance Fee (After 3km): ₱15 per additional kilometer
-• Bad Weather Surcharge: May apply during heavy rain
+• Bad Weather Surcharge: ₱10 (applies during heavy rain/storm)
+
+📍 Additional Fees (Auto-detected):
+• Hilltop Areas (Xevera, Greenhills, etc.): ₱10
+• Loob/Lakad Areas (Hospitals, Schools, etc.): ₱10
+• High Floor (5th floor and above): ₱20
+• Box/Package Delivery: ₱10
+• Bulk Food Orders (30+ items): ₱50
 
 💡 The exact fee is calculated based on your route and shown before booking. You can see the estimated delivery fee on the map after entering addresses!
 
 📊 Example:
-• 2km distance: ₱55 (base charge)
-• 5km distance: ₱55 (base) + ₱30 (2km × ₱15) = ₱85
-• 10km distance: ₱55 (base) + ₱105 (7km × ₱15) = ₱160
+• 2km distance: ₱54 (base charge)
+• 5km distance: ₱54 (base) + ₱30 (2km × ₱15) = ₱84
+• 10km distance: ₱54 (base) + ₱105 (7km × ₱15) = ₱159
+
+💳 Payment Methods:
+• Cash on Delivery (COD)
+• GCash (with additional charges based on amount)
 
 All fees are displayed transparently before you confirm your booking.`
       }

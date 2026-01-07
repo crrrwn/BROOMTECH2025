@@ -193,7 +193,13 @@ export default {
       const pendingOrders = orders.filter(order => ['pending', 'confirmed', 'in_transit'].includes(order.status)).length
       const totalSpent = orders
         .filter(order => order.status === 'delivered')
-        .reduce((sum, order) => sum + (order.priceEstimate?.total || 0), 0)
+        .reduce((sum, order) => {
+          const amount = Number(order.totalAmount) || 
+                        Number(order.pricing?.total) || 
+                        Number(order.priceEstimate?.total) || 
+                        0
+          return sum + amount
+        }, 0)
 
       this.stats = {
         totalOrders,
@@ -204,32 +210,52 @@ export default {
 
       // Get recent orders (last 4 orders)
       this.recentOrders = orders
-        .sort((a, b) => new Date(b.createdAt?.toDate()) - new Date(a.createdAt?.toDate()))
+        .sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0)
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0)
+          return dateB - dateA
+        })
         .slice(0, 4)
-        .map(order => ({
-          id: order.id,
-          service: order.serviceName,
-          date: this.formatDate(order.createdAt),
-          amount: order.priceEstimate?.total || 0,
-          status: this.formatStatus(order.status)
-        }))
+        .map(order => {
+          // Get amount from multiple possible fields
+          const amount = Number(order.totalAmount) || 
+                        Number(order.pricing?.total) || 
+                        Number(order.priceEstimate?.total) || 
+                        0
+          
+          return {
+            id: order.id,
+            service: order.serviceName || order.service || 'Service',
+            date: this.formatDate(order.createdAt),
+            amount: amount.toFixed(2),
+            status: this.formatStatus(order.status)
+          }
+        })
     },
 
     formatDate(timestamp) {
       if (!timestamp) return ''
-      const date = new Date(timestamp.toDate())
-      const now = new Date()
-      const diffTime = Math.abs(now - date)
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
-      if (diffDays === 1) return 'Today'
-      if (diffDays === 2) return 'Yesterday'
-      if (diffDays <= 7) return `${diffDays - 1} days ago`
-      
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      })
+      try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+        if (isNaN(date.getTime())) return ''
+        
+        const now = new Date()
+        const diffTime = Math.abs(now - date)
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        if (diffDays === 1) return 'Today'
+        if (diffDays === 2) return 'Yesterday'
+        if (diffDays <= 7) return `${diffDays - 1} days ago`
+        
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        })
+      } catch (error) {
+        console.error('[Dashboard] Error formatting date:', error)
+        return ''
+      }
     },
 
     formatStatus(status) {

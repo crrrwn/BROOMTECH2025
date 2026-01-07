@@ -129,56 +129,75 @@ export const useDriverStore = defineStore("driver", {
         if (driverSnap.exists()) {
           const driverData = driverSnap.data()
 
-          const today = new Date().toDateString()
-          let lastRemitDate = driverData.lastRemitDate
+          // Fetch driver's share rates
+          const driverShareRate = driverData.driverShareRate || 0.80
+          const adminShareRate = driverData.adminShareRate || 0.20
 
-          // Normalize lastRemitDate - handle both string and Timestamp/Date formats
-          if (lastRemitDate) {
-            if (lastRemitDate.toDate) {
-              // Firestore Timestamp
-              lastRemitDate = lastRemitDate.toDate().toDateString()
-            } else if (lastRemitDate instanceof Date) {
-              // Date object
-              lastRemitDate = lastRemitDate.toDateString()
-            } else if (typeof lastRemitDate === 'string') {
-              // Already a string, trim and use as is
-              lastRemitDate = lastRemitDate.trim()
-            }
-          }
+          // Query approved remittances for today
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const todayString = today.toDateString()
 
-          // Check hasRemitted from Firestore first, then fallback to date comparison
-          const normalizedToday = today.trim()
-          const normalizedLastRemit = lastRemitDate ? lastRemitDate.trim() : ''
-          const dateMatches = normalizedLastRemit === normalizedToday
+          const remittancesQuery = query(
+            collection(db, 'remittances'),
+            where('driverId', '==', user.uid),
+            where('status', '==', 'approved')
+          )
+
+          const remittancesSnapshot = await getDocs(remittancesQuery)
           
-          // Use Firestore hasRemitted if available, otherwise use date comparison
-          this.hasRemitted = driverData.hasRemitted === true || (driverData.hasRemitted !== false && dateMatches)
+          let totalRemittedToday = 0
+          let totalDriverShareToday = 0
+          let totalAdminShareToday = 0
 
-          console.log("[v0] Earnings data loaded:", {
-            today: normalizedToday,
-            lastRemitDate: normalizedLastRemit,
-            dateMatches,
-            firestoreHasRemitted: driverData.hasRemitted,
-            hasRemitted: this.hasRemitted,
-            totalEarningsToday: driverData.totalEarningsToday,
-            totalEarningsTodayType: typeof driverData.totalEarningsToday
+          remittancesSnapshot.forEach(doc => {
+            const remittance = doc.data()
+            
+            // Check if remittance was approved today
+            let approvalDate
+            if (remittance.approvedAt) {
+              approvalDate = remittance.approvedAt.toDate ? remittance.approvedAt.toDate() : 
+                            new Date(remittance.approvedAt)
+            } else if (remittance.date) {
+              approvalDate = remittance.date.toDate ? remittance.date.toDate() : 
+                            new Date(remittance.date)
+            } else {
+              return
+            }
+            
+            const approvalDateString = approvalDate.toDateString()
+            
+            if (approvalDateString === todayString) {
+              const amount = parseFloat(remittance.amount) || 0
+              const driverShare = remittance.driverShare || (amount * driverShareRate)
+              const adminShare = remittance.adminShare || (amount * adminShareRate)
+              
+              totalRemittedToday += amount
+              totalDriverShareToday += driverShare
+              totalAdminShareToday += adminShare
+            }
           })
 
-          if (this.hasRemitted && driverData.totalEarningsToday) {
-            const totalEarned = parseFloat(driverData.totalEarningsToday) || 0
-            const driverShare = totalEarned * 0.8
-            const adminShare = totalEarned * 0.2
+          this.hasRemitted = totalRemittedToday > 0
 
+          if (this.hasRemitted) {
             this.todayEarnings = {
-              total: totalEarned.toFixed(2),
-              driverShare: driverShare.toFixed(2),
-              adminShare: adminShare.toFixed(2),
+              total: totalRemittedToday.toFixed(2),
+              driverShare: totalDriverShareToday.toFixed(2),
+              adminShare: totalAdminShareToday.toFixed(2),
             }
-            this.totalEarningsToday = totalEarned
+            this.totalEarningsToday = totalRemittedToday
 
-            console.log("[v0] Earnings calculated:", this.todayEarnings)
+            console.log("[v0] Earnings loaded from approved remittances:", {
+              totalRemittedToday,
+              totalDriverShareToday,
+              totalAdminShareToday,
+              driverShareRate,
+              adminShareRate,
+              todayEarnings: this.todayEarnings
+            })
           } else {
-            // Reset earnings if not remitted today or no earnings
+            // Reset earnings if no approved remittances today
             this.todayEarnings = {
               total: "0.00",
               driverShare: "0.00",
@@ -186,10 +205,7 @@ export const useDriverStore = defineStore("driver", {
             }
             this.totalEarningsToday = 0
             
-            console.log("[v0] No remittance today or no earnings, earnings reset", {
-            hasRemitted: this.hasRemitted,
-              totalEarningsToday: driverData.totalEarningsToday
-            })
+            console.log("[v0] No approved remittances today, earnings reset")
           }
           
           // Calculate weekly earnings
@@ -257,73 +273,103 @@ export const useDriverStore = defineStore("driver", {
       today.setHours(0, 0, 0, 0)
       const todayString = today.toDateString()
 
-      // Query for delivered orders by this driver today
-      const ordersQuery = query(
-        collection(db, 'orders'),
+      // Query for approved remittances by this driver
+      const remittancesQuery = query(
+        collection(db, 'remittances'),
         where('driverId', '==', driverId),
-        where('status', '==', 'delivered')
+        where('status', '==', 'approved')
       )
 
       this.unsubscribeTodayEarnings = onSnapshot(
-        ordersQuery,
-        (snapshot) => {
-          let totalEarnedToday = 0
+        remittancesQuery,
+        async (snapshot) => {
+          // Handle permission errors gracefully
+          if (snapshot.metadata && snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) {
+            // If we only have cached data, it might be a permission issue
+            console.warn('[v0] Only cached data available for remittances, checking permissions')
+          }
+          // Fetch driver's share rates from profile
+          let driverShareRate = 0.80 // Default 80%
+          let adminShareRate = 0.20  // Default 20%
+          
+          try {
+            const driverRef = doc(db, "drivers", driverId)
+            const driverDoc = await getDoc(driverRef)
+            if (driverDoc.exists()) {
+              const driverData = driverDoc.data()
+              driverShareRate = driverData.driverShareRate || 0.80
+              adminShareRate = driverData.adminShareRate || 0.20
+            }
+          } catch (error) {
+            console.error("[v0] Error fetching driver share rates:", error)
+          }
+
+          let totalRemittedToday = 0
+          let totalDriverShareToday = 0
+          let totalAdminShareToday = 0
 
           snapshot.forEach(doc => {
-            const order = doc.data()
+            const remittance = doc.data()
             
-            // Check if order was delivered today
-            let deliveryDate
-            if (order.deliveredAt) {
-              deliveryDate = order.deliveredAt.toDate ? order.deliveredAt.toDate() : 
-                            new Date(order.deliveredAt)
-            } else if (order.createdAt) {
-              // Fallback to createdAt if deliveredAt doesn't exist
-              deliveryDate = order.createdAt.toDate ? order.createdAt.toDate() : 
-                            new Date(order.createdAt)
+            // Check if remittance was approved today
+            let approvalDate
+            if (remittance.approvedAt) {
+              approvalDate = remittance.approvedAt.toDate ? remittance.approvedAt.toDate() : 
+                            new Date(remittance.approvedAt)
+            } else if (remittance.date) {
+              // Fallback to date field if approvedAt doesn't exist
+              approvalDate = remittance.date.toDate ? remittance.date.toDate() : 
+                            new Date(remittance.date)
             } else {
               // Skip if no date available
               return
             }
             
             // Compare date strings to ensure same day
-            const deliveryDateString = deliveryDate.toDateString()
+            const approvalDateString = approvalDate.toDateString()
             
-            // Only count orders delivered today (exact same day)
-            if (deliveryDateString === todayString) {
-              const amount = parseFloat(order.totalAmount) || parseFloat(order.amount) || 0
-              totalEarnedToday += amount
+            // Only count remittances approved today (exact same day)
+            if (approvalDateString === todayString) {
+              const amount = parseFloat(remittance.amount) || 0
               
-              console.log("[v0] Found delivered order today:", {
-                orderId: doc.id,
+              // Use driverShare and adminShare from remittance if available, otherwise calculate
+              const driverShare = remittance.driverShare || (amount * driverShareRate)
+              const adminShare = remittance.adminShare || (amount * adminShareRate)
+              
+              totalRemittedToday += amount
+              totalDriverShareToday += driverShare
+              totalAdminShareToday += adminShare
+              
+              console.log("[v0] Found approved remittance today:", {
+                remittanceId: doc.id,
                 amount,
-                deliveredAt: deliveryDateString,
+                driverShare,
+                adminShare,
+                approvedAt: approvalDateString,
                 today: todayString
               })
             }
           })
 
-          // Calculate 80/20 split
-          const driverShare = totalEarnedToday * 0.8
-          const adminShare = totalEarnedToday * 0.2
-
           this.todayEarnings = {
-            total: totalEarnedToday.toFixed(2),
-            driverShare: driverShare.toFixed(2),
-            adminShare: adminShare.toFixed(2),
+            total: totalRemittedToday.toFixed(2),
+            driverShare: totalDriverShareToday.toFixed(2),
+            adminShare: totalAdminShareToday.toFixed(2),
           }
-          this.totalEarningsToday = totalEarnedToday
+          this.totalEarningsToday = totalRemittedToday
           
-          // Update hasRemitted flag based on whether there are delivered orders today
-          this.hasRemitted = totalEarnedToday > 0
+          // Update hasRemitted flag based on whether there are approved remittances today
+          this.hasRemitted = totalRemittedToday > 0
 
-          console.log("[v0] Today's earnings from delivered orders:", {
-            totalEarnedToday,
-            driverShare,
-            adminShare,
+          console.log("[v0] Today's earnings from approved remittances:", {
+            totalRemittedToday,
+            totalDriverShareToday,
+            totalAdminShareToday,
+            driverShareRate,
+            adminShareRate,
             todayEarnings: this.todayEarnings,
             today: todayString,
-            ordersCount: snapshot.size,
+            remittancesCount: snapshot.size,
             hasRemitted: this.hasRemitted
           })
         },

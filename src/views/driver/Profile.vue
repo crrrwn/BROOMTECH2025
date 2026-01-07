@@ -332,22 +332,50 @@ export default {
           
           if (docSnap.exists()) {
             const data = docSnap.data()
-            this.profile = {
-              firstName: data.firstName || '',
-              lastName: data.lastName || '',
-              // Check various fields for contact/email incase of schema drift
-              contact: data.contact || data.phone || '',
-              email: data.email || this.authStore.user.email || '',
-              profilePictureUrl: data.profilePictureUrl || data.driverInfo?.documents?.profilePicture || '',
-              motorcycleInfo: {
-                brand: data.motorcycleInfo?.brand || '',
-                model: data.motorcycleInfo?.model || '',
-                plateNumber: data.motorcycleInfo?.plateNumber || '',
-                year: data.motorcycleInfo?.year || ''
-              },
-              experience: data.experience || '',
-              availability: data.availability || ''
+            
+            // Extract fullName or construct from firstName/lastName
+            let fullName = data.fullName || ''
+            if (!fullName && (data.firstName || data.lastName)) {
+              fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim()
             }
+            
+            // Extract experience from driverInfo or root level
+            const experience = data.driverInfo?.experience || data.experience || ''
+            
+            // Extract availability from driverInfo or root level
+            const availability = data.driverInfo?.availability || data.availability || ''
+            
+            // Extract motorcycleInfo from driverInfo or root level
+            const motorcycleInfo = data.driverInfo?.motorcycleInfo || data.motorcycleInfo || {
+              brand: '',
+              model: '',
+              plateNumber: '',
+              year: ''
+            }
+            
+            this.profile = {
+              fullName: fullName,
+              firstName: data.firstName || fullName.split(' ')[0] || '',
+              lastName: data.lastName || fullName.split(' ').slice(1).join(' ') || '',
+              middleName: data.middleName || '',
+              contact: data.contact || data.phone || '',
+              address: data.address || '',
+              barangay: data.barangay || '',
+              email: data.email || this.authStore.user.email || '',
+              profilePictureUrl: data.profilePictureUrl || data.driverInfo?.documents?.profilePicture || data.profilePicture || '',
+              motorcycleInfo: {
+                brand: motorcycleInfo.brand || '',
+                model: motorcycleInfo.model || '',
+                plateNumber: motorcycleInfo.plateNumber || '',
+                year: motorcycleInfo.year || ''
+              },
+              experience: experience,
+              availability: availability
+            }
+            
+            console.log('[v0] Profile loaded from Firestore:', this.profile)
+          } else {
+            console.warn('[v0] Driver profile not found in Firestore')
           }
         }
       } catch (error) {
@@ -431,24 +459,45 @@ export default {
         if (this.authStore.user) {
           const docRef = doc(db, 'drivers', this.authStore.user.uid)
           
+          // Construct fullName from firstName and lastName, or use existing fullName
+          const fullName = this.profile.fullName || `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim()
+          
           const updateData = {
-            fullName: this.profile.firstName + ' ' + this.profile.lastName, // Store full name for display
-            firstName: this.profile.firstName,
-            lastName: this.profile.lastName,
+            fullName: fullName,
+            firstName: this.profile.firstName || fullName.split(' ')[0] || '',
+            lastName: this.profile.lastName || fullName.split(' ').slice(1).join(' ') || '',
+            middleName: this.profile.middleName || '',
             contact: this.profile.contact,
+            phone: this.profile.contact, // Also store as phone for compatibility
             email: this.profile.email,
+            address: this.profile.address || '',
+            barangay: this.profile.barangay || '',
             profilePictureUrl: this.profile.profilePictureUrl,
-            motorcycleInfo: this.profile.motorcycleInfo,
+            profilePicture: this.profile.profilePictureUrl, // Also store as profilePicture for compatibility
             experience: this.profile.experience,
             availability: this.profile.availability,
-            updatedAt: new Date()
+            motorcycleInfo: this.profile.motorcycleInfo,
+            // Also update driverInfo structure for compatibility
+            driverInfo: {
+              experience: this.profile.experience,
+              availability: this.profile.availability,
+              motorcycleInfo: this.profile.motorcycleInfo
+            },
+            updatedAt: new Date().toISOString()
           }
           
           await setDoc(docRef, updateData, { merge: true })
           
+          // Refresh profile after update
+          await this.loadProfile()
+          
+          // Refresh auth store profile
+          await this.authStore.fetchUserProfile()
+          
           this.showNotification('success', 'Profile Updated Successfully!')
         }
       } catch (error) {
+        console.error('[v0] Error updating profile:', error)
         this.showNotification('error', 'Update Unsuccessful. ' + error.message)
       } finally {
         this.loading = false

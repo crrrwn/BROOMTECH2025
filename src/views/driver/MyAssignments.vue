@@ -843,8 +843,27 @@ export default {
                 }
               },
               (error) => {
-                console.error('[v0] Location tracking error:', error)
-                this.$toast?.error?.('Unable to track location')
+                // Handle different geolocation error codes
+                // Code 1: PERMISSION_DENIED - User denied location permission
+                // Code 2: POSITION_UNAVAILABLE - Location unavailable
+                // Code 3: TIMEOUT - Request timeout (common, expected - don't log as error)
+                if (error.code === 3) {
+                  // Timeout is expected and common - just log as debug, don't show error
+                  console.log('[v0] Location tracking timeout (expected):', error.message)
+                  return
+                }
+                
+                // Only log actual errors (permission denied, position unavailable)
+                if (error.code === 1) {
+                  console.warn('[v0] Location permission denied:', error.message)
+                  this.$toast?.warning?.('Location permission denied. Please enable location access.')
+                } else if (error.code === 2) {
+                  console.warn('[v0] Location unavailable:', error.message)
+                  this.$toast?.warning?.('Location unavailable. Please check your GPS settings.')
+                } else {
+                  console.warn('[v0] Location tracking error:', error.message)
+                  this.$toast?.warning?.('Location tracking issue: ' + error.message)
+                }
               },
               {
                 enableHighAccuracy: true,

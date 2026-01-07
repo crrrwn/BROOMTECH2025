@@ -504,8 +504,21 @@ const handleRegister = async () => {
   }
 
   try {
-    // Emit the descriptor to parent component
-    emit('registered', currentDescriptor)
+    // Capture face image from canvas
+    let faceImageUrl = null
+    if (canvasElement.value && videoElement.value) {
+      const canvas = canvasElement.value
+      const video = videoElement.value
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      ctx.scale(-1, 1) // Mirror the image
+      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height)
+      faceImageUrl = canvas.toDataURL('image/jpeg', 0.9)
+    }
+    
+    // Emit the descriptor and face image to parent component
+    emit('registered', { descriptor: currentDescriptor, faceImage: faceImageUrl })
     // Reset attempts on success
     registrationAttempts.value = 0
   } catch (err) {

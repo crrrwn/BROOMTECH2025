@@ -95,7 +95,7 @@
         <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs sm:text-sm text-gray-600">Total Earnings</p>
+              <p class="text-xs sm:text-sm text-gray-600">Total Driver Shares</p>
               <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-600">₱{{ totalEarnings }}</p>
             </div>
             <div class="p-2 sm:p-3 bg-purple-100 rounded-lg">
@@ -174,7 +174,7 @@
                 <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
                 <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver Share</th>
                 <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
                 <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -301,7 +301,7 @@
                 <div class="text-lg font-semibold text-gray-900">{{ driver.deliveries || 0 }}</div>
               </div>
               <div>
-                <div class="text-xs font-medium text-gray-500 mb-1">Earnings</div>
+                <div class="text-xs font-medium text-gray-500 mb-1">Driver Share</div>
                 <div class="text-lg font-semibold text-gray-900">₱{{ Number(driver.earnings || 0).toLocaleString() }}</div>
               </div>
             </div>
@@ -469,7 +469,7 @@
                 <p class="text-sm text-gray-900">{{ selectedDriver.deliveries }}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700">Total Earnings</label>
+                <label class="block text-sm font-medium text-gray-700">Driver Share</label>
                 <p class="text-sm text-gray-900">₱{{ selectedDriver.earnings.toLocaleString() }}</p>
               </div>
             </div>
@@ -1039,8 +1039,10 @@ export default {
         plateNumber,
         status: String(status).toLowerCase(),
         rating: Number(raw.rating ?? raw.driverInfo?.rating ?? 0) || 0,
-        deliveries: Number(raw.deliveries ?? 0) || 0,
-        earnings: Number(raw.earnings ?? 0) || 0,
+        deliveries: 0, // Will be calculated from orders
+        earnings: 0, // Will be calculated from orders (driver's share)
+        driverShareRate: raw.driverShareRate || 0.80, // Store driver's share rate
+        adminShareRate: raw.adminShareRate || 0.20,   // Store admin's share rate
         approved: !!raw.approved,
         banned: !!raw.banned,
         raw
@@ -1092,45 +1094,51 @@ export default {
       return filteredDrivers.value.slice(start, end)
     })
 
-    // Fetch driver earnings from orders
-    const fetchDriverEarnings = async (driverId) => {
+    // Fetch driver delivery count and earnings (driver share from approved remittances)
+    const fetchDriverStats = async (driverId) => {
       try {
-        // Query all delivered orders for this driver
+        // Query delivered orders for delivery count
         const ordersQuery = query(
           collection(db, 'orders'),
           where('driverId', '==', driverId),
           where('status', '==', 'delivered')
         )
-        
         const ordersSnap = await getDocs(ordersQuery)
-        let totalEarnings = 0
+        const deliveryCount = ordersSnap.size
         
-        ordersSnap.forEach(orderDoc => {
-          const order = orderDoc.data()
-          // Get earnings from order - prioritize driverShare, then calculate 80% of total
-          let earnings = 0
-          
-          // First try to get driverShare if it exists
-          if (order.driverShare !== undefined && order.driverShare !== null) {
-            earnings = Number(order.driverShare) || 0
-          } else if (order.pricing?.driverShare !== undefined && order.pricing?.driverShare !== null) {
-            earnings = Number(order.pricing.driverShare) || 0
+        // Query approved remittances to get driver's actual share
+        const remittancesQuery = query(
+          collection(db, 'remittances'),
+          where('driverId', '==', driverId),
+          where('status', '==', 'approved')
+        )
+        const remittancesSnap = await getDocs(remittancesQuery)
+        
+        let totalDriverShare = 0
+        
+        // Sum up driverShare from all approved remittances
+        remittancesSnap.forEach(remittanceDoc => {
+          const remittance = remittanceDoc.data()
+          // Use driverShare from remittance if available, otherwise calculate from amount and rate
+          if (remittance.driverShare !== undefined && remittance.driverShare !== null) {
+            totalDriverShare += Number(remittance.driverShare) || 0
           } else {
-            // Calculate 80% of total amount (driver's share)
-            const totalAmount = Number(order.totalAmount) || 
-                               Number(order.pricing?.total) || 
-                               Number(order.priceEstimate?.total) || 
-                               0
-            earnings = totalAmount * 0.8 // Driver gets 80% of the order total
+            // Fallback: calculate using driver's share rate
+            const amount = Number(remittance.amount) || 0
+            const driverShareRate = remittance.driverShareRate || 0.80
+            totalDriverShare += amount * driverShareRate
           }
-          
-          totalEarnings += earnings
         })
         
-        return totalEarnings
+        console.log(`[ManageDrivers] Driver ${driverId} stats:`, {
+          deliveries: deliveryCount,
+          driverShare: totalDriverShare
+        })
+        
+        return { earnings: totalDriverShare, deliveries: deliveryCount }
       } catch (error) {
-        console.error(`[ManageDrivers] Error fetching earnings for driver ${driverId}:`, error)
-        return 0
+        console.error(`[ManageDrivers] Error fetching stats for driver ${driverId}:`, error)
+        return { earnings: 0, deliveries: 0 }
       }
     }
 
@@ -1152,17 +1160,18 @@ export default {
 
         drivers.value = Array.from(mapById.values())
 
-        // Fetch earnings for each driver from orders
-        console.log('[ManageDrivers] Fetching earnings for drivers...')
-        const earningsPromises = drivers.value.map(async (driver) => {
-          const earnings = await fetchDriverEarnings(driver.id)
-          // Update driver earnings
-          driver.earnings = earnings
+        // Fetch earnings and delivery count for each driver from orders
+        console.log('[ManageDrivers] Fetching stats for drivers...')
+        const statsPromises = drivers.value.map(async (driver) => {
+          const stats = await fetchDriverStats(driver.id)
+          // Update driver earnings and deliveries
+          driver.earnings = stats.earnings
+          driver.deliveries = stats.deliveries
           return driver
         })
         
-        await Promise.all(earningsPromises)
-        console.log('[ManageDrivers] Earnings fetched for all drivers')
+        await Promise.all(statsPromises)
+        console.log('[ManageDrivers] Stats fetched for all drivers')
 
         toast.success(`Loaded ${drivers.value.length} drivers with earnings`)
         currentPage.value = 1
@@ -1186,14 +1195,15 @@ export default {
           })
           drivers.value = Array.from(existing.values())
           
-          // Update earnings when drivers are updated (debounced to avoid too many calls)
+          // Update earnings and deliveries when drivers are updated (debounced to avoid too many calls)
           if (drivers.value.length > 0) {
-            const earningsPromises = drivers.value.map(async (driver) => {
-              const earnings = await fetchDriverEarnings(driver.id)
-              driver.earnings = earnings
+            const statsPromises = drivers.value.map(async (driver) => {
+              const stats = await fetchDriverStats(driver.id)
+              driver.earnings = stats.earnings
+              driver.deliveries = stats.deliveries
               return driver
             })
-            await Promise.all(earningsPromises)
+            await Promise.all(statsPromises)
           }
         }, (err) => console.error('[Realtime drivers] error:', err))
 
@@ -1337,6 +1347,19 @@ export default {
         )
         const userId = userCredential.user.uid
 
+        // Calculate commission rates based on experience
+        // 1-2 years: Driver 80%, Admin 20%
+        // 3-5 years: Driver 18%, Admin 20%
+        // Other experience levels: Driver 80%, Admin 20% (default)
+        let driverShareRate, adminShareRate
+        if (newDriver.value.experience === '3-5') {
+          driverShareRate = 0.18  // Driver gets 18%
+          adminShareRate = 0.20   // Admin gets 20%
+        } else {
+          driverShareRate = 0.80  // Driver gets 80%
+          adminShareRate = 0.20    // Admin gets 20%
+        }
+
         // Create driver document in Firestore
         const driverData = {
           firstName: newDriver.value.firstName,
@@ -1354,6 +1377,8 @@ export default {
           deliveries: 0,
           earnings: 0,
           isOnline: false,
+          driverShareRate: driverShareRate, // Store driver share rate
+          adminShareRate: adminShareRate,   // Store admin share rate
           driverInfo: {
             motorcycleInfo: {
               brand: newDriver.value.motorcycleInfo.brand,
@@ -1400,15 +1425,16 @@ export default {
 
     const exportReport = async () => {
       try {
-        // Ensure earnings are up to date before exporting
-        console.log('[Export] Fetching latest earnings for all drivers...')
-        const earningsPromises = drivers.value.map(async (driver) => {
-          const earnings = await fetchDriverEarnings(driver.id)
-          driver.earnings = earnings
+        // Ensure earnings and deliveries are up to date before exporting
+        console.log('[Export] Fetching latest stats for all drivers...')
+        const statsPromises = drivers.value.map(async (driver) => {
+          const stats = await fetchDriverStats(driver.id)
+          driver.earnings = stats.earnings
+          driver.deliveries = stats.deliveries
           return driver
         })
-        await Promise.all(earningsPromises)
-        console.log('[Export] Earnings updated')
+        await Promise.all(statsPromises)
+        console.log('[Export] Stats updated')
 
         // Helper function to format dates
         const formatDate = (dateValue) => {

@@ -87,7 +87,26 @@ export class GoogleMapsService {
         }
         callback(location)
       },
-      (error) => console.error("Location watch error:", error),
+      (error) => {
+        // Handle different geolocation error codes
+        // Code 1: PERMISSION_DENIED - User denied location permission
+        // Code 2: POSITION_UNAVAILABLE - Location unavailable
+        // Code 3: TIMEOUT - Request timeout (common, expected - don't log as error)
+        if (error.code === 3) {
+          // Timeout is expected and common - just log as debug, don't show error
+          console.log("Location watch timeout (expected):", error.message)
+          return
+        }
+        
+        // Only log actual errors (permission denied, position unavailable)
+        if (error.code === 1) {
+          console.warn("Location permission denied:", error.message)
+        } else if (error.code === 2) {
+          console.warn("Location unavailable:", error.message)
+        } else {
+          console.warn("Location watch error:", error.message)
+        }
+      },
       {
         enableHighAccuracy: true,
         timeout: 5000,

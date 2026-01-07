@@ -183,7 +183,7 @@
                   </div>
                   <div>
                     <p class="text-xs font-bold text-blue-500 uppercase tracking-wide">Your Driver</p>
-                    <p class="font-bold text-gray-900 text-lg">{{ order.driver?.name || 'Driver Assigned' }}</p>
+                    <p class="font-bold text-gray-900 text-lg">{{ getDriverName(order) }}</p>
                   </div>
                 </div>
                 <button 
@@ -1063,9 +1063,14 @@ export default {
         this.chatId = chatRoomId
         
         // Set chat partner info with fallback values
+        const driverName = order.driver?.fullName || 
+                          order.driver?.name || 
+                          (order.driver?.firstName && order.driver?.lastName ? `${order.driver.firstName} ${order.driver.lastName}`.trim() : '') ||
+                          'Driver'
+        
         this.chatPartner = {
           id: driverId,
-          name: order.driver?.name || order.driver?.firstName || 'Driver',
+          name: driverName,
           role: 'driver',
           phone: order.driver?.phone || order.driver?.contact || ''
         }
@@ -1113,20 +1118,93 @@ export default {
       if (!order.driverId || order.driver) return
       
       try {
-        const driverDoc = await getDoc(doc(db, 'users', order.driverId))
+        // Fetch from drivers collection (not users collection)
+        const driverDoc = await getDoc(doc(db, 'drivers', order.driverId))
         if (driverDoc.exists()) {
           const driverData = driverDoc.data()
+          
+          // Get fullName or construct from firstName/lastName
+          let fullName = driverData.fullName || ''
+          if (!fullName && (driverData.firstName || driverData.lastName)) {
+            fullName = `${driverData.firstName || ''} ${driverData.lastName || ''}`.trim()
+          }
+          
+          // Get profile picture from various possible locations
+          const profilePicture = driverData.profilePictureUrl || 
+                                driverData.profilePicture || 
+                                driverData.driverInfo?.documents?.profilePicture || 
+                                driverData.photoURL || ''
+          
+          // Generate avatar URL if no profile picture
+          const avatarUrl = profilePicture || 
+                           (fullName ? `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}` : 
+                            `https://ui-avatars.com/api/?name=Driver`)
+          
           order.driver = {
             uid: order.driverId,
-            name: `${driverData.firstName} ${driverData.lastName}`,
-            phone: driverData.contact,
-            vehicle: driverData.vehicleType || 'Vehicle',
-            avatar: driverData.photoURL || `https://ui-avatars.com/api/?name=${driverData.firstName}+${driverData.lastName}`
+            name: fullName || 'Driver',
+            fullName: fullName,
+            firstName: driverData.firstName || '',
+            lastName: driverData.lastName || '',
+            phone: driverData.contact || driverData.phone || '',
+            vehicle: driverData.motorcycleInfo?.brand || driverData.vehicleType || 'Vehicle',
+            avatar: avatarUrl
+          }
+          
+          console.log('[v0] Driver info fetched:', {
+            driverId: order.driverId,
+            name: order.driver.name,
+            fullName: order.driver.fullName
+          })
+        } else {
+          console.warn('[v0] Driver document not found:', order.driverId)
+          // Set default driver info if document doesn't exist
+          order.driver = {
+            uid: order.driverId,
+            name: 'Driver',
+            fullName: 'Driver',
+            phone: '',
+            vehicle: 'Vehicle',
+            avatar: 'https://ui-avatars.com/api/?name=Driver'
           }
         }
       } catch (error) {
         console.error('[v0] Error fetching driver info:', error)
+        // Set default driver info on error
+        order.driver = {
+          uid: order.driverId,
+          name: 'Driver',
+          fullName: 'Driver',
+          phone: '',
+          vehicle: 'Vehicle',
+          avatar: 'https://ui-avatars.com/api/?name=Driver'
+        }
       }
+    },
+    
+    getDriverName(order) {
+      if (!order.driverId && !order.driver) {
+        return 'No driver assigned'
+      }
+      
+      // Prioritize fullName, then name, then constructed name
+      if (order.driver) {
+        if (order.driver.fullName) {
+          return order.driver.fullName
+        }
+        if (order.driver.name && order.driver.name !== 'Driver Assigned') {
+          return order.driver.name
+        }
+        if (order.driver.firstName || order.driver.lastName) {
+          const constructed = `${order.driver.firstName || ''} ${order.driver.lastName || ''}`.trim()
+          if (constructed) {
+            return constructed
+          }
+        }
+      }
+      
+      // Fallback
+      return 'Driver Assigned'
     },
 
     async loadOrders() {

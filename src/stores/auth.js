@@ -98,7 +98,84 @@ export const useAuthStore = defineStore("auth", {
     },
 
     // ---------- Face Recognition Methods ----------
-    async saveFaceDescriptor(userId, descriptor) {
+    async saveFaceDescriptor(userId, descriptor, faceImage = null) {
+      try {
+        const profile = await this.refreshAndGetProfile()
+        if (!profile) {
+          return { success: false, message: 'User profile not found' }
+        }
+
+        const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
+        
+        // Upload face image to storage if provided
+        let faceImageUrl = null
+        if (faceImage) {
+          try {
+            // Use already imported storage and storageRef
+            const timestamp = Date.now()
+            const randomString = Math.random().toString(36).substring(2, 15)
+            const fileName = `face-registration_${timestamp}_${randomString}.jpg`
+            const fileRef = storageRef(storage, `face-images/${userId}/${fileName}`)
+            
+            // Import uploadString for base64 upload
+            const { uploadString } = await import('firebase/storage')
+            
+            // Upload base64 image
+            await uploadString(fileRef, faceImage, 'data_url', {
+              contentType: 'image/jpeg',
+              customMetadata: {
+                uploadedAt: new Date().toISOString(),
+                documentType: 'faceRegistration'
+              }
+            })
+            
+            faceImageUrl = await getDownloadURL(fileRef)
+            console.log('[v0] Face image uploaded successfully to Storage:', faceImageUrl)
+            console.log('[v0] Saving faceRegistrationImage URL to Firestore...')
+          } catch (uploadError) {
+            console.error('[v0] Error uploading face image to Storage:', uploadError)
+            console.error('[v0] Upload error details:', {
+              code: uploadError.code,
+              message: uploadError.message,
+              stack: uploadError.stack
+            })
+            // Continue even if image upload fails
+          }
+        }
+
+        const updateData = {
+          faceDescriptor: descriptor,
+          faceRegisteredAt: new Date().toISOString()
+        }
+        
+        if (faceImageUrl) {
+          updateData.faceRegistrationImage = faceImageUrl
+          console.log('[v0] Adding faceRegistrationImage to Firestore update:', faceImageUrl)
+        } else {
+          console.warn('[v0] No faceImageUrl available - face image may not have uploaded successfully')
+        }
+
+        console.log('[v0] Updating Firestore document:', collectionName, userId, updateData)
+        await updateDoc(doc(db, collectionName, userId), updateData)
+        console.log('[v0] Firestore document updated successfully')
+
+        // Update local profile
+        if (this.userProfile) {
+          this.userProfile.faceDescriptor = descriptor
+          this.userProfile.faceRegisteredAt = new Date().toISOString()
+          if (faceImageUrl) {
+            this.userProfile.faceRegistrationImage = faceImageUrl
+          }
+        }
+
+        return { success: true, message: 'Face registered successfully' }
+      } catch (error) {
+        console.error('Error saving face descriptor:', error)
+        return { success: false, message: error.message }
+      }
+    },
+
+    async saveValidId(userId, validIdUrl) {
       try {
         const profile = await this.refreshAndGetProfile()
         if (!profile) {
@@ -107,19 +184,19 @@ export const useAuthStore = defineStore("auth", {
 
         const collectionName = profile.role === 'user' ? 'users' : profile.role === 'driver' ? 'drivers' : 'admins'
         await updateDoc(doc(db, collectionName, userId), {
-          faceDescriptor: descriptor,
-          faceRegisteredAt: new Date().toISOString()
+          validIdUrl: validIdUrl,
+          validIdUploadedAt: new Date().toISOString()
         })
 
         // Update local profile
         if (this.userProfile) {
-          this.userProfile.faceDescriptor = descriptor
-          this.userProfile.faceRegisteredAt = new Date().toISOString()
+          this.userProfile.validIdUrl = validIdUrl
+          this.userProfile.validIdUploadedAt = new Date().toISOString()
         }
 
-        return { success: true, message: 'Face registered successfully' }
+        return { success: true, message: 'Valid ID saved successfully' }
       } catch (error) {
-        console.error('Error saving face descriptor:', error)
+        console.error('Error saving valid ID:', error)
         return { success: false, message: error.message }
       }
     },
@@ -866,6 +943,19 @@ export const useAuthStore = defineStore("auth", {
           }
         }
 
+        // Calculate commission rates based on experience
+        // 1-2 years: Driver 80%, Admin 20%
+        // 3-5 years: Driver 18%, Admin 20%
+        // Other experience levels: Driver 80%, Admin 20% (default)
+        let driverShareRate, adminShareRate
+        if (profileData.experience === '3-5') {
+          driverShareRate = 0.18  // Driver gets 18%
+          adminShareRate = 0.20    // Admin gets 20%
+        } else {
+          driverShareRate = 0.80  // Driver gets 80%
+          adminShareRate = 0.20    // Admin gets 20%
+        }
+
         const userProfileData = {
           fullName: profileData.fullName,
           contact: profileData.contact,
@@ -875,6 +965,8 @@ export const useAuthStore = defineStore("auth", {
           emailVerified: true,
           banned: false,
           createdAt: new Date().toISOString(),
+          driverShareRate: driverShareRate, // Store driver share rate
+          adminShareRate: adminShareRate,   // Store admin share rate
           driverInfo: {
             motorcycleInfo: profileData.motorcycleInfo,
             experience: profileData.experience,

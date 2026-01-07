@@ -5,10 +5,10 @@
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Earnings & Remittance</h1>
-          <p class="text-gray-500 mt-1">Manage your income. Keep 80%, remit 20% to admin.</p>
+          <p class="text-gray-500 mt-1">Manage your income. Keep {{ driverSharePercent }}%, remit {{ adminSharePercent }}% to admin.</p>
         </div>
         <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold border border-blue-100 shadow-sm">
-           Driver Share: 80% • Admin Fee: 20%
+           Driver Share: {{ driverSharePercent }}% • Admin Fee: {{ adminSharePercent }}%
         </div>
       </div>
 
@@ -112,7 +112,7 @@
                     <tr>
                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
-                       <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider text-blue-600">You (80%)</th>
+                       <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider text-blue-600">You ({{ driverSharePercent }}%)</th>
                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Method</th>
                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Proof</th>
@@ -122,7 +122,7 @@
                     <tr v-for="remittance in remittanceHistory" :key="remittance.id" class="hover:bg-gray-50/50 transition-colors">
                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ formatDate(remittance.date) }}</td>
                        <td class="px-6 py-4 text-sm font-bold text-gray-900">₱{{ remittance.amount.toFixed(2) }}</td>
-                       <td class="px-6 py-4 text-sm font-bold text-blue-600">₱{{ (remittance.amount * 0.8).toFixed(2) }}</td>
+                       <td class="px-6 py-4 text-sm font-bold text-blue-600">₱{{ (remittance.driverShare || (remittance.amount * driverShareRate)).toFixed(2) }}</td>
                        <td class="px-6 py-4 text-sm text-gray-500">{{ formatPaymentMethod(remittance.paymentMethod) }}</td>
                        <td class="px-6 py-4">
                           <span :class="['px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider', remittance.status === 'approved' ? 'bg-green-100 text-green-700' : remittance.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700']">
@@ -161,12 +161,12 @@
                  <span class="text-2xl font-extrabold text-gray-900">₱{{ selectedDateGroup.totalAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-sm">
-                 <span class="text-gray-500">Your Income (80%)</span>
-                 <span class="font-bold text-blue-600">₱{{ (selectedDateGroup.totalAmount * 0.8).toFixed(2) }}</span>
+                 <span class="text-gray-500">Your Income ({{ driverSharePercent }}%)</span>
+                 <span class="font-bold text-blue-600">₱{{ (selectedDateGroup.totalAmount * driverShareRate).toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-sm">
-                 <span class="text-gray-500">Admin Commission (20%)</span>
-                 <span class="font-bold text-green-600">₱{{ (selectedDateGroup.totalAmount * 0.2).toFixed(2) }}</span>
+                 <span class="text-gray-500">Admin Commission ({{ adminSharePercent }}%)</span>
+                 <span class="font-bold text-green-600">₱{{ (selectedDateGroup.totalAmount * adminShareRate).toFixed(2) }}</span>
               </div>
               <div class="pt-2">
                  <div class="bg-[#3ED400]/10 p-3 rounded-xl border border-[#3ED400]/20 flex justify-between items-center">
@@ -298,10 +298,18 @@ export default {
       remitFormData: { paymentMethod: '', proofFile: null },
       isUploading: false,
       showProofModal: false,
-      selectedProof: null
+      selectedProof: null,
+      driverShareRate: 0.80, // Default to 80%
+      adminShareRate: 0.20   // Default to 20%
     }
   },
   computed: {
+    driverSharePercent() {
+      return Math.round(this.driverShareRate * 100)
+    },
+    adminSharePercent() {
+      return Math.round(this.adminShareRate * 100)
+    },
     groupedDeliveries() {
       const deliveries = this.getFilteredDeliveries()
       const grouped = {}
@@ -325,6 +333,7 @@ export default {
     }
   },
   async mounted() {
+    await this.loadDriverShareRates()
     this.setupRemittanceHistoryListener()
     this.setupCompletedDeliveriesListener()
   },
@@ -333,6 +342,21 @@ export default {
     if (this.remittanceHistoryUnsubscribe) this.remittanceHistoryUnsubscribe()
   },
   methods: {
+    async loadDriverShareRates() {
+      try {
+        const user = this.authStore.user
+        if (!user) return
+        const driverRef = doc(db, 'drivers', user.uid)
+        const driverDoc = await getDoc(driverRef)
+        if (driverDoc.exists()) {
+          const data = driverDoc.data()
+          this.driverShareRate = data.driverShareRate || 0.80
+          this.adminShareRate = data.adminShareRate || 0.20
+        }
+      } catch (error) {
+        console.error('Error loading driver share rates:', error)
+      }
+    },
     handleFileUpload(event) {
       const file = event.target.files[0]
       if (file) {
@@ -370,9 +394,20 @@ export default {
         uploadTask.on('state_changed', null, (err) => { this.isUploading = false; this.toast.error('Upload failed'); }, async () => {
              const proofUrl = await getDownloadURL(uploadTask.snapshot.ref);
              const amount = this.selectedDateGroup.totalAmount;
+             
+             // Get driver's share rates from profile (default to 80/20 if not set)
+             const driverRef = doc(db, 'drivers', user.uid);
+             const driverDoc = await getDoc(driverRef);
+             const driverShareRate = driverDoc.exists() ? (driverDoc.data().driverShareRate || 0.80) : 0.80;
+             const adminShareRate = driverDoc.exists() ? (driverDoc.data().adminShareRate || 0.20) : 0.20;
+             
              const remittanceData = {
                 driverId: user.uid, driverName: this.authStore.userProfile?.fullName || 'Driver',
-                amount, driverShare: amount * 0.8, adminShare: amount * 0.2,
+                amount, 
+                driverShare: amount * driverShareRate, 
+                adminShare: amount * adminShareRate,
+                driverShareRate: driverShareRate, // Store rates for reference
+                adminShareRate: adminShareRate,
                 paymentMethod: this.remitFormData.paymentMethod, proofUrl,
                 notes: `Earnings for ${this.selectedDateGroup.label}`, date: new Date(), status: 'pending', createdAt: new Date(),
                 orderIds: this.selectedDateGroup.deliveries.map(d => d.id)
@@ -382,8 +417,6 @@ export default {
                  await updateDoc(doc(db, 'orders', d.id), { remitStatus: 'remitted', remittanceId: ref.id, remittedAt: new Date() });
              }
              // Update driver doc
-             const driverRef = doc(db, 'drivers', user.uid);
-             const driverDoc = await getDoc(driverRef);
              const newTotal = (driverDoc.exists() ? driverDoc.data().totalEarningsToday || 0 : 0) + amount;
              await setDoc(driverRef, { totalEarningsToday: newTotal, lastRemitDate: new Date().toDateString(), hasRemitted: true }, { merge: true });
              await this.driverStore.loadEarningsData();

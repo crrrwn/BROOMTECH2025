@@ -470,11 +470,25 @@ export default {
                 const customerDoc = await getDoc(doc(db, 'users', chat.userId))
                 const customerData = customerDoc.exists() ? customerDoc.data() : {}
                 
-                // Get driver info
+                // Get driver info from drivers collection (not users)
                 let driverData = {}
                 if (chat.driverId) {
-                  const driverDoc = await getDoc(doc(db, 'users', chat.driverId))
-                  driverData = driverDoc.exists() ? driverDoc.data() : {}
+                  const driverDoc = await getDoc(doc(db, 'drivers', chat.driverId))
+                  if (driverDoc.exists()) {
+                    driverData = driverDoc.data()
+                  } else {
+                    // Fallback to users collection if not found in drivers
+                    const userDriverDoc = await getDoc(doc(db, 'users', chat.driverId))
+                    driverData = userDriverDoc.exists() ? userDriverDoc.data() : {}
+                  }
+                }
+                
+                // Get fullName or construct from firstName/lastName
+                let driverName = null
+                if (driverData.fullName) {
+                  driverName = driverData.fullName
+                } else if (driverData.firstName || driverData.lastName) {
+                  driverName = `${driverData.firstName || ''} ${driverData.lastName || ''}`.trim()
                 }
                 
                 return {
@@ -482,9 +496,7 @@ export default {
                   customerName: customerData.firstName && customerData.lastName 
                     ? `${customerData.firstName} ${customerData.lastName}`
                     : 'Customer',
-                  driverName: driverData.firstName && driverData.lastName 
-                    ? `${driverData.firstName} ${driverData.lastName}`
-                    : null,
+                  driverName: driverName || null,
                   isUrgent: chat.isUrgent || false
                 }
               } catch (error) {

@@ -51,16 +51,6 @@
         </router-link>
 
         <router-link 
-          to="/driver/chat" 
-          @click="isSidebarOpen = false"
-          class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
-          active-class="bg-green-50 text-[#3ED400]"
-        >
-          <svg class="w-5 h-5 mr-3 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-          Messages
-        </router-link>
-
-        <router-link 
           to="/driver/remit" 
           @click="isSidebarOpen = false"
           class="flex items-center px-6 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors rounded-xl group" 
@@ -215,7 +205,7 @@ export default {
       // Existing data from your code
       userLoaded: false,
       availableBookingsCount: 3,
-      activeAssignmentsCount: 1,
+      activeAssignmentsCount: 0,
       isTrackingLocation: false,
       locationWatchId: null,
       currentLocation: null,
@@ -223,7 +213,8 @@ export default {
       notifications: [],
       loadingNotifications: false,
       unreadCount: 0,
-      notificationsUnsubscribe: null
+      notificationsUnsubscribe: null,
+      assignmentsUnsubscribe: null
     }
   },
   computed: {
@@ -261,6 +252,15 @@ export default {
     console.log('[v0] DriverLayout mounted')
     await this.loadDriverStatus()
     this.fetchNotifications()
+    this.setupAssignmentsListener()
+    
+    // Auto-enable location tracking on login (silent mode - no toast)
+    if (this.authStore.user && !this.isTrackingLocation) {
+      // Small delay to ensure everything is loaded
+      setTimeout(() => {
+        this.toggleLocationTracking(true) // Pass true for silent mode
+      }, 1000)
+    }
     
     // Close notifications when clicking outside
     document.addEventListener('click', this.handleClickOutside)
@@ -273,6 +273,9 @@ export default {
     }
     if (this.notificationsUnsubscribe) {
       this.notificationsUnsubscribe()
+    }
+    if (this.assignmentsUnsubscribe) {
+      this.assignmentsUnsubscribe()
     }
     document.removeEventListener('click', this.handleClickOutside)
   },
@@ -348,14 +351,14 @@ export default {
       })
     },
     
-    async toggleLocationTracking() {
+    async toggleLocationTracking(silent = false) {
       try {
         if (!this.isTrackingLocation) {
           // Start tracking location using Geolocation API
           if (navigator.geolocation) {
             const userId = this.authStore.user?.uid
             if (!userId) {
-              this.$toast.error('User not authenticated')
+              if (!silent) this.$toast.error('User not authenticated')
               return
             }
 
@@ -388,8 +391,28 @@ export default {
                 }
               },
               (error) => {
-                console.error('[v0] Location tracking error:', error)
-                this.$toast.error('Unable to track location: ' + error.message)
+                // Handle different geolocation error codes
+                // Code 1: PERMISSION_DENIED - User denied location permission
+                // Code 2: POSITION_UNAVAILABLE - Location unavailable
+                // Code 3: TIMEOUT - Request timeout (common, expected - don't log as error)
+                if (error.code === 3) {
+                  // Timeout is expected and common - just log as debug, don't show error
+                  console.log('[v0] Location tracking timeout (expected):', error.message)
+                  // Silently retry or continue - timeout is not a critical error
+                  return
+                }
+                
+                // Only log actual errors (permission denied, position unavailable)
+                if (error.code === 1) {
+                  console.warn('[v0] Location permission denied:', error.message)
+                  if (!silent) this.$toast.warning('Location permission denied. Please enable location access.')
+                } else if (error.code === 2) {
+                  console.warn('[v0] Location unavailable:', error.message)
+                  if (!silent) this.$toast.warning('Location unavailable. Please check your GPS settings.')
+                } else {
+                  console.warn('[v0] Location tracking error:', error.message)
+                  if (!silent) this.$toast.warning('Location tracking issue: ' + error.message)
+                }
               },
               {
                 enableHighAccuracy: true,
@@ -398,9 +421,13 @@ export default {
               }
             )
             this.isTrackingLocation = true
-            this.$toast.success('Location tracking enabled - Your location will be shared accurately')
+            if (!silent) {
+              this.$toast.success('Location tracking enabled - Your location will be shared accurately')
+            } else {
+              console.log('[v0] Location tracking auto-enabled on login')
+            }
           } else {
-            this.$toast.error('Geolocation not supported on this device')
+            if (!silent) this.$toast.error('Geolocation not supported on this device')
           }
         } else {
           // Stop tracking location
@@ -409,11 +436,13 @@ export default {
             this.locationWatchId = null
           }
           this.isTrackingLocation = false
-          this.$toast.success('Location tracking disabled')
+          if (!silent) {
+            this.$toast.success('Location tracking disabled')
+          }
         }
       } catch (error) {
         console.error('[v0] Error toggling location tracking:', error)
-        this.$toast.error('Failed to toggle location tracking')
+        if (!silent) this.$toast.error('Failed to toggle location tracking')
       }
     },
 
@@ -535,6 +564,32 @@ export default {
       
       if (!notificationButton && !notificationDropdown) {
         this.showNotifications = false
+      }
+    },
+
+    setupAssignmentsListener() {
+      try {
+        const userId = this.authStore.user?.uid
+        if (!userId) return
+
+        // Query for orders assigned to this driver by admin
+        const assignmentsQuery = query(
+          collection(db, 'orders'),
+          where('driverId', '==', userId),
+          where('status', 'in', ['confirmed', 'driver_assigned', 'in_transit', 'on_the_way', 'assigned'])
+        )
+
+        this.assignmentsUnsubscribe = onSnapshot(assignmentsQuery, (snapshot) => {
+          // Only show count if there are actual assignments from admin
+          this.activeAssignmentsCount = snapshot.size
+          console.log('[v0] Active assignments count:', this.activeAssignmentsCount)
+        }, (error) => {
+          console.error('[v0] Error loading assignments:', error)
+          this.activeAssignmentsCount = 0
+        })
+      } catch (error) {
+        console.error('[v0] Error setting up assignments listener:', error)
+        this.activeAssignmentsCount = 0
       }
     }
   }

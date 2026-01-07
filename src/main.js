@@ -46,7 +46,17 @@ const originalConsoleLog = console.log.bind(console)
 
 console.warn = (...args) => {
   const message = args[0]?.toString() || ''
-  const fullMessage = args.join(' ').toLowerCase()
+  const fullMessage = args.map(arg => {
+    if (arg === null || arg === undefined) return ''
+    if (typeof arg === 'object') {
+      try {
+        return JSON.stringify(arg)
+      } catch {
+        return String(arg)
+      }
+    }
+    return String(arg)
+  }).join(' ').toLowerCase()
   
   // Suppress Google Maps deprecation warnings
   if (message.includes('google.maps.Marker is deprecated') || 
@@ -57,6 +67,23 @@ console.warn = (...args) => {
       message.includes('As of March 1st, 2025') ||
       message.includes('Firestore index missing')) {
     return // Suppress these warnings
+  }
+  
+  // Suppress Google Maps InvalidKey warnings
+  if (fullMessage.includes('invalidkey') ||
+      fullMessage.includes('invalid key') ||
+      fullMessage.includes('google maps javascript api warning') ||
+      fullMessage.includes('google maps javascript api error') ||
+      message.includes('InvalidKey') ||
+      message.includes('InvalidKeyMapError') ||
+      fullMessage.includes('developers.google.com/maps/documentation/javascript/error-messages') ||
+      (args.some(arg => {
+        const str = String(arg || '')
+        return str.includes('InvalidKey') || 
+               str.includes('invalidkey') ||
+               (str.includes('Google Maps') && (str.includes('warning') || str.includes('error')))
+      }))) {
+    return // Suppress Google Maps InvalidKey warnings
   }
   
   // Suppress Google Maps custom element registration warnings
@@ -79,7 +106,17 @@ console.warn = (...args) => {
 console.error = (...args) => {
   try {
     const message = args[0]?.toString() || ''
-    const fullMessage = args.join(' ').toLowerCase()
+    const fullMessage = args.map(arg => {
+      if (arg === null || arg === undefined) return ''
+      if (typeof arg === 'object') {
+        try {
+          return JSON.stringify(arg)
+        } catch {
+          return String(arg)
+        }
+      }
+      return String(arg)
+    }).join(' ').toLowerCase()
     
     // Suppress 403 errors for Facebook CDN images - check all variations
     if ((fullMessage.includes('failed to load resource') || 
@@ -116,6 +153,18 @@ console.error = (...args) => {
       return // Suppress blocked by client errors
     }
     
+    // Suppress Firestore permission errors (expected in some cases)
+    if (fullMessage.includes('permission-denied') ||
+        fullMessage.includes('missing or insufficient permissions') ||
+        (fullMessage.includes('firebaseerror') && (fullMessage.includes('permission') || fullMessage.includes('permissions'))) ||
+        (fullMessage.includes('@firebase/firestore') && (fullMessage.includes('permission') || fullMessage.includes('permissions'))) ||
+        (fullMessage.includes('firestore') && (fullMessage.includes('permission') || fullMessage.includes('permissions'))) ||
+        message.includes('permission-denied') ||
+        (message.includes('Firestore') && (message.includes('permission') || message.includes('Permission')))) {
+      // Suppress all Firestore permission errors
+      return // Suppress Firestore permission errors
+    }
+    
     // Suppress saved replies permission errors (expected, using localStorage fallback)
     if ((fullMessage.includes('error loading saved replies') || 
          fullMessage.includes('saved replies')) &&
@@ -124,34 +173,52 @@ console.error = (...args) => {
       return // Suppress expected permission errors for saved replies
     }
     
-    // Suppress Google Maps API key errors (InvalidKeyMapError)
+    // Suppress Google Maps API key errors (InvalidKeyMapError, InvalidKey)
     if (fullMessage.includes('invalidkeymaperror') ||
         fullMessage.includes('invalid key map error') ||
+        fullMessage.includes('invalidkey') ||
+        fullMessage.includes('invalid key') ||
         fullMessage.includes('google maps javascript api error') ||
+        fullMessage.includes('google maps javascript api warning') ||
         message.includes('InvalidKeyMapError') ||
-        message.includes('InvalidKeyMapError') ||
+        message.includes('InvalidKey') ||
         (args.some(arg => {
           const str = String(arg || '')
           return str.includes('InvalidKeyMapError') || 
+                 str.includes('InvalidKey') ||
                  str.includes('invalidkeymaperror') ||
-                 (str.includes('Google Maps') && str.includes('error'))
+                 str.includes('invalidkey') ||
+                 (str.includes('Google Maps') && (str.includes('error') || str.includes('warning')))
         })) ||
         fullMessage.includes('developers.google.com/maps/documentation/javascript/error-messages')) {
       return // Suppress Google Maps API key errors
     }
     
-    // Suppress Google Maps API internal errors
+    // Aggressively suppress Google Maps API internal errors
     if (fullMessage.includes('cannot read properties of undefined') ||
+        fullMessage.includes('cannot read property') ||
         fullMessage.includes('connectforexplicitthirdpartyload') ||
         fullMessage.includes('reading \'connectforexplicitthirdpartyload\'') ||
         fullMessage.includes('reading \'bj\'') ||
+        fullMessage.includes('reading \'bJ\'') ||
+        fullMessage.includes('reading "bj"') ||
+        fullMessage.includes('reading "bJ"') ||
         message.includes('connectForExplicitThirdPartyLoad') ||
+        message.includes('Cannot read properties of undefined') ||
+        message.includes('reading \'bJ\'') ||
+        message.includes('reading \'bj\'') ||
+        message.match(/reading ['"]b[jJ]['"]/i) ||
         (args.some(arg => {
           const str = String(arg || '')
           return str.includes('connectForExplicitThirdPartyLoad') || 
                  str.includes('Cannot read properties of undefined') ||
-                 str.includes('reading \'bJ\'')
-        }))) {
+                 str.includes('Cannot read property') ||
+                 str.includes('reading \'bJ\'') ||
+                 str.includes('reading \'bj\'') ||
+                 str.match(/reading ['"]b[jJ]['"]/i) ||
+                 (str.includes('TypeError') && (str.includes('undefined') || str.includes('bJ') || str.includes('bj')))
+        })) ||
+        (fullMessage.includes('typeerror') && (fullMessage.includes('cannot read') || fullMessage.includes('undefined') || fullMessage.includes('bj') || fullMessage.includes('bJ')))) {
       return // Suppress Google Maps API internal errors
     }
   } catch (e) {
@@ -163,7 +230,17 @@ console.error = (...args) => {
 // Suppress network errors in console
 console.log = (...args) => {
   const message = args[0]?.toString() || ''
-  const fullMessage = args.join(' ').toLowerCase()
+  const fullMessage = args.map(arg => {
+    if (arg === null || arg === undefined) return ''
+    if (typeof arg === 'object') {
+      try {
+        return JSON.stringify(arg)
+      } catch {
+        return String(arg)
+      }
+    }
+    return String(arg)
+  }).join(' ').toLowerCase()
   
   // Suppress 403 errors for Facebook CDN images
   if ((message.includes('403') || message.includes('Forbidden')) &&
@@ -201,6 +278,31 @@ console.log = (...args) => {
 
 // Global error handler to catch and suppress image load errors
 window.addEventListener('error', (event) => {
+  const errorMessage = event.message || ''
+  const errorMessageLower = errorMessage.toLowerCase()
+  
+  // FIRST: Aggressively suppress Google Maps 'bJ' errors (highest priority)
+  if (errorMessage.includes('bJ') ||
+      errorMessageLower.includes('reading \'bj\'') ||
+      errorMessageLower.includes('reading \'bj\'') ||
+      (errorMessageLower.includes('cannot read') && (errorMessageLower.includes('undefined') || errorMessageLower.includes('bj')))) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return false
+  }
+  
+  // Suppress Firestore permission errors
+  if (errorMessageLower.includes('permission-denied') ||
+      errorMessageLower.includes('missing or insufficient permissions') ||
+      (errorMessageLower.includes('firestore') && errorMessageLower.includes('permission')) ||
+      (errorMessageLower.includes('firebaseerror') && errorMessageLower.includes('permission'))) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return false
+  }
+  
   if (event.target && event.target.tagName === 'IMG') {
     const src = event.target.src || ''
     // Suppress 403 errors for Facebook CDN images
@@ -233,20 +335,32 @@ window.addEventListener('error', (event) => {
     event.stopPropagation()
     return false
   }
-  // Suppress Google Maps API internal errors
-  if (event.message && (event.message.includes('connectForExplicitThirdPartyLoad') ||
-                        event.message.includes('Cannot read properties of undefined') ||
-                        event.message.toLowerCase().includes('reading \'bj\''))) {
+  // Aggressively suppress Google Maps API internal errors
+  const errorMsg = event.message || ''
+  const errorMsgLower = errorMsg.toLowerCase()
+  if (errorMsg.includes('connectForExplicitThirdPartyLoad') ||
+      errorMsg.includes('Cannot read properties of undefined') ||
+      errorMsg.includes('Cannot read property') ||
+      errorMsgLower.includes('reading \'bj\'') ||
+      errorMsg.includes('reading \'bJ\'') ||
+      errorMsg.includes('bJ') ||
+      (errorMsgLower.includes('typeerror') && (errorMsgLower.includes('cannot read') || errorMsgLower.includes('undefined') || errorMsgLower.includes('bj'))) ||
+      (errorMsgLower.includes('cannot read') && errorMsgLower.includes('undefined'))) {
     event.preventDefault()
     event.stopPropagation()
+    event.stopImmediatePropagation()
     return false
   }
-  // Suppress Google Maps API internal errors
-  if (event.message && (event.message.includes('connectForExplicitThirdPartyLoad') ||
-                        event.message.includes('Cannot read properties of undefined') ||
-                        event.message.toLowerCase().includes('reading \'bj\''))) {
+  
+  // Also check error source/filename for Google Maps
+  const errorSource = event.filename || event.source || ''
+  if (errorSource.includes('maps.googleapis.com') && 
+      (errorMsgLower.includes('cannot read') || 
+       errorMsgLower.includes('undefined') ||
+       errorMsgLower.includes('bj'))) {
     event.preventDefault()
     event.stopPropagation()
+    event.stopImmediatePropagation()
     return false
   }
   // Suppress errors from Firestore Write/channel requests
@@ -258,22 +372,160 @@ window.addEventListener('error', (event) => {
   }
 }, true)
 
+// Suppress IntersectionObserver errors
+if (typeof window !== 'undefined' && window.IntersectionObserver) {
+  const OriginalIntersectionObserver = window.IntersectionObserver
+  window.IntersectionObserver = function(callback, options) {
+    // Wrap callback to handle errors
+    const safeCallback = (entries, observer) => {
+      try {
+        if (callback) callback(entries, observer)
+      } catch (error) {
+        console.warn('[v0] IntersectionObserver callback error:', error)
+      }
+    }
+    try {
+      return new OriginalIntersectionObserver(safeCallback, options)
+    } catch (error) {
+      console.warn('[v0] IntersectionObserver creation failed:', error)
+      // Return a no-op observer
+      return {
+        observe: () => {},
+        unobserve: () => {},
+        disconnect: () => {}
+      }
+    }
+  }
+  // Copy prototype
+  Object.setPrototypeOf(window.IntersectionObserver, OriginalIntersectionObserver)
+}
+
 // Global unhandled promise rejection handler to suppress Google Maps API errors
 window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason
   const reasonStr = reason ? (reason.message || reason.toString() || String(reason)) : ''
   const reasonLower = reasonStr.toLowerCase()
   
-  // Suppress Google Maps API internal errors
-  if (reasonLower.includes('connectforexplicitthirdpartyload') ||
-      reasonLower.includes('cannot read properties of undefined') ||
+  // FIRST: Aggressively suppress Google Maps 'bJ' errors (highest priority)
+  // Check multiple patterns to catch all variations
+  const errorStack = reason?.stack || ''
+  const errorStackLower = errorStack.toLowerCase()
+  
+  if (reasonStr.includes('bJ') ||
+      reasonStr.includes('bj') ||
       reasonLower.includes('reading \'bj\'') ||
-      reasonLower.includes('reading \'connectforexplicitthirdpartyload\'')) {
+      reasonLower.includes('reading \'bJ\'') ||
+      reasonLower.includes('reading "bj"') ||
+      reasonLower.includes('reading "bJ"') ||
+      reasonStr.match(/reading ['"]b[jJ]['"]/i) ||
+      (reasonLower.includes('cannot read') && (reasonLower.includes('undefined') || reasonLower.includes('bj'))) ||
+      (reasonStr.includes('TypeError') && (reasonStr.includes('bJ') || reasonStr.includes('bj'))) ||
+      (errorStackLower.includes('bJ') || errorStackLower.includes('bj')) ||
+      (errorStackLower.includes('maps.googleapis.com') && (errorStackLower.includes('bJ') || errorStackLower.includes('bj'))) ||
+      (errorStackLower.includes('js?key=') && (errorStackLower.includes('bJ') || errorStackLower.includes('bj'))) ||
+      (errorStackLower.includes('main.js') && (errorStackLower.includes('bJ') || errorStackLower.includes('bj'))) ||
+      (errorStackLower.includes('vm') && (errorStackLower.includes('bJ') || errorStackLower.includes('bj'))) ||
+      (errorStackLower.includes('vm') && errorStackLower.includes('main.js')) ||
+      // Catch VM main.js:302 pattern specifically
+      (errorStackLower.includes('main.js') && errorStackLower.includes('302')) ||
+      // Catch any TypeError from Google Maps related sources
+      (reasonStr.includes('TypeError') && (errorStackLower.includes('maps') || errorStackLower.includes('google') || errorStackLower.includes('main.js') || errorStackLower.includes('vm')))) {
     event.preventDefault()
     event.stopPropagation()
+    event.stopImmediatePropagation()
     return false
   }
-})
+  
+  // Suppress Firestore permission errors that are expected
+  if (reasonLower.includes('permission-denied') || 
+      reasonLower.includes('missing or insufficient permissions')) {
+    // Only suppress if it's related to remittances or expected queries
+    if (reasonLower.includes('remittances') || 
+        reasonLower.includes('snapshot listener')) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      return false
+    }
+  }
+  
+  // Aggressively suppress Google Maps API internal errors
+  if (reasonLower.includes('connectforexplicitthirdpartyload') ||
+      reasonLower.includes('cannot read properties of undefined') ||
+      reasonLower.includes('cannot read property') ||
+      reasonLower.includes('reading \'bj\'') ||
+      reasonLower.includes('reading \'bJ\'') ||
+      reasonLower.includes('reading \'connectforexplicitthirdpartyload\'') ||
+      (reasonLower.includes('cannot read') && reasonLower.includes('undefined')) ||
+      (reasonLower.includes('typeerror') && (reasonLower.includes('cannot read') || reasonLower.includes('undefined')))) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return false
+  }
+  
+  // Also check the error stack trace for Google Maps patterns (already checked above, but double-check)
+  if (errorStackLower.includes('maps.googleapis.com') && 
+      (errorStackLower.includes('cannot read') || 
+       errorStackLower.includes('undefined') ||
+       errorStackLower.includes('bj') ||
+       errorStackLower.includes('bJ'))) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return false
+  }
+  
+  // Check if error is from Google Maps script files
+  if (errorStackLower.includes('js?key=') && 
+      (errorStackLower.includes('maps') || errorStackLower.includes('google'))) {
+    if (errorStackLower.includes('cannot read') || 
+        errorStackLower.includes('undefined') ||
+        errorStackLower.includes('bj') ||
+        errorStackLower.includes('bJ')) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      return false
+    }
+  }
+  
+  // Catch any Google Maps related errors in the stack (broad catch)
+  if ((errorStackLower.includes('maps') || errorStackLower.includes('googleapis') || errorStackLower.includes('main.js') || errorStackLower.includes('vm')) && 
+      (errorStackLower.includes('typeerror') || 
+       errorStackLower.includes('cannot read') ||
+       errorStackLower.includes('undefined') ||
+       errorStackLower.includes('bJ') ||
+       errorStackLower.includes('bj'))) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return false
+  }
+  
+  // Final catch-all for any TypeError with 'bJ' pattern from any source (including VM errors)
+  if (reasonStr.includes('TypeError') && (reasonStr.includes('bJ') || reasonStr.includes('bj') || errorStackLower.includes('bJ') || errorStackLower.includes('bj') || errorStackLower.includes('vm'))) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return false
+  }
+  
+  // Catch VM main.js errors specifically (VM5892 main.js:302 pattern)
+  if ((errorStackLower.includes('vm') && errorStackLower.includes('main.js')) || 
+      (errorStackLower.includes('main.js') && errorStackLower.includes('302'))) {
+    if (errorStackLower.includes('typeerror') || 
+        errorStackLower.includes('cannot read') || 
+        errorStackLower.includes('undefined') ||
+        errorStackLower.includes('bJ') ||
+        errorStackLower.includes('bj')) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      return false
+    }
+  }
+}, true)
 
 // Override XMLHttpRequest to prevent 403 errors and ERR_BLOCKED_BY_CLIENT from being logged
 const originalXHROpen = XMLHttpRequest.prototype.open

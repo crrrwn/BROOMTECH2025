@@ -152,7 +152,40 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
+              <th 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                @click="sortByRegistered"
+              >
+                <div class="flex items-center space-x-1">
+                  <span>Registered</span>
+                  <div class="flex flex-col">
+                    <svg 
+                      v-if="sortBy === 'registered' && sortOrder === 'asc'"
+                      class="w-3 h-3 text-primary" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                    >
+                      <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg 
+                      v-else-if="sortBy === 'registered' && sortOrder === 'desc'"
+                      class="w-3 h-3 text-primary" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                    >
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg 
+                      v-else
+                      class="w-3 h-3 text-gray-400" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
+                    </svg>
+                  </div>
+                </div>
+              </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cancelled</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -363,6 +396,71 @@
                 <p class="text-sm text-gray-500">{{ selectedUser.email }}</p>
               </div>
             </div>
+
+            <!-- Facial Registration & Valid ID Section -->
+            <div v-if="selectedUser.faceRegistrationImage || selectedUser.validIdUrl" class="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+              <h4 class="text-lg font-semibold text-gray-900 mb-4">Verification Documents</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Facial Registration Image -->
+                <div v-if="selectedUser.faceRegistrationImage">
+                  <p class="text-sm font-medium text-gray-700 mb-2">Facial Registration</p>
+                  <div class="relative w-full h-48 border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      :src="selectedUser.faceRegistrationImage"
+                      alt="Facial Registration"
+                      class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      @click="openImageModal(selectedUser.faceRegistrationImage, 'Facial Registration')"
+                    />
+                    <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                      ✓ Verified
+                    </div>
+                  </div>
+                  <p v-if="selectedUser.faceRegisteredAt" class="text-xs text-gray-500 mt-1">
+                    Registered: {{ formatDate(selectedUser.faceRegisteredAt) }}
+                  </p>
+                </div>
+                <div v-else class="flex items-center justify-center h-48 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <p class="text-sm text-gray-500">No facial registration</p>
+                </div>
+
+                <!-- Valid ID -->
+                <div v-if="selectedUser.validIdUrl">
+                  <p class="text-sm font-medium text-gray-700 mb-2">Valid ID</p>
+                  <div class="relative w-full h-48 border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      v-if="selectedUser.validIdUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)"
+                      :src="selectedUser.validIdUrl"
+                      alt="Valid ID"
+                      class="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                      @click="openImageModal(selectedUser.validIdUrl, 'Valid ID')"
+                    />
+                    <a
+                      v-else
+                      :href="selectedUser.validIdUrl"
+                      target="_blank"
+                      class="flex items-center justify-center w-full h-full text-blue-600 hover:text-blue-800"
+                    >
+                      <div class="text-center">
+                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="text-sm">View PDF</p>
+                      </div>
+                    </a>
+                    <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                      ✓ Verified
+                    </div>
+                  </div>
+                  <p v-if="selectedUser.validIdUploadedAt" class="text-xs text-gray-500 mt-1">
+                    Uploaded: {{ formatDate(selectedUser.validIdUploadedAt) }}
+                  </p>
+                </div>
+                <div v-else class="flex items-center justify-center h-48 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <p class="text-sm text-gray-500">No valid ID uploaded</p>
+                </div>
+              </div>
+            </div>
+
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -395,7 +493,7 @@
               </div>
               <div>
                 <p class="text-sm text-gray-600">Registered Date</p>
-                <p class="text-base font-medium text-gray-900">{{ selectedUser.registeredDate }}</p>
+                <p class="text-base font-medium text-gray-900">{{ formatRegisteredDate(selectedUser.createdAt) }}</p>
               </div>
             </div>
           </div>
@@ -466,6 +564,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Image Modal -->
+    <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4" @click="closeImageModal">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto" @click.stop>
+        <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+          <h3 class="text-xl font-semibold text-gray-900">{{ imageModalTitle }}</h3>
+          <button @click="closeImageModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <img :src="imageModalUrl" :alt="imageModalTitle" class="w-full h-auto rounded-lg" />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -497,6 +612,15 @@ export default {
     const selectedUser = ref(null)
     const userOrders = ref([])
     const loadingUserOrders = ref(false)
+    
+    // Image modal state
+    const showImageModal = ref(false)
+    const imageModalUrl = ref('')
+    const imageModalTitle = ref('')
+    
+    // Sorting state
+    const sortBy = ref('registered') // Default sort by registered date
+    const sortOrder = ref('desc') // Default descending order (newest first)
     
     const fraudSettings = ref(null)
     const showFlaggedOnly = ref(false)
@@ -621,6 +745,42 @@ export default {
         filtered = filtered.filter(user => user.fraudFlags && user.fraudFlags.length > 0)
       }
       
+      // Sort by registered date
+      if (sortBy.value === 'registered') {
+        filtered = filtered.sort((a, b) => {
+          // Get actual date values for comparison
+          const getDateValue = (user) => {
+            if (!user.createdAt) return 0
+            // Handle Firestore Timestamp
+            if (user.createdAt && typeof user.createdAt === 'object' && user.createdAt.toDate) {
+              return user.createdAt.toDate().getTime()
+            }
+            // Handle ISO string
+            if (typeof user.createdAt === 'string') {
+              return new Date(user.createdAt).getTime()
+            }
+            // Handle Date object
+            if (user.createdAt instanceof Date) {
+              return user.createdAt.getTime()
+            }
+            // Handle timestamp number
+            if (typeof user.createdAt === 'number') {
+              return user.createdAt
+            }
+            return 0
+          }
+          
+          const dateA = getDateValue(a)
+          const dateB = getDateValue(b)
+          
+          if (sortOrder.value === 'asc') {
+            return dateA - dateB // Ascending: oldest first
+          } else {
+            return dateB - dateA // Descending: newest first
+          }
+        })
+      }
+      
       return filtered
     })
     
@@ -668,11 +828,16 @@ export default {
           name: `${userData.firstName} ${userData.lastName}`.trim(),
           initials: `${userData.firstName?.[0] || ""}${userData.lastName?.[0] || ""}`.toUpperCase(),
           profilePictureUrl: userData.profilePictureUrl || userData.photoURL || '',
+          registeredDate: formatRegisteredDate(userData.createdAt),
           status: userData.status === 'banned' || userData.banned ? 'flagged' : 
                   userData.status === 'flagged' ? 'flagged' :
                   userData.approved ? 'approved' : 'pending',
           totalOrders: 0,
-          cancelledOrders: 0
+          cancelledOrders: 0,
+          faceRegistrationImage: userData.faceRegistrationImage || null,
+          faceRegisteredAt: userData.faceRegisteredAt || null,
+          validIdUrl: userData.validIdUrl || null,
+          validIdUploadedAt: userData.validIdUploadedAt || null
         }))
         
         await loadFraudSettings()
@@ -847,9 +1012,38 @@ export default {
     }
 
     const viewUserDetails = async (user) => {
-      selectedUser.value = user
-      showUserDetailsModal.value = true
-      await fetchUserOrders(user.id)
+      try {
+        // Fetch fresh user data from Firestore to ensure we have all fields including faceRegistrationImage
+        const userDoc = await getDoc(doc(db, 'users', user.id))
+        if (userDoc.exists()) {
+          const userData = userDoc.data()
+          selectedUser.value = {
+            ...user,
+            ...userData,
+            registeredDate: formatRegisteredDate(userData.createdAt),
+            faceRegistrationImage: userData.faceRegistrationImage || null,
+            faceRegisteredAt: userData.faceRegisteredAt || null,
+            validIdUrl: userData.validIdUrl || null,
+            validIdUploadedAt: userData.validIdUploadedAt || null
+          }
+        } else {
+          selectedUser.value = {
+            ...user,
+            registeredDate: formatRegisteredDate(user.createdAt)
+          }
+        }
+        showUserDetailsModal.value = true
+        await fetchUserOrders(user.id)
+      } catch (error) {
+        console.error('[v0] Error fetching user details:', error)
+        // Fallback to using the user object from the list
+        selectedUser.value = {
+          ...user,
+          registeredDate: formatRegisteredDate(user.createdAt)
+        }
+        showUserDetailsModal.value = true
+        await fetchUserOrders(user.id)
+      }
     }
 
     const fetchUserOrders = async (userId) => {
@@ -880,6 +1074,88 @@ export default {
       showUserDetailsModal.value = false
       selectedUser.value = null
       userOrders.value = []
+    }
+
+    const openImageModal = (imageUrl, title) => {
+      imageModalUrl.value = imageUrl
+      imageModalTitle.value = title
+      showImageModal.value = true
+    }
+
+    const closeImageModal = () => {
+      showImageModal.value = false
+      imageModalUrl.value = ''
+      imageModalTitle.value = ''
+    }
+
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A'
+      try {
+        const date = typeof dateString === 'string' ? new Date(dateString) : dateString.toDate()
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (error) {
+        return dateString
+      }
+    }
+
+    const formatRegisteredDate = (dateValue) => {
+      if (!dateValue) return 'N/A'
+      try {
+        let date
+        // Handle Firestore Timestamp
+        if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+          date = dateValue.toDate()
+        }
+        // Handle ISO string
+        else if (typeof dateValue === 'string') {
+          date = new Date(dateValue)
+        }
+        // Handle Date object
+        else if (dateValue instanceof Date) {
+          date = dateValue
+        }
+        // Handle timestamp number
+        else if (typeof dateValue === 'number') {
+          date = new Date(dateValue)
+        }
+        else {
+          return 'N/A'
+        }
+
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          return 'N/A'
+        }
+
+        // Format as: "Jan 15, 2024"
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      } catch (error) {
+        console.error('[v0] Error formatting registered date:', error, dateValue)
+        return 'N/A'
+      }
+    }
+
+    const sortByRegistered = () => {
+      if (sortBy.value === 'registered') {
+        // Toggle sort order
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Set to registered and default to descending (newest first)
+        sortBy.value = 'registered'
+        sortOrder.value = 'desc'
+      }
+      // Reset to first page when sorting
+      currentPage.value = 1
     }
 
     const flagUserFromModal = async () => {
@@ -1189,6 +1465,16 @@ export default {
       closeUserDetailsModal,
       flagUserFromModal,
       unflagUserFromModal,
+      showImageModal,
+      imageModalUrl,
+      imageModalTitle,
+      openImageModal,
+      closeImageModal,
+      formatDate,
+      formatRegisteredDate,
+      sortBy,
+      sortOrder,
+      sortByRegistered,
       exportUsers
     }
   }
