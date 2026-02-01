@@ -160,7 +160,7 @@
       <div class="container mx-auto px-4 sm:px-6 max-w-6xl">
         <div class="grid md:grid-cols-2 gap-8 sm:gap-10 md:gap-12 items-center mb-8 sm:mb-10 md:mb-12">
           <div class="order-2 md:order-1 about-content">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#05103B] mb-3 sm:mb-4 animate-title-in">About BROOOM</h2>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#05103B] mb-3 sm:mb-4 animate-title-in">About BROOOOM</h2>
             <div class="w-12 sm:w-16 h-0.5 sm:h-1 bg-[#74E600] mb-4 sm:mb-6 rounded-full animate-line-expand"></div>
             <p class="text-sm sm:text-base text-gray-600 leading-relaxed mb-4 sm:mb-6 animate-fade-in-delay">Founded on <span class="font-semibold text-[#74E600] animate-highlight">Feb 7, 2020</span>, BROOOM DELIVERY SERVICES connects customers with providers in Calapan City.</p>
             <div class="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
