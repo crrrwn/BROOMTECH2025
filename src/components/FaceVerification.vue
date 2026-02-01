@@ -1,114 +1,206 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md" @click="showTryAgain && !showCooldown ? handleTryAgain() : null">
-    
-    <div class="relative w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/50 overflow-hidden transform transition-all">
-      
-      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#3ED400] to-[#A8EB12]"></div>
+  <div class="fixed inset-0 bg-gradient-to-br from-[#A8EB12]/20 via-[#74E600]/15 to-[#00C851]/20 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 md:p-6" @click="showTryAgain && !showCooldown ? handleTryAgain() : null">
+    <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full p-4 sm:p-6 md:p-8 transform transition-all duration-300 scale-100" style="box-shadow: 0 20px 60px rgba(0, 200, 81, 0.15);">
+      <!-- Header -->
+      <div class="mb-4 sm:mb-6">
+        <h3 class="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] bg-clip-text text-transparent">
+          Face Verification
+        </h3>
+        <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+          Please position your face in front of the camera. Make sure you have good lighting and your face is clearly visible.
+        </p>
+      </div>
 
-      <div class="p-8 text-center">
-        <h3 class="text-2xl font-black text-gray-800 mb-2">Face Verification</h3>
-        <p class="text-sm text-gray-500 mb-6 font-medium">Please look at the camera to verify identity.</p>
-
-        <div class="relative w-full aspect-[4/3] mx-auto mb-6 rounded-3xl overflow-hidden border-4 border-gray-100 shadow-inner bg-gray-900 group">
-          
-          <video
-            ref="videoElement"
-            autoplay
-            playsinline
-            class="w-full h-full object-cover transform scale-x-[-1]"
-          ></video>
-          <canvas ref="canvasElement" class="hidden"></canvas>
-          
-          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="relative w-64 h-64">
-              <div class="absolute inset-0 rounded-full border-[3px] border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.2)]"></div>
-              
-              <div 
-                class="absolute inset-2 rounded-full border-[3px] transition-all duration-300"
-                :class="faceDetected ? (verifying ? 'border-blue-400 shadow-[0_0_30px_#60A5FA] animate-pulse' : 'border-[#3ED400] shadow-[0_0_30px_#3ED400]') : 'border-white/60 border-dashed'"
-              ></div>
-              
-              <div v-if="detecting && !faceDetectedOnce" class="absolute inset-0 rounded-full overflow-hidden opacity-30">
-                 <div class="w-full h-2 bg-[#3ED400] absolute top-0 animate-scan shadow-[0_0_15px_#3ED400]"></div>
-              </div>
-
-              <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white/80 rounded-full"></div>
-            </div>
+      <!-- Camera Container -->
+      <div class="relative mb-4 sm:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg" style="aspect-ratio: 4/3; background: linear-gradient(135deg, #00C851 0%, #3ED400 50%, #74E600 100%);">
+        <video
+          ref="videoElement"
+          autoplay
+          playsinline
+          class="w-full h-full object-cover"
+          style="transform: scaleX(-1);"
+        ></video>
+        <canvas ref="canvasElement" class="hidden"></canvas>
+        
+        <!-- Circular Overlay (like GCash) -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="relative w-48 h-48 sm:w-64 sm:h-64">
+            <!-- Outer circle guide with glow -->
+            <div class="absolute inset-0 rounded-full border-4 border-white/60 shadow-lg" style="box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);"></div>
+            <!-- Inner circle for face alignment with animated border -->
+            <div 
+              class="absolute inset-4 rounded-full transition-all duration-500 shadow-lg"
+              :class="faceDetected ? 'border-[#74E600]' : 'border-white/40'"
+              :style="`border: 3px solid ${faceDetected ? '#74E600' : 'rgba(255, 255, 255, 0.4)'}; ${faceDetected ? 'box-shadow: 0 0 30px rgba(116, 230, 0, 0.6), 0 0 60px rgba(116, 230, 0, 0.3);' : ''}`"
+            ></div>
+            <!-- Animated center dot -->
+            <div 
+              class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full transition-all duration-300"
+              :class="faceDetected ? 'bg-[#74E600] shadow-lg' : 'bg-white'"
+              :style="faceDetected ? 'box-shadow: 0 0 15px rgba(116, 230, 0, 0.8), 0 0 30px rgba(116, 230, 0, 0.4);' : ''"
+            ></div>
           </div>
+        </div>
 
-          <div v-if="!livenessChecked && !faceDetectedOnce && !showTryAgain && detecting" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500/90 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
-            <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            CHECKING LIVENESS
-          </div>
+        <!-- Liveness check status -->
+        <div v-if="!livenessChecked && !faceDetectedOnce && !showTryAgain && detecting" class="absolute top-3 sm:top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-[#3ED400] to-[#74E600] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold shadow-xl backdrop-blur-sm animate-pulse" style="box-shadow: 0 4px 15px rgba(62, 212, 0, 0.5);">
+          <span class="flex items-center gap-2">
+            <svg class="animate-spin w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Checking liveness...</span>
+          </span>
+        </div>
 
-          <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 scale-50" enter-to-class="opacity-100 scale-100">
-            <div v-if="faceDetectedOnce && !verifying && !showTryAgain" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md text-[#00C851] px-5 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-              FACE DETECTED
-            </div>
-          </transition>
+        <!-- Face detection status - only show once, don't blink -->
+        <div v-if="faceDetectedOnce && !verifying && !showTryAgain" class="absolute top-3 sm:top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold shadow-xl flex items-center gap-2" style="box-shadow: 0 4px 20px rgba(0, 200, 81, 0.6); animation: slideDown 0.3s ease-out;">
+          <span class="text-base sm:text-lg">✓</span>
+          <span>Face Detected</span>
+        </div>
 
-          <div v-if="(verifying) || (detecting && !livenessChecked && !faceDetectedOnce)" class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity">
-            <div v-if="verifying">
-                <svg class="animate-spin h-10 w-10 text-white mb-3" fill="none" viewBox="0 0 24 24">
+        <!-- Face Scan Progress Ring -->
+        <div v-if="detecting && !faceDetectedOnce" class="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20 backdrop-blur-sm rounded-xl sm:rounded-2xl">
+          <div class="relative w-48 h-48 sm:w-64 sm:h-64">
+            <!-- Scanning Circle Progress Ring -->
+            <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <!-- Background circle -->
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.2)"
+                stroke-width="4"
+              />
+              <!-- Progress circle with gradient -->
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="url(#progressGradient)"
+                stroke-width="4"
+                stroke-linecap="round"
+                :stroke-dasharray="283"
+                :stroke-dashoffset="283 - (scanProgress * 283 / 100)"
+                class="transition-all duration-300"
+                style="filter: drop-shadow(0 0 8px rgba(116, 230, 0, 0.6));"
+              />
+              <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#A8EB12;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#74E600;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#3ED400;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <!-- Center text -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+              <div class="relative w-10 h-10 sm:w-12 sm:h-12 mb-2">
+                <svg class="absolute inset-0 w-full h-full animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style="stroke: #74E600;"></path>
                 </svg>
-                <p class="text-white text-xs font-bold tracking-widest uppercase shadow-black drop-shadow-md">
-                  Verifying...
-                </p>
+              </div>
+              <p class="text-xs sm:text-sm font-semibold">Scanning Face...</p>
+              <p class="text-[10px] sm:text-xs mt-1 opacity-90 font-bold" style="color: #74E600;">{{ Math.round(scanProgress) }}%</p>
             </div>
           </div>
-          
-          <div v-if="showTryAgain && !showCooldown" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] cursor-pointer" @click="handleTryAgain">
-             <svg class="w-12 h-12 text-white mb-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-             <p class="text-white text-sm font-bold uppercase tracking-wider">Tap to Retry</p>
+        </div>
+
+        <!-- Verification Loading Circle -->
+        <div v-if="verifying" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/40 to-black/60 backdrop-blur-md rounded-xl sm:rounded-2xl">
+          <div class="text-white text-center">
+            <div class="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-3 sm:mb-4">
+              <!-- Spinning circle ring -->
+              <svg class="absolute inset-0 w-full h-full transform -rotate-90 animate-spin" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="url(#verifyGradient)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-dasharray="283"
+                  stroke-dashoffset="70"
+                  style="filter: drop-shadow(0 0 10px rgba(116, 230, 0, 0.8));"
+                />
+              </svg>
+              <defs>
+                <linearGradient id="verifyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#A8EB12;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#00C851;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <!-- Center icon -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #74E600;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <p class="text-xs sm:text-sm font-semibold">Verifying Face...</p>
           </div>
         </div>
 
-        <div class="min-h-[80px] flex flex-col justify-center mb-4">
-          
-          <div v-if="verificationAttempts > 0 && verificationAttempts < 3 && !showCooldown" class="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl text-xs font-medium flex items-center justify-center gap-2 animate-pulse">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            Match failed. Attempt {{ verificationAttempts }}/3. Try again.
-          </div>
-
-          <div v-if="showCooldown" class="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-center shadow-inner">
-            <p class="font-bold text-sm mb-1">Too many attempts</p>
-            <p class="text-xs opacity-80">Please wait</p>
-            <p class="text-2xl font-black mt-1">{{ formatTime(cooldownSeconds) }}</p>
-          </div>
-
-          <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium text-center">
-            {{ error }}
-          </div>
-
-          <div v-if="faceDetectedOnce && !verifying && !showCooldown && !error && !showTryAgain" class="text-blue-500 text-sm font-bold animate-pulse flex justify-center items-center gap-2">
-              Verifying automatically...
-          </div>
-          
-           <div v-if="showTryAgain && !showCooldown" class="text-gray-400 text-xs font-medium animate-bounce">
-            Tap the screen or click below to retry
-          </div>
+        <!-- Try Again Overlay -->
+        <div v-if="showTryAgain && !showCooldown" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl sm:rounded-2xl cursor-pointer" @click="handleTryAgain">
+          <svg class="w-12 h-12 sm:w-16 sm:h-16 text-white mb-3 sm:mb-4 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <p class="text-white text-sm sm:text-base font-bold uppercase tracking-wider">Tap to Retry</p>
         </div>
+      </div>
 
-        <div class="flex gap-3 pt-2">
-          <button
-            @click="handleCancel"
-            class="flex-1 py-3.5 rounded-xl text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
+      <!-- Attempts counter -->
+      <div v-if="verificationAttempts > 0 && verificationAttempts < 3 && !showCooldown" class="mb-4 p-3 sm:p-4 bg-gradient-to-r from-[#A8EB12]/10 to-[#74E600]/10 border-2 border-[#74E600]/30 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+        <p class="mb-3 text-sm sm:text-base font-medium text-gray-700">Verification failed. Attempt <span class="font-bold" style="color: #3ED400;">{{ verificationAttempts }}</span> of 3. Please try again.</p>
+        <button
+          @click="handleTryAgain"
+          class="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-[#74E600] to-[#3ED400] text-white rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base hover:from-[#3ED400] hover:to-[#00C851] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+          style="box-shadow: 0 4px 15px rgba(116, 230, 0, 0.4);"
+        >
+          Try Again
+        </button>
+      </div>
 
-           <button
-            v-if="showTryAgain && !showCooldown"
-            @click="handleTryAgain"
-            class="flex-1 py-3.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-          >
-            Try Again
-          </button>
-        </div>
+      <!-- Cooldown countdown -->
+      <div v-if="showCooldown" class="mb-4 p-4 sm:p-5 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300/50 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
+        <p class="font-bold text-base sm:text-lg mb-2 text-orange-800">Too many failed attempts</p>
+        <p class="text-sm sm:text-base text-orange-700">Please wait <span class="font-bold text-lg sm:text-xl" style="color: #00C851;">{{ formatTime(cooldownSeconds) }}</span> before trying again.</p>
+      </div>
 
+      <!-- Error message -->
+      <div v-if="error && !error.includes('Failed to register') && verificationAttempts < 3 && !showCooldown" class="mb-4 p-3 sm:p-4 bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200/50 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+        <p class="text-sm sm:text-base text-red-700 font-medium">{{ error }}</p>
+      </div>
+
+      <!-- Auto-verification status -->
+      <div v-if="faceDetectedOnce && !verifying && !showCooldown && !error && !showTryAgain" class="mb-4 p-3 sm:p-4 bg-gradient-to-r from-[#A8EB12]/20 via-[#74E600]/20 to-[#3ED400]/20 border-2 border-[#74E600]/40 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm animate-pulse">
+        <p class="font-semibold text-sm sm:text-base" style="color: #00C851;">
+          <span class="inline-block mr-2">✨</span>
+          Face detected! Verification will start automatically...
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end space-x-3 sm:space-x-4">
+        <button
+          @click="handleCancel"
+          class="px-4 sm:px-6 py-2.5 sm:py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Cancel
+        </button>
+      </div>
+      
+      <!-- Tap to retry hint -->
+      <div v-if="showTryAgain && !showCooldown" class="mt-4 sm:mt-5 text-center">
+        <p class="text-xs sm:text-sm text-gray-600 mb-2 font-medium">
+          <span class="inline-block animate-bounce mr-2">👆</span>
+          Tap anywhere on the screen to retry
+        </p>
       </div>
     </div>
   </div>
@@ -504,14 +596,155 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
-/* COPIED CSS ANIMATION FROM DESIGN A */
-@keyframes scan {
-  0% { top: 0%; opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
-.animate-scan {
-  animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(116, 230, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(116, 230, 0, 0.8);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .fixed {
+    padding: 0.75rem;
+  }
+  
+  .rounded-2xl {
+    border-radius: 1rem;
+  }
+  
+  .rounded-3xl {
+    border-radius: 1.25rem;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Backdrop blur support */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Gradient text support */
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Smooth scale animations */
+.scale-100 {
+  transform: scale(1);
+}
+
+/* Enhanced shadow effects */
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Responsive text sizes */
+@media (max-width: 480px) {
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  p {
+    font-size: 0.875rem;
+  }
+}
+
+/* Smooth gradient transitions */
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+/* Ensure video element maintains aspect ratio */
+video {
+  min-height: 100%;
+  min-width: 100%;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for status indicators */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Bounce animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Optimize for performance - no delays */
+.transition-all {
+  transition-duration: 0.2s;
+}
+
+.duration-300 {
+  transition-duration: 0.3s;
+}
+
+.duration-500 {
+  transition-duration: 0.5s;
 }
 </style>

@@ -18,8 +18,8 @@
       
       <div class="h-20 flex items-center px-8 border-b border-gray-50 justify-between">
         <div class="flex items-center">
-          <div class="w-10 h-10 bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-xl flex items-center justify-center shadow-lg text-white font-extrabold text-xl">B</div>
-          <span class="ml-3 text-xl font-bold text-gray-800 tracking-tight">BroomTech</span>
+          <img src="/LOGO.jpg" alt="Broooom Logo" class="w-10 h-10 rounded-xl shadow-lg object-cover" />
+          <span class="ml-3 text-xl font-bold text-gray-800 tracking-tight">Broooom</span>
         </div>
         <button @click="isSidebarOpen = false" class="md:hidden text-gray-400 hover:text-gray-600">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -105,7 +105,7 @@
            <p class="text-[10px] text-gray-400 mt-2 font-medium">{{ userLoaded ? (driverStore.isOnline ? 'Visible to customers' : 'Currently offline') : 'Loading...' }}</p>
         </div>
         
-        <button @click="logout" class="w-full mt-4 flex items-center justify-center px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+        <button @click="confirmLogout" class="w-full mt-4 flex items-center justify-center px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
            Sign Out
         </button>
@@ -181,6 +181,37 @@
 
     </div>
 
+    <Transition name="fade">
+      <div v-if="showLogoutModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-gray-100">
+          
+          <div class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-6 shadow-inner">
+             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          </div>
+
+          <h3 class="text-xl font-black text-gray-800 mb-2">End Session?</h3>
+          <p class="text-sm text-gray-500 mb-8 font-medium leading-relaxed">
+            Are you sure you want to close / end your session?
+          </p>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <button 
+              @click="showLogoutModal = false" 
+              class="py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all active:scale-95"
+            >
+              No, Cancel
+            </button>
+            <button 
+              @click="executeLogout" 
+              class="py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95"
+            >
+              Yes, Log Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -209,12 +240,14 @@ export default {
       isTrackingLocation: false,
       locationWatchId: null,
       currentLocation: null,
+      locationPermissionDenied: false, // Track if permission was denied
       showNotifications: false,
       notifications: [],
       loadingNotifications: false,
       unreadCount: 0,
       notificationsUnsubscribe: null,
-      assignmentsUnsubscribe: null
+      assignmentsUnsubscribe: null,
+      showLogoutModal: false
     }
   },
   computed: {
@@ -255,7 +288,8 @@ export default {
     this.setupAssignmentsListener()
     
     // Auto-enable location tracking on login (silent mode - no toast)
-    if (this.authStore.user && !this.isTrackingLocation) {
+    // Only if permission wasn't previously denied
+    if (this.authStore.user && !this.isTrackingLocation && !this.locationPermissionDenied) {
       // Small delay to ensure everything is loaded
       setTimeout(() => {
         this.toggleLocationTracking(true) // Pass true for silent mode
@@ -341,7 +375,13 @@ export default {
       }
     },
     
-    logout() {
+    confirmLogout() {
+      this.isSidebarOpen = false
+      this.showLogoutModal = true
+    },
+
+    executeLogout() {
+      this.showLogoutModal = false
       this.$router.push('/')
       
       // Perform cleanup and logout in background without blocking
@@ -404,8 +444,19 @@ export default {
                 
                 // Only log actual errors (permission denied, position unavailable)
                 if (error.code === 1) {
-                  console.warn('[v0] Location permission denied:', error.message)
-                  if (!silent) this.$toast.warning('Location permission denied. Please enable location access.')
+                  // Permission denied - mark it and stop trying
+                  this.locationPermissionDenied = true
+                  // Don't log warning if silent mode (auto-enable on login)
+                  if (!silent) {
+                    console.warn('[v0] Location permission denied:', error.message)
+                    this.$toast.warning('Location permission denied. Please enable location access in browser settings.')
+                  }
+                  // Stop watching if permission is denied
+                  if (this.locationWatchId) {
+                    navigator.geolocation.clearWatch(this.locationWatchId)
+                    this.locationWatchId = null
+                    this.isTrackingLocation = false
+                  }
                 } else if (error.code === 2) {
                   console.warn('[v0] Location unavailable:', error.message)
                   if (!silent) this.$toast.warning('Location unavailable. Please check your GPS settings.')

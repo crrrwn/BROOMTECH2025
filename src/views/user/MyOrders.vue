@@ -446,66 +446,159 @@
       </div>
     </div>
 
-    <div v-if="showFeedbackDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 transform transition-all border border-gray-100">
-        <div class="text-center mb-6">
-          <h3 class="text-2xl font-black text-gray-900">Rate Experience</h3>
-          <p class="text-sm text-gray-500">How was your delivery?</p>
-        </div>
-        
-        <div class="flex flex-col items-center mb-8">
-          <div class="flex items-center space-x-2 mb-2">
-            <button v-for="i in 5" :key="i"
-                    @click="feedbackRating = i"
-                    class="transition-transform hover:scale-110 focus:outline-none">
-              <svg :class="i <= feedbackRating ? 'text-yellow-400 fill-current' : 'text-gray-200'"
-                   class="w-10 h-10 drop-shadow-sm transition-colors" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292z"></path>
+    <!-- Rate Experience Modal -->
+    <div v-if="showFeedbackDialog" class="fixed inset-0 bg-black/60 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4" @click="closeFeedbackModal">
+      <div class="relative mx-auto w-full max-w-3xl bg-white rounded-3xl shadow-2xl border-2 border-[#00C851]/20 max-h-[95vh] flex flex-col transform transition-all" @click.stop>
+        <!-- Enhanced Header with Green Gradient -->
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-4 sm:p-5 rounded-t-3xl flex-shrink-0 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-[#A8EB12]/20 to-transparent"></div>
+          <div class="relative flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 bg-white/25 backdrop-blur-sm rounded-xl shadow-lg">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg sm:text-xl font-extrabold text-white drop-shadow-md">Rate Experience</h3>
+                <p class="text-sm text-white/95 font-medium hidden sm:block">Share your delivery experience with us</p>
+              </div>
+            </div>
+            <button @click="closeFeedbackModal" class="text-white/90 hover:text-white hover:bg-white/25 rounded-xl p-2 transition-all duration-200 hover:scale-110">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
-          <span class="text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">{{ getRatingText(feedbackRating) }}</span>
         </div>
+        
+        <!-- Modal Content -->
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1 bg-gradient-to-b from-white to-gray-50/50">
+          <!-- Rating Section -->
+          <div class="bg-gradient-to-br from-[#00C851]/15 via-[#3ED400]/10 to-[#74E600]/15 p-5 sm:p-6 rounded-2xl border-2 border-[#00C851]/30 mb-4 shadow-lg">
+            <div class="flex flex-col items-center">
+              <p class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Overall Rating</p>
+              <div class="flex items-center space-x-2 sm:space-x-3 mb-4">
+                <button v-for="i in 5" :key="i"
+                        @click="feedbackRating = i"
+                        class="transition-all hover:scale-125 active:scale-95 focus:outline-none transform">
+                  <svg :class="i <= feedbackRating ? 'text-[#A8EB12] fill-current drop-shadow-lg' : 'text-gray-300'"
+                       class="w-10 h-10 sm:w-12 sm:h-12 transition-all duration-300" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292z"></path>
+                  </svg>
+                </button>
+              </div>
+              <span class="text-sm sm:text-base font-extrabold text-[#00C851] bg-white px-5 py-2 rounded-full border-2 border-[#3ED400]/30 shadow-md">{{ getRatingText(feedbackRating) }}</span>
+            </div>
+          </div>
 
-        <div class="space-y-3 mb-6 bg-gray-50 p-4 rounded-2xl">
-          <div v-for="aspect in serviceAspects" :key="aspect.key" class="flex items-center justify-between">
-            <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">{{ aspect.label }}</span>
-            <div class="flex space-x-1">
-              <button v-for="i in 5" :key="i"
-                      @click="feedbackAspects[aspect.key] = i"
-                      class="focus:outline-none">
-                <div class="w-2 h-6 rounded-full transition-colors"
-                     :class="i <= (feedbackAspects[aspect.key] || 0) ? 'bg-yellow-400' : 'bg-gray-200'"></div>
+          <!-- Service Aspects -->
+          <div class="bg-gradient-to-br from-[#74E600]/15 via-[#3ED400]/10 to-[#00C851]/15 p-5 sm:p-6 rounded-2xl border-2 border-[#74E600]/30 mb-4 shadow-lg">
+            <h4 class="text-sm sm:text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Rate Service Aspects
+            </h4>
+            <div class="space-y-3 sm:space-y-4">
+              <div v-for="aspect in serviceAspects" :key="aspect.key" class="flex items-center justify-between bg-white/80 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 border-gray-100 hover:border-[#3ED400]/50 transition-all shadow-sm">
+                <span class="text-sm sm:text-base font-semibold text-gray-800">{{ aspect.label }}</span>
+                <div class="flex space-x-1 sm:space-x-1.5">
+                  <button v-for="i in 5" :key="i"
+                          @click="feedbackAspects[aspect.key] = i"
+                          class="focus:outline-none transition-all hover:scale-125 active:scale-95">
+                    <div class="w-2 h-5 sm:w-2.5 sm:h-7 rounded-full transition-all duration-300 shadow-sm"
+                         :class="i <= (feedbackAspects[aspect.key] || 0) 
+                           ? 'bg-gradient-to-b from-[#A8EB12] via-[#74E600] to-[#00C851] shadow-[#3ED400]/50' 
+                           : 'bg-gray-200 hover:bg-gray-300'"></div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags Section -->
+          <div class="mb-4">
+            <h4 class="text-sm sm:text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+              Select Tags
+            </h4>
+            <div class="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-start">
+              <button v-for="tag in feedbackTags" :key="tag"
+                      @click="toggleFeedbackTag(tag)"
+                      class="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
+                      :class="selectedTags.includes(tag) 
+                        ? 'bg-gradient-to-r from-[#A8EB12] via-[#74E600] to-[#3ED400] text-white border-[#00C851] shadow-lg shadow-[#00C851]/30' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-[#3ED400] hover:bg-[#00C851]/5 hover:text-[#00C851]'">
+                {{ tag }}
               </button>
             </div>
           </div>
-        </div>
 
-        <div class="mb-6">
-          <div class="flex flex-wrap gap-2 justify-center">
-            <button v-for="tag in feedbackTags" :key="tag"
-                    @click="toggleFeedbackTag(tag)"
-                    class="px-3 py-1 text-xs font-bold rounded-lg border transition-all"
-                    :class="selectedTags.includes(tag) ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white text-gray-500 border-gray-200 hover:border-green-200'">
-              {{ tag }}
+          <!-- Comment Section -->
+          <div class="mb-4">
+            <label class="block text-sm sm:text-base font-bold text-gray-800 mb-2 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Additional Comments <span class="text-gray-400 font-normal text-xs">(Optional)</span>
+            </label>
+            <textarea v-model="feedbackComment"
+                      placeholder="Tell us more about your experience..."
+                      class="w-full px-4 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] outline-none transition-all resize-none bg-white focus:bg-gray-50 shadow-inner"
+                      rows="4"></textarea>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6 flex-shrink-0 pt-4 border-t-2 border-gray-200">
+            <button @click="closeFeedbackModal" 
+                    class="px-6 py-3 text-sm sm:text-base font-bold text-gray-700 bg-gray-100 border-2 border-gray-300 rounded-xl hover:bg-gray-200 hover:border-gray-400 transition-all duration-200 shadow-sm">
+              Cancel
+            </button>
+            <button @click="submitFeedback"
+                    :disabled="!feedbackRating || submittingFeedback"
+                    class="px-6 py-3 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] border-2 border-transparent rounded-xl hover:from-[#00C851]/90 hover:via-[#3ED400]/90 hover:to-[#74E600]/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-[#00C851]/30 hover:shadow-xl hover:shadow-[#00C851]/40 hover:scale-105 active:scale-95">
+              <svg v-if="submittingFeedback" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              {{ submittingFeedback ? 'Submitting...' : 'Submit Feedback' }}
             </button>
           </div>
         </div>
+      </div>
+    </div>
 
-        <textarea v-model="feedbackComment"
-                  placeholder="Tell us more (optional)..."
-                  class="w-full px-4 py-3 mb-6 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none transition-all text-sm resize-none bg-gray-50 focus:bg-white"
-                  rows="3"></textarea>
-
-        <div class="flex gap-3">
-          <button @click="closeFeedbackModal" 
-                  class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">
-            Cancel
-          </button>
-          <button @click="submitFeedback"
-                  :disabled="!feedbackRating || submittingFeedback"
-                  class="flex-1 py-3 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-bold rounded-xl shadow-lg hover:shadow-green-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none transition-all">
-            {{ submittingFeedback ? 'Sending...' : 'Submit' }}
+    <!-- Success Modal after Feedback Submission -->
+    <div v-if="showFeedbackSuccessModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center p-4" @click="closeFeedbackSuccessModal">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform transition-all scale-100 border-2 border-[#00C851]/30" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-6 rounded-t-3xl relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-[#A8EB12]/30 to-transparent"></div>
+          <div class="relative flex items-center justify-center">
+            <div class="w-20 h-20 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-xl animate-bounce">
+              <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6 sm:p-8 text-center bg-gradient-to-b from-white to-gray-50/50">
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
+            Thank You!
+          </h3>
+          <p class="text-gray-600 mb-6 font-medium leading-relaxed text-base">
+            Your feedback has been submitted successfully. We appreciate your time and will use your input to improve our services.
+          </p>
+          
+          <button @click="closeFeedbackSuccessModal"
+                  class="w-full py-4 rounded-xl font-bold text-white shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] hover:from-[#00C851]/90 hover:via-[#3ED400]/90 hover:to-[#74E600]/90 border-2 border-transparent">
+            Got it!
           </button>
         </div>
       </div>
@@ -547,9 +640,9 @@
     </div>
 
     <div v-if="showNotificationModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" @click.self="closeNotificationModal">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-gray-100" @click.stop>
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-[#DFF7D0]" @click.stop>
         <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"
-             :class="notificationType === 'success' ? 'bg-green-100 text-green-500' : notificationType === 'error' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'">
+             :class="notificationType === 'success' ? 'bg-[#E7FFF5] text-[#00C851]' : notificationType === 'error' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'">
           <svg v-if="notificationType === 'success'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
           <svg v-else-if="notificationType === 'error'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
           <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -562,7 +655,11 @@
         
         <button @click="closeNotificationModal"
                 class="w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95"
-                :class="notificationType === 'success' ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : notificationType === 'error' ? 'bg-red-500 hover:bg-red-600 shadow-red-200' : 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'">
+                :class="notificationType === 'success' 
+                  ? 'bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] shadow-[0_10px_30px_rgba(0,200,81,0.45)] hover:shadow-[0_14px_36px_rgba(0,200,81,0.6)]' 
+                  : notificationType === 'error' 
+                    ? 'bg-red-500 hover:bg-red-600 shadow-red-200' 
+                    : 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'">
           Okay, Got it
         </button>
       </div>
@@ -633,6 +730,7 @@ export default {
       feedbackAspects: {},
       selectedTags: [],
       submittingFeedback: false,
+      showFeedbackSuccessModal: false,
 
       // chat modal state
       showChatModal: false,
@@ -820,6 +918,10 @@ export default {
       this.selectedTags = []
     },
 
+    closeFeedbackSuccessModal() {
+      this.showFeedbackSuccessModal = false
+    },
+
     toggleFeedbackTag(tag) {
       const index = this.selectedTags.indexOf(tag)
       if (index > -1) {
@@ -987,8 +1089,11 @@ export default {
         this.filterOrders()
 
         console.log('Feedback submission completed successfully')
-        alert('Thank you for your feedback!')
         this.closeFeedbackModal()
+        // Show success modal after a brief delay
+        setTimeout(() => {
+          this.showFeedbackSuccessModal = true
+        }, 300)
       } catch (error) {
         console.error('Error submitting feedback:', error)
         console.error('Error details:', {

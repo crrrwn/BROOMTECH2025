@@ -1,10 +1,12 @@
 <template>
-  <div class="h-screen flex flex-col relative overflow-hidden bg-gray-100">
+  <div
+    class="h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-[#A8EB12] via-[#74E600] to-[#00C851]"
+  >
     
     <div class="flex-1 relative z-0" id="deliveryMap">
       <button
         @click="toggleFullscreen"
-        class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-xl hover:bg-white text-gray-600 hover:text-[#3ED400] transition-all transform hover:scale-105 border border-white/50"
+        class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-xl hover:bg-white text-gray-700 hover:text-[#008a3a] transition-all transform hover:scale-105 border border-white/60"
         title="Toggle Fullscreen"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -12,7 +14,7 @@
         </svg>
       </button>
       
-      <div class="w-full h-full" ref="mapContainer"></div>
+      <div class="w-full h-full rounded-b-[2.5rem] md:rounded-b-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.25)]" ref="mapContainer"></div>
       
       <div v-if="mapError" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
         <div class="text-center p-8 max-w-md bg-white rounded-3xl shadow-2xl border border-red-100">
@@ -33,13 +35,15 @@
       </div>
     </div>
 
-    <div class="bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-white/50 p-6 max-h-[45vh] overflow-y-auto z-10 relative">
+    <div
+      class="bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.18)] border-t border-white/60 p-6 md:p-7 lg:p-8 max-h-[48vh] md:max-h-[50vh] overflow-y-auto z-10 relative"
+    >
       
-      <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+      <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:mb-7"></div>
 
-      <div class="flex items-center justify-between mb-8">
-        <div class="flex items-center gap-4">
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#74E600] to-[#00C851] p-0.5 shadow-lg shadow-green-200">
+      <div class="flex flex-wrap items-center justify-between gap-4 md:gap-6 mb-6 md:mb-8">
+        <div class="flex items-center gap-4 md:gap-5 min-w-0">
+          <div class="w-16 h-16 md:w-18 md:h-18 rounded-2xl bg-gradient-to-br from-[#A8EB12] via-[#74E600] to-[#00C851] p-0.5 shadow-lg shadow-green-200/70">
             <div class="w-full h-full bg-white rounded-2xl overflow-hidden flex items-center justify-center text-[#00C851] text-xl font-black border-2 border-white">
               <span v-if="!driverProfile?.profilePicture">
                 {{ driverInitials }}
@@ -53,40 +57,55 @@
             </div>
           </div>
           
-          <div>
-            <h3 class="text-xl font-black text-gray-800 leading-tight">{{ driverName }}</h3>
+          <div class="min-w-0">
+            <h3 class="text-lg md:text-xl font-black text-gray-800 leading-tight truncate">
+              {{ driverName }}
+            </h3>
+            <span
+              class="inline-block px-2.5 py-0.5 bg-[#E7FFE0] text-[#2F8F27] text-[10px] font-bold uppercase tracking-wider rounded-full mt-1 border border-[#C9F6B9]"
+            >
+              Courier
+            </span>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <button @click="viewOrderDetails" class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center group" title="Order Details">
+        <div class="flex items-center gap-3 md:gap-4">
+          <button
+            @click="viewOrderDetails"
+            class="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-[#F3FDF1] text-[#3ED400] hover:bg-[#3ED400] hover:text-white hover:shadow-lg hover:shadow-green-200/70 transition-all flex items-center justify-center group"
+            title="Order Details"
+          >
             <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
 
-          <button 
-            v-if="!order || order.status !== 'delivered'"
-            @click="openChat" 
-            class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-200 transition-all flex items-center justify-center group" 
-            title="Chat">
+          <button
+            @click="openChat"
+            class="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-[#E9FFF8] text-[#00C851] hover:bg-[#00C851] hover:text-white hover:shadow-lg hover:shadow-emerald-200/70 transition-all flex items-center justify-center group"
+            title="Chat"
+          >
             <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
           </button>
 
-          <button @click="callCustomer" class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 hover:bg-[#00C851] hover:text-white hover:shadow-lg hover:shadow-green-200 transition-all flex items-center justify-center group" title="Call Customer">
+          <button
+            @click="callCustomer"
+            class="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-[#E3FFE8] text-[#00C851] hover:bg-[#00C851] hover:text-white hover:shadow-lg hover:shadow-green-200 transition-all flex items-center justify-center group"
+            title="Call Customer"
+          >
             <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
           </button>
         </div>
       </div>
 
-      <div class="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 mb-6">
-        <div class="relative pl-4 border-l-2 border-gray-200 space-y-6">
+      <div class="bg-gradient-to-r from-[#F4FFE9] via-white to-[#E8FFE8] p-5 rounded-2xl border border-[#E2FAD6] mb-6">
+        <div class="relative pl-4 border-l-2 border-[#B7F08F] space-y-6">
           <div class="relative">
-            <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-4 border-orange-400 shadow-sm"></div>
+            <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-[3px] border-[#FFB300] shadow-sm"></div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Pickup</p>
             <p class="text-sm font-bold text-gray-800 leading-snug">{{ pickupAddress }}</p>
           </div>
 
           <div class="relative">
-            <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-4 border-gray-400 shadow-sm"></div>
+            <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-[3px] border-[#00C851] shadow-sm"></div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Drop-off</p>
             <p class="text-sm font-bold text-gray-800 leading-snug">{{ deliveryAddress }}</p>
           </div>
@@ -97,14 +116,14 @@
         <button
           @click="showItemsTotalModal"
           :disabled="!order || order.status === 'delivered'"
-          class="flex-1 py-3 px-2 bg-blue-50 text-blue-600 font-bold text-sm rounded-xl border border-blue-100 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex-1 py-3 px-2 bg-[#E7FFF5] text-[#00C851] font-semibold text-sm rounded-xl border border-[#C5F7DE] hover:bg-[#D4FFE7] hover:border-[#9CF3C1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Set Total
         </button>
         <button
           @click="showProofModal"
           :disabled="!order || order.status === 'delivered'"
-          class="flex-1 py-3 px-2 bg-purple-50 text-purple-600 font-bold text-sm rounded-xl border border-purple-100 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex-1 py-3 px-2 bg-[#F4FFF0] text-[#3ED400] font-semibold text-sm rounded-xl border border-[#D9F6C8] hover:bg-[#E8FFE1] hover:border-[#B8F29A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Upload Proof
         </button>
@@ -112,24 +131,34 @@
       
       <button
         @click="finishDelivery"
-        class="w-full py-4 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-black text-lg rounded-xl shadow-lg shadow-green-200 hover:shadow-green-300 hover:-translate-y-0.5 transition-all active:scale-95"
+        class="w-full py-4 bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] text-white font-black text-base md:text-lg rounded-2xl shadow-[0_12px_30px_rgba(0,200,81,0.55)] hover:shadow-[0_16px_40px_rgba(0,200,81,0.65)] hover:-translate-y-0.5 transition-all active:scale-95 tracking-wide"
       >
         FINISH DELIVERY
       </button>
     </div>
 
-    <div v-if="showOrderDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 transform transition-all">
-        <div class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 p-6 flex items-center justify-between z-10">
-          <h2 class="text-xl font-black text-gray-900">Order Details</h2>
-          <button @click="showOrderDetailsModal = false" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+    <div
+      v-if="showOrderDetailsModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 md:bg-black/45 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#DFF7D0] transform transition-all"
+      >
+        <div
+          class="sticky top-0 bg-gradient-to-r from-[#A8EB12] via-[#74E600] to-[#00C851] text-white border-b border-[#C8F6B8]/60 px-6 py-4 flex items-center justify-between z-10"
+        >
+          <h2 class="text-xl font-black drop-shadow-sm">Order Details</h2>
+          <button
+            @click="showOrderDetailsModal = false"
+            class="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+          >
             <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
         
         <div class="p-6 space-y-6" v-if="order">
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100">
-            <h4 class="text-xs font-black text-blue-400 uppercase tracking-widest mb-4">Order Summary</h4>
+          <div class="bg-gradient-to-br from-[#F2FFE5] via-[#E4FFE8] to-[#D9FFE5] p-5 rounded-2xl border border-[#CFF5C2]">
+            <h4 class="text-xs font-black text-[#3ED400] uppercase tracking-widest mb-4">Order Summary</h4>
             <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div>
                 <p class="text-gray-500 text-xs">Order ID</p>
@@ -137,13 +166,17 @@
               </div>
               <div>
                 <p class="text-gray-500 text-xs">Status</p>
-                <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-md mt-0.5">
+                <span
+                  class="inline-block px-2 py-0.5 bg-[#E7FFF5] text-[#00C851] text-[10px] font-bold uppercase rounded-full mt-0.5"
+                >
                   {{ order.status || 'N/A' }}
                 </span>
               </div>
               <div>
                 <p class="text-gray-500 text-xs">Total Amount</p>
-                <p class="font-black text-[#00C851] text-lg">₱{{ (order.totalAmount || order.pricing?.total || 0).toFixed(2) }}</p>
+                <p class="font-black text-[#00C851] text-lg">
+                  ₱{{ (order.totalAmount || order.pricing?.total || 0).toFixed(2) }}
+                </p>
               </div>
               <div>
                 <p class="text-gray-500 text-xs">Payment</p>
@@ -193,8 +226,11 @@
           </div>
 
           <!-- Customer Feedback Section -->
-          <div v-if="order?.feedback && order.status === 'delivered'" class="bg-gradient-to-br from-yellow-50 to-orange-50 p-5 rounded-2xl border border-yellow-200 shadow-sm">
-            <h4 class="text-xs font-black text-yellow-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <div
+            v-if="order?.feedback && order.status === 'delivered'"
+            class="bg-gradient-to-br from-[#FFF9E2] via-[#FFF1C5] to-[#FFE0A3] p-5 rounded-2xl border border-[#FFE6B8] shadow-sm"
+          >
+            <h4 class="text-xs font-black text-[#C18A00] uppercase tracking-widest mb-4 flex items-center gap-2">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
               </svg>
@@ -212,7 +248,10 @@
                 <span class="text-sm font-bold text-gray-700">{{ order.feedback.rating || 0 }}.0</span>
                 <span class="text-xs text-gray-500">by {{ order.feedback.userName || 'Customer' }}</span>
               </div>
-              <p v-if="order.feedback.comment" class="text-sm text-gray-700 italic bg-white/60 p-3 rounded-lg border border-yellow-100">
+              <p
+                v-if="order.feedback.comment"
+                class="text-sm text-gray-700 italic bg-white/60 p-3 rounded-lg border border-yellow-100"
+              >
                 "{{ order.feedback.comment }}"
               </p>
             </div>
@@ -221,19 +260,33 @@
       </div>
     </div>
 
-    <div v-if="showChatModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[80vh] flex flex-col overflow-hidden border border-gray-100">
-        <div class="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between shadow-sm z-10">
+    <div
+      v-if="showChatModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[80vh] flex flex-col overflow-hidden border border-[#DFF7D0]"
+      >
+        <div
+          class="px-6 py-4 bg-gradient-to-r from-[#A8EB12] via-[#74E600] to-[#00C851] text-white flex items-center justify-between shadow-sm z-10"
+        >
           <div class="flex items-center gap-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+            <div
+              class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-bold shadow-md"
+            >
               {{ chatPartner?.role === 'user' ? 'U' : 'C' }}
             </div>
             <div>
-              <h2 class="text-lg font-black text-gray-800 leading-tight">Chat</h2>
-              <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ chatPartner?.name || 'Customer' }}</p>
+              <h2 class="text-lg font-black leading-tight drop-shadow-sm">Chat</h2>
+              <p class="text-xs font-bold uppercase tracking-wide text-white/80">
+                {{ chatPartner?.name || 'Customer' }}
+              </p>
             </div>
           </div>
-          <button @click="showChatModal = false" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+          <button
+            @click="showChatModal = false"
+            class="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+          >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -248,78 +301,125 @@
             class="h-full"
           />
           <div v-else class="flex flex-col items-center justify-center h-full text-gray-400">
-            <div class="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-500 mb-4"></div>
+            <div
+              class="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-[#00C851] mb-4"
+            ></div>
             <p class="font-medium">Connecting...</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="showCallModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all">
-        <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+    <div
+      v-if="showCallModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all border border-[#DFF7D0]"
+      >
+        <div class="w-20 h-20 bg-[#E7FFF5] rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
           <svg class="w-10 h-10 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
         </div>
         <h2 class="text-2xl font-black text-gray-900 mb-2">Call Customer</h2>
-        <div class="bg-gray-50 py-4 px-6 rounded-2xl mb-8 border border-gray-100">
+        <div class="bg-[#F6FFF1] py-4 px-6 rounded-2xl mb-8 border border-[#E0F6CF]">
           <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Number</p>
           <p class="text-xl font-bold text-gray-800 font-mono">{{ order?.customerData?.phone || 'N/A' }}</p>
         </div>
         <div class="flex gap-4">
-          <button @click="showCallModal = false" class="flex-1 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
-          <button @click="initiateCall" :disabled="!order?.customerData?.phone" class="flex-1 py-3 bg-[#00C851] text-white font-bold rounded-xl hover:bg-green-600 transition-colors shadow-lg disabled:opacity-50">Call Now</button>
+          <button
+            @click="showCallModal = false"
+            class="flex-1 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="initiateCall"
+            :disabled="!order?.customerData?.phone"
+            class="flex-1 py-3 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-bold rounded-xl hover:brightness-110 transition-colors shadow-lg disabled:opacity-50"
+          >
+            Call Now
+          </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showItemsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
+    <div
+      v-if="showItemsModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-[#DFF7D0]">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-black text-gray-900">Set Items Total</h2>
-          <button @click="showItemsModal = false" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          <button
+            @click="showItemsModal = false"
+            class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"
+          ><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
         
         <div class="space-y-6" v-if="order">
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Enter Amount (₱)</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+              Enter Amount (₱)
+            </label>
             <input
               v-model.number="itemsTotal"
               type="number"
               min="0"
               step="0.01"
-              class="w-full text-2xl font-bold px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 outline-none transition-all placeholder-gray-300"
+              class="w-full text-2xl font-bold px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-[#00C851] outline-none transition-all placeholder-gray-300"
               placeholder="0.00"
             />
           </div>
 
-          <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-2 text-sm">
+          <div class="bg-[#F6FFF1] p-5 rounded-2xl border border-[#E0F6CF] space-y-2 text-sm">
             <div class="flex justify-between text-gray-500"><span>Base Charge</span> <span>₱{{ (order.pricing?.baseCharge || 0).toFixed(2) }}</span></div>
             <div class="flex justify-between text-gray-500"><span>Distance Fee</span> <span>₱{{ (order.pricing?.distanceFee || 0).toFixed(2) }}</span></div>
             <div v-if="order.pricing?.badWeatherFee" class="flex justify-between text-yellow-600"><span>Weather Fee</span> <span>₱{{ (order.pricing.badWeatherFee || 0).toFixed(2) }}</span></div>
-            <div class="flex justify-between text-blue-600 font-bold bg-blue-50 p-2 rounded-lg"><span>Items Total</span> <span>₱{{ (itemsTotal || 0).toFixed(2) }}</span></div>
+            <div class="flex justify-between text-[#00C851] font-bold bg-[#E7FFF5] p-2 rounded-lg">
+              <span>Items Total</span> <span>₱{{ (itemsTotal || 0).toFixed(2) }}</span>
+            </div>
             
             <div class="border-t border-gray-200 my-2 pt-2">
-              <div class="flex justify-between text-gray-600"><span>Subtotal</span> <span>₱{{ calculateNewTotal().toFixed(2) }}</span></div>
-              <div v-if="order.paymentMethod?.toUpperCase() !== 'COD'" class="flex justify-between text-gray-600"><span>GCash Fee</span> <span>₱{{ calculateGCashFee().toFixed(2) }}</span></div>
+              <div class="flex justify-between text-gray-600">
+                <span>Subtotal</span> <span>₱{{ calculateNewTotal().toFixed(2) }}</span>
+              </div>
+              <div
+                v-if="order.paymentMethod?.toUpperCase() !== 'COD'"
+                class="flex justify-between text-gray-600"
+              >
+                <span>GCash Fee</span> <span>₱{{ calculateGCashFee().toFixed(2) }}</span>
+              </div>
               <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
                 <span class="font-bold text-gray-800 text-base">TOTAL</span>
-                <span class="font-black text-2xl text-[#00C851]">₱{{ (order.totalAmount || calculateNewTotalWithGCash()).toFixed(2) }}</span>
+                <span class="font-black text-2xl text-[#00C851]">
+                  ₱{{ (order.totalAmount || calculateNewTotalWithGCash()).toFixed(2) }}
+                </span>
               </div>
             </div>
           </div>
 
-          <button @click="saveItemsTotal" :disabled="savingItems || itemsTotal < 0" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all disabled:opacity-50">
+          <button
+            @click="saveItemsTotal"
+            :disabled="savingItems || itemsTotal < 0"
+            class="w-full py-3 bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
+          >
             {{ savingItems ? 'Saving...' : 'Save & Notify User' }}
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showProofOfDeliveryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
+    <div
+      v-if="showProofOfDeliveryModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-[#DFF7D0]">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-black text-gray-900">Upload Proof</h2>
-          <button @click="showProofOfDeliveryModal = false" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          <button
+            @click="showProofOfDeliveryModal = false"
+            class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"
+          ><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
 
         <div class="space-y-4">
@@ -327,11 +427,18 @@
             @drop.prevent="handleProofDrop"
             @dragover.prevent="dragOverProof = true"
             @dragleave.prevent="dragOverProof = false"
-            :class="['border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer', dragOverProof ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50']"
+            :class="[
+              'border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer',
+              dragOverProof
+                ? 'border-[#00C851] bg-[#E7FFF5]'
+                : 'border-gray-300 hover:border-[#74E600] hover:bg-gray-50'
+            ]"
           >
             <input type="file" accept="image/*" @change="handleProofFileSelect" class="hidden" id="proofFileInput" ref="proofFileInput" />
             <label for="proofFileInput" class="cursor-pointer block">
-              <div class="w-16 h-16 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div
+                class="w-16 h-16 bg-[#E7FFF5] text-[#00C851] rounded-full flex items-center justify-center mx-auto mb-4"
+              >
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
               </div>
               <p class="text-gray-600 font-medium">Click to upload or drag image</p>
@@ -344,17 +451,30 @@
             <button @click="proofPreview = null; proofFile = null" class="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-red-500 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
 
-          <button @click="uploadProofOfDelivery" :disabled="!proofFile || uploadingProof" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50">
+          <button
+            @click="uploadProofOfDelivery"
+            :disabled="!proofFile || uploadingProof"
+            class="w-full py-3 bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
+          >
             {{ uploadingProof ? 'Uploading...' : 'Upload & Confirm' }}
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showNotificationModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" @click.self="closeNotificationModal">
-      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-gray-100" @click.stop>
-        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"
-             :class="notificationType === 'success' ? 'bg-green-100 text-green-500' : notificationType === 'error' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'">
+    <div
+      v-if="showNotificationModal"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
+      @click.self="closeNotificationModal"
+    >
+      <div
+        class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-[#DFF7D0]"
+        @click.stop
+      >
+        <div
+          class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"
+          :class="notificationType === 'success' ? 'bg-[#E7FFF5] text-[#00C851]' : notificationType === 'error' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'"
+        >
           <svg v-if="notificationType === 'success'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
           <svg v-else-if="notificationType === 'error'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
           <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -367,7 +487,11 @@
         
         <button @click="closeNotificationModal"
                 class="w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95"
-                :class="notificationType === 'success' ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : notificationType === 'error' ? 'bg-red-500 hover:bg-red-600 shadow-red-200' : 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'">
+                :class="notificationType === 'success' 
+                  ? 'bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] shadow-[0_10px_30px_rgba(0,200,81,0.45)] hover:shadow-[0_14px_36px_rgba(0,200,81,0.6)]' 
+                  : notificationType === 'error' 
+                    ? 'bg-red-500 hover:bg-red-600 shadow-red-200' 
+                    : 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'">
           Okay, Got it
         </button>
       </div>
@@ -430,28 +554,10 @@ export default {
   },
   computed: {
     driverName() {
-      // Prioritize fullName from driverProfile
       if (this.driverProfile) {
-        if (this.driverProfile.fullName) {
-          return this.driverProfile.fullName
-        }
-        // Fallback to firstName + lastName
-        const constructedName = `${this.driverProfile.firstName || ''} ${this.driverProfile.lastName || ''}`.trim()
-        if (constructedName) {
-          return constructedName
-        }
+        return `${this.driverProfile.firstName || ''} ${this.driverProfile.lastName || ''}`.trim() || 'Driver'
       }
-      // Fallback to authStore userProfile
-      if (this.authStore.userProfile) {
-        if (this.authStore.userProfile.fullName) {
-          return this.authStore.userProfile.fullName
-        }
-        const constructedName = `${this.authStore.userProfile.firstName || ''} ${this.authStore.userProfile.lastName || ''}`.trim()
-        if (constructedName) {
-          return constructedName
-        }
-      }
-      return 'Driver'
+      return this.authStore.userProfile?.fullName || 'Driver'
     },
     driverInitials() {
       const name = this.driverName
@@ -600,24 +706,7 @@ export default {
         const driverSnap = await getDoc(driverRef)
         
         if (driverSnap.exists()) {
-          const data = driverSnap.data()
-          this.driverProfile = {
-            ...data,
-            // Ensure fullName is available
-            fullName: data.fullName || 
-                     (data.firstName && data.lastName ? `${data.firstName} ${data.lastName}`.trim() : '') ||
-                     data.name || '',
-            // Also ensure profilePicture is available
-            profilePicture: data.profilePictureUrl || 
-                           data.profilePicture || 
-                           data.driverInfo?.documents?.profilePicture || ''
-          }
-          
-          console.log('[v0] Driver profile loaded:', {
-            fullName: this.driverProfile.fullName,
-            firstName: this.driverProfile.firstName,
-            lastName: this.driverProfile.lastName
-          })
+          this.driverProfile = driverSnap.data()
           
           // Get current location from Firestore if available (more accurate)
           if (this.driverProfile.currentLocation) {
@@ -629,13 +718,10 @@ export default {
           }
         } else {
           // Fallback to user profile
-          this.driverProfile = this.authStore.userProfile || {}
-          console.log('[v0] Using authStore userProfile as fallback')
+          this.driverProfile = this.authStore.userProfile
         }
       } catch (error) {
         console.error('[v0] Error loading driver profile:', error)
-        // Fallback to authStore profile on error
-        this.driverProfile = this.authStore.userProfile || {}
       }
     },
 
@@ -690,17 +776,13 @@ export default {
         })
 
         // Set up ResizeObserver to handle container size changes
-        if (window.ResizeObserver && mapElement && mapElement instanceof Element) {
-          try {
-            const resizeObserver = new ResizeObserver(() => {
-              if (this.map) {
-                window.google.maps.event.trigger(this.map, 'resize')
-              }
-            })
-            resizeObserver.observe(mapElement)
-          } catch (error) {
-            console.warn('[v0] ResizeObserver setup failed:', error)
-          }
+        if (window.ResizeObserver && mapElement) {
+          const resizeObserver = new ResizeObserver(() => {
+            if (this.map) {
+              window.google.maps.event.trigger(this.map, 'resize')
+            }
+          })
+          resizeObserver.observe(mapElement)
         }
 
         // Add markers and route immediately (this will set the proper bounds to show pickup/delivery)
@@ -1091,24 +1173,7 @@ export default {
           }
         },
         (error) => {
-          // Handle different geolocation error codes
-          // Code 1: PERMISSION_DENIED - User denied location permission
-          // Code 2: POSITION_UNAVAILABLE - Location unavailable
-          // Code 3: TIMEOUT - Request timeout (common, expected - don't log as error)
-          if (error.code === 3) {
-            // Timeout is expected and common - just log as debug, don't show error
-            console.log('[v0] Location tracking timeout (expected):', error.message)
-            return
-          }
-          
-          // Only log actual errors (permission denied, position unavailable)
-          if (error.code === 1) {
-            console.warn('[v0] Location permission denied:', error.message)
-          } else if (error.code === 2) {
-            console.warn('[v0] Location unavailable:', error.message)
-          } else {
-            console.warn('[v0] Location tracking error:', error.message)
-          }
+          console.error('[v0] Location tracking error:', error)
         },
         {
           enableHighAccuracy: true,

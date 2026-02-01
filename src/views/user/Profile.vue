@@ -205,7 +205,7 @@
       <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform scale-100 transition-transform animate-in zoom-in-95" @click.stop>
         <div :class="[
           'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce shadow-sm',
-          notificationType === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+          notificationType === 'success' ? 'bg-[#E7FFF5] text-[#00C851]' : 'bg-red-100 text-red-600'
         ]">
           <svg v-if="notificationType === 'success'" class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
           <svg v-else class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -214,7 +214,7 @@
           {{ notificationType === 'success' ? 'Success!' : 'Oops!' }}
         </h3>
         <p class="text-gray-600 text-base mb-8 leading-relaxed font-medium">{{ notificationMessage }}</p>
-        <button @click="closeNotificationModal" class="w-full py-3.5 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black shadow-md transition-colors">
+        <button @click="closeNotificationModal" class="w-full py-3.5 bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] text-white font-bold rounded-2xl hover:brightness-110 shadow-[0_10px_28px_rgba(0,200,81,0.5)] transition-colors">
           Okay, Got it
         </button>
       </div>

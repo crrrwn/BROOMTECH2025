@@ -1,19 +1,19 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+  <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-full">
     <!-- Header -->
-    <div class="p-4 border-b bg-gray-50">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900">Live Tracking</h3>
-          <p class="text-sm text-gray-600">Order #{{ order?.id }}</p>
+    <div class="p-4 sm:p-5 md:p-6 border-b bg-gradient-to-r from-[#A8EB12] via-[#74E600] to-[#3ED400]">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <div class="flex-1">
+          <h3 class="text-xl sm:text-2xl font-bold text-white drop-shadow-md">Live Tracking</h3>
+          <p class="text-sm sm:text-base text-white/90 mt-1 font-medium">Order #{{ order?.id }}</p>
         </div>
-        <div class="flex items-center space-x-2">
-          <div class="flex items-center">
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span class="ml-2 text-sm text-gray-600">Live</span>
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+          <div class="flex items-center bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            <div class="w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-lg"></div>
+            <span class="ml-2 text-sm font-semibold text-white">Live</span>
           </div>
-          <button @click="refreshTracking" class="p-2 text-gray-400 hover:text-gray-600">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="refreshTracking" class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 backdrop-blur-sm">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
           </button>
@@ -22,102 +22,166 @@
     </div>
 
     <!-- Map Container -->
-    <div class="relative">
-      <div id="tracking-map" ref="mapContainer" class="h-64 w-full bg-gray-100 flex items-center justify-center">
+    <div class="relative w-full">
+      <div id="tracking-map" ref="mapContainer" class="h-64 sm:h-80 md:h-96 lg:h-[450px] w-full bg-gradient-to-br from-[#A8EB12]/10 to-[#00C851]/10 flex items-center justify-center">
         <!-- Map will be rendered here by Google Maps API -->
       </div>
       
       <!-- Loading Overlay -->
-      <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-        <div class="flex items-center space-x-2">
-          <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce"></div>
-          <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+      <div v-if="loading" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10">
+        <div class="flex flex-col items-center space-y-4">
+          <div class="flex items-center space-x-2">
+            <div class="w-4 h-4 bg-[#74E600] rounded-full animate-bounce shadow-lg"></div>
+            <div class="w-4 h-4 bg-[#3ED400] rounded-full animate-bounce shadow-lg" style="animation-delay: 0.1s"></div>
+            <div class="w-4 h-4 bg-[#00C851] rounded-full animate-bounce shadow-lg" style="animation-delay: 0.2s"></div>
+          </div>
+          <p class="text-sm font-medium text-gray-700">Updating location...</p>
         </div>
       </div>
     </div>
 
     <!-- Order Status -->
-    <div class="p-4 space-y-4">
+    <div class="p-4 sm:p-5 md:p-6 space-y-5 sm:space-y-6">
       <!-- Status Timeline -->
-      <div class="flex items-center justify-between">
-        <div v-for="(step, index) in statusSteps" :key="step.status" class="flex flex-col items-center flex-1">
-          <div class="flex items-center w-full">
-            <div :class="getStepClass(step.status)" class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium">
-              <svg v-if="isStepCompleted(step.status)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-              </svg>
-              <span v-else>{{ index + 1 }}</span>
+      <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
+        <h4 class="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Order Status</h4>
+        <div class="flex items-center justify-between relative status-timeline">
+          <div v-for="(step, index) in statusSteps" :key="step.status" class="flex flex-col items-center flex-1 relative z-10">
+            <div class="flex items-center w-full mb-2">
+              <div :class="getStepClass(step.status)" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:scale-110 relative z-20">
+                <svg v-if="isStepCompleted(step.status)" class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span v-else class="text-xs sm:text-sm">{{ index + 1 }}</span>
+              </div>
+              <div v-if="index < statusSteps.length - 1" :class="getStepLineClass(step.status)" class="flex-1 h-1.5 mx-2 sm:mx-3 rounded-full transition-all duration-500"></div>
             </div>
-            <div v-if="index < statusSteps.length - 1" :class="isStepCompleted(step.status) ? 'bg-green-500' : 'bg-gray-300'" class="flex-1 h-1 mx-2"></div>
+            <span class="text-xs sm:text-sm font-medium text-gray-700 mt-2 text-center px-1">{{ step.label }}</span>
+            <span v-if="step.time" class="text-xs text-[#00C851] font-semibold mt-1">{{ formatTime(step.time) }}</span>
           </div>
-          <span class="text-xs text-gray-600 mt-2 text-center">{{ step.label }}</span>
-          <span v-if="step.time" class="text-xs text-gray-400">{{ formatTime(step.time) }}</span>
         </div>
       </div>
 
       <!-- Driver Info -->
-      <div v-if="order?.driver" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-        <div class="flex items-center space-x-3">
-          <img :src="order.driver.avatar || '/placeholder.svg?height=40&width=40'" :alt="order.driver.name" class="w-10 h-10 rounded-full">
-          <div>
-            <p class="font-medium text-gray-900">{{ order.driver.name }}</p>
-            <p class="text-sm text-gray-600">{{ order.driver.vehicle }} • {{ order.driver.plateNumber }}</p>
-          </div>
-        </div>
-        <div class="flex space-x-2">
-          <!-- Phone button now shows phone number in tooltip/modal -->
-          <button @click="showPhoneNumber" class="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 relative group">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-            </svg>
-            <!-- Tooltip showing phone number -->
-            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-              {{ order.driver.phone }}
+      <div v-if="order?.driver" class="bg-gradient-to-r from-[#A8EB12]/10 via-[#74E600]/10 to-[#3ED400]/10 rounded-xl p-4 sm:p-5 border-2 border-[#74E600]/20 shadow-md">
+        <h4 class="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Driver Information</h4>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center space-x-3 sm:space-x-4 flex-1">
+            <div class="relative">
+              <img :src="order.driver.avatar || '/placeholder.svg?height=40&width=40'" :alt="order.driver.name" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-3 border-[#74E600] shadow-lg object-cover">
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#00C851] rounded-full border-2 border-white"></div>
             </div>
-          </button>
-          <!-- Message button opens chat with driver -->
-          <button @click="openChat" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-            </svg>
-          </button>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-base sm:text-lg truncate">{{ order.driver.name }}</p>
+              <p class="text-sm sm:text-base text-gray-600 mt-1">{{ order.driver.vehicle }} • {{ order.driver.plateNumber }}</p>
+            </div>
+          </div>
+          <div class="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
+            <!-- Phone button -->
+            <button @click="showPhoneNumber" class="flex-1 sm:flex-none px-4 sm:px-3 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#3ED400] to-[#00C851] text-white rounded-lg hover:from-[#00C851] hover:to-[#3ED400] transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 relative group">
+              <svg class="w-5 h-5 sm:w-4 sm:h-4 mx-auto sm:mx-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+              <span class="sm:hidden ml-2 text-sm font-semibold">Call</span>
+            </button>
+            <!-- Message button -->
+            <button @click="openChat" class="flex-1 sm:flex-none px-4 sm:px-3 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#74E600] to-[#3ED400] text-white rounded-lg hover:from-[#3ED400] hover:to-[#74E600] transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105">
+              <svg class="w-5 h-5 sm:w-4 sm:h-4 mx-auto sm:mx-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              <span class="sm:hidden ml-2 text-sm font-semibold">Message</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Delivery Details -->
-      <div class="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <p class="text-gray-600">Estimated Arrival</p>
-          <p class="font-medium text-gray-900">{{ estimatedArrival }}</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-gradient-to-br from-[#A8EB12]/10 to-[#74E600]/10 rounded-xl p-4 sm:p-5 border border-[#74E600]/20 shadow-sm">
+          <div class="flex items-center space-x-2 mb-2">
+            <svg class="w-5 h-5 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Estimated Arrival</p>
+          </div>
+          <p class="text-xl sm:text-2xl font-bold text-[#00C851]">{{ estimatedArrival }}</p>
         </div>
-        <div>
-          <p class="text-gray-600">Distance Remaining</p>
-          <p class="font-medium text-gray-900">{{ remainingDistance }}</p>
+        <div class="bg-gradient-to-br from-[#3ED400]/10 to-[#00C851]/10 rounded-xl p-4 sm:p-5 border border-[#3ED400]/20 shadow-sm">
+          <div class="flex items-center space-x-2 mb-2">
+            <svg class="w-5 h-5 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Distance Remaining</p>
+          </div>
+          <p class="text-xl sm:text-2xl font-bold text-[#00C851]">{{ remainingDistance }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Phone Number Modal -->
-    <div v-if="showPhoneModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Driver Contact</h3>
-        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-          <p class="text-sm text-gray-600 mb-2">Driver Name</p>
-          <p class="font-medium text-gray-900 mb-4">{{ order?.driver?.name }}</p>
-          <p class="text-sm text-gray-600 mb-2">Phone Number</p>
-          <p class="font-mono text-lg font-semibold text-green-600">{{ order?.driver?.phone }}</p>
-        </div>
-        <div class="flex space-x-3">
-          <button @click="callDriver" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            Call Driver
-          </button>
-          <button @click="showPhoneModal = false" class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-            Close
-          </button>
+    <!-- Enhanced Phone Number Modal -->
+    <transition name="modal">
+      <div v-if="showPhoneModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showPhoneModal = false">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+          <!-- Modal Header -->
+          <div class="bg-gradient-to-r from-[#A8EB12] via-[#74E600] to-[#3ED400] p-6 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white">Driver Contact</h3>
+              </div>
+              <button @click="showPhoneModal = false" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 space-y-6">
+            <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 border-[#74E600]/20">
+              <div class="space-y-4">
+                <div>
+                  <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Driver Name</p>
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-[#74E600] to-[#00C851] rounded-full flex items-center justify-center text-white font-bold">
+                      {{ order?.driver?.name?.charAt(0) || 'D' }}
+                    </div>
+                    <p class="text-lg font-bold text-gray-900">{{ order?.driver?.name }}</p>
+                  </div>
+                </div>
+                <div class="pt-4 border-t border-gray-200">
+                  <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Phone Number</p>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-1 bg-white rounded-lg p-3 border-2 border-[#00C851]/30">
+                      <p class="font-mono text-xl font-bold text-[#00C851] text-center">{{ order?.driver?.phone }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button @click="callDriver" class="flex-1 px-6 py-3.5 bg-gradient-to-r from-[#3ED400] to-[#00C851] text-white rounded-xl hover:from-[#00C851] hover:to-[#3ED400] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold flex items-center justify-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                <span>Call Driver</span>
+              </button>
+              <button @click="showPhoneModal = false" class="flex-1 px-6 py-3.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-300 font-semibold">
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -539,7 +603,7 @@ export default {
           // Try to use RIDER.png first
           createDriverMarker('/RIDER.png')
         } else {
-          // Smoothly animate marker to new position for visible movement
+          // Optimized smooth animation - reduced steps for better performance
           const startPosition = this.driverMarker.getPosition()
           if (startPosition) {
             const endPosition = new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng)
@@ -550,8 +614,8 @@ export default {
               Math.pow(endPosition.lng() - startPosition.lng(), 2)
             )
             
-            // More steps for longer distances to show smooth movement
-            const steps = Math.max(15, Math.min(30, Math.ceil(distance * 1000)))
+            // Optimized: fewer steps for better performance, still smooth
+            const steps = Math.max(10, Math.min(20, Math.ceil(distance * 500)))
             
             let step = 0
             const animateMarker = () => {
@@ -568,7 +632,9 @@ export default {
               this.driverMarker.setPosition(new window.google.maps.LatLng(lat, lng))
 
               if (step < steps) {
-                setTimeout(animateMarker, 30) // Faster update for smoother movement
+                requestAnimationFrame(() => {
+                  setTimeout(animateMarker, 16) // ~60fps for smooth movement
+                })
               }
             }
             animateMarker()
@@ -606,41 +672,44 @@ export default {
           }
         }
 
-        // Pan map to follow driver movement (real-time tracking)
+        // Optimized pan map to follow driver movement (real-time tracking)
         if (this.map) {
-          // Smoothly pan to driver location to show movement
-          this.map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
-          
-          // Update map bounds to include driver, pickup, and delivery
-          if (this.pickupMarker && this.destinationMarker) {
-            const bounds = new window.google.maps.LatLngBounds()
-            
-            const pickupPos = this.pickupMarker.getPosition()
-            if (pickupPos) bounds.extend(pickupPos)
-            
-            const dropoffPos = this.destinationMarker.getPosition()
-            if (dropoffPos) bounds.extend(dropoffPos)
-            
-            bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
-            
-            // Fit bounds to show all locations - but don't force it, let panTo handle movement
-            // Only fit bounds if driver is far from viewport
-            const mapCenter = this.map.getCenter()
-            if (mapCenter) {
-              const distanceFromCenter = Math.sqrt(
-                Math.pow(driverPosition.lat - mapCenter.lat(), 2) + 
-                Math.pow(driverPosition.lng - mapCenter.lng(), 2)
-              )
-              
-              // If driver is far from center, fit bounds to show everything
-              if (distanceFromCenter > 0.01) {
-                this.map.fitBounds(bounds, { padding: 100 })
-              }
-            }
-          } else {
-            // If markers not available, just pan to driver
+          // Use requestAnimationFrame for smooth panning
+          requestAnimationFrame(() => {
+            // Smoothly pan to driver location to show movement
             this.map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
-          }
+            
+            // Update map bounds to include driver, pickup, and delivery (throttled)
+            if (this.pickupMarker && this.destinationMarker) {
+              const bounds = new window.google.maps.LatLngBounds()
+              
+              const pickupPos = this.pickupMarker.getPosition()
+              if (pickupPos) bounds.extend(pickupPos)
+              
+              const dropoffPos = this.destinationMarker.getPosition()
+              if (dropoffPos) bounds.extend(dropoffPos)
+              
+              bounds.extend(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+              
+              // Fit bounds to show all locations - but don't force it, let panTo handle movement
+              // Only fit bounds if driver is far from viewport (optimized threshold)
+              const mapCenter = this.map.getCenter()
+              if (mapCenter) {
+                const distanceFromCenter = Math.sqrt(
+                  Math.pow(driverPosition.lat - mapCenter.lat(), 2) + 
+                  Math.pow(driverPosition.lng - mapCenter.lng(), 2)
+                )
+                
+                // If driver is far from center, fit bounds to show everything
+                if (distanceFromCenter > 0.015) {
+                  this.map.fitBounds(bounds, { padding: 80 })
+                }
+              }
+            } else {
+              // If markers not available, just pan to driver
+              this.map.panTo(new window.google.maps.LatLng(driverPosition.lat, driverPosition.lng))
+            }
+          })
         }
       }, (error) => {
         console.error('Error listening to driver location:', error)
@@ -708,9 +777,19 @@ export default {
 
     getStepClass(status) {
       if (this.isStepCompleted(status)) {
-        return 'bg-green-500'
+        return 'bg-gradient-to-br from-[#3ED400] to-[#00C851]'
       } else if (this.isCurrentStep(status)) {
-        return 'bg-blue-500'
+        return 'bg-gradient-to-br from-[#74E600] to-[#3ED400] animate-pulse'
+      } else {
+        return 'bg-gray-300'
+      }
+    },
+
+    getStepLineClass(status) {
+      if (this.isStepCompleted(status)) {
+        return 'bg-gradient-to-r from-[#3ED400] to-[#00C851]'
+      } else if (this.isCurrentStep(status)) {
+        return 'bg-gradient-to-r from-[#74E600] to-[#3ED400]'
       } else {
         return 'bg-gray-300'
       }
@@ -737,10 +816,17 @@ export default {
     },
 
     refreshTracking() {
+      // Optimized refresh - no artificial delays
       this.loading = true
-      setTimeout(() => {
+      // Re-initialize map immediately for real-time updates
+      if (this.mapsReady && this.order) {
+        this.$nextTick(() => {
+          this.initializeMap()
+          this.loading = false
+        })
+      } else {
         this.loading = false
-      }, 1000)
+      }
     },
 
     showPhoneNumber() {
@@ -780,3 +866,81 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Modal Transition Animations */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .bg-white,
+.modal-leave-active .bg-white {
+  transition: transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .bg-white,
+.modal-leave-to .bg-white {
+  transform: scale(0.9);
+}
+
+/* Smooth animations for status steps */
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  #tracking-map {
+    height: 16rem !important;
+  }
+  
+  .status-timeline {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  #tracking-map {
+    height: 24rem !important;
+  }
+}
+
+/* Performance optimizations */
+* {
+  will-change: auto;
+}
+
+.animate-pulse {
+  animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 640px) {
+  button {
+    min-height: 44px; /* iOS recommended touch target */
+  }
+}
+
+/* Prevent layout shift */
+#tracking-map {
+  min-height: 16rem;
+}
+</style>

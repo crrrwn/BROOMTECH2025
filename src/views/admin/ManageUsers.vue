@@ -1,25 +1,38 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-semibold text-gray-900">Manage Users</h1>
-        <p class="text-gray-600">Review and manage user accounts and approvals</p>
-      </div>
-      <div class="flex items-center space-x-4">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <!-- Green Banner Header -->
+    <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Manage Users</h1>
+          <p class="text-white/90 text-sm sm:text-base">Review and manage user accounts and approvals</p>
+        </div>
+        <div class="flex gap-2 sm:gap-3 flex-wrap">
+          <button 
+            @click="exportUsers"
+            :disabled="loading"
+            class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base border border-white/30"
+          >
+            <svg v-if="loading" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ loading ? 'Exporting...' : 'Export PDF' }}
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Fraud Detection Alert Banner -->
-    <div v-if="flaggedUsersCount > 0" class="bg-red-50 border border-red-200 rounded-lg p-4">
-      <div class="flex items-start space-x-3">
-        <div class="p-2 bg-red-100 rounded-lg">
-          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="flaggedUsersCount > 0" class="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 shadow-md">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+        <div class="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
           </svg>
         </div>
-        <div class="flex-1">
-          <h3 class="text-sm font-semibold text-red-900">Fraud Detection Alert</h3>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm sm:text-base font-semibold text-red-900">Fraud Detection Alert</h3>
           <p class="text-sm text-red-800 mt-1">
             {{ flaggedUsersCount }} user{{ flaggedUsersCount > 1 ? 's' : '' }} flagged for suspicious behavior. 
             Review flagged users below (marked with warning icons).
@@ -27,7 +40,7 @@
         </div>
         <button 
           @click="showFlaggedOnly = !showFlaggedOnly"
-          class="px-3 py-1 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+          class="px-3 sm:px-4 py-2 text-sm sm:text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 whitespace-nowrap"
         >
           {{ showFlaggedOnly ? 'Show All' : 'Show Flagged Only' }}
         </button>
@@ -35,78 +48,81 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="bg-white rounded-lg p-6 shadow-sm border">
-        <div class="flex items-center">
-          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-            </svg>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-gray-600 mb-1">Total Users</p>
+            <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ userStats.total }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Users</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ userStats.total }}</p>
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#A8EB12]/20 to-[#74E600]/20 rounded-lg">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="currentColor">
+              <path d="M320 80c57.4 0 104 46.6 104 104s-46.6 104-104 104s-104-46.6-104-104S262.6 80 320 80M96 152c39.8 0 72 32.2 72 72s-32.2 72-72 72s-72-32.2-72-72s32.2-72 72-72M0 480c0-70.7 57.3-128 128-128c12.8 0 25.2 1.9 36.9 5.4C132 394.2 112 442.8 112 496v16c0 11.4 2.4 22.2 6.7 32H32c-17.7 0-32-14.3-32-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32v-16c0-53.2-20-101.8-52.9-138.6c11.7-3.5 24.1-5.4 36.9-5.4c70.7 0 128 57.3 128 128v32c0 17.7-14.3 32-32 32zM472 224c0-39.8 32.2-72 72-72s72 32.2 72 72s-32.2 72-72 72s-72-32.2-72-72M160 496c0-88.4 71.6-160 160-160s160 71.6 160 160v16c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32z"/>
+            </svg>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg p-6 shadow-sm border">
-        <div class="flex items-center">
-          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-gray-600 mb-1">Approved</p>
+            <p class="text-xl sm:text-2xl font-bold text-[#74E600]">{{ userStats.approved }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Approved</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ userStats.approved }}</p>
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#74E600]/20 to-[#3ED400]/20 rounded-lg">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#74E600]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" d="M10.586 2.1a2 2 0 0 1 2.7-.116l.128.117L15.314 4H18a2 2 0 0 1 1.994 1.85L20 6v2.686l1.9 1.9a2 2 0 0 1 .116 2.701l-.117.127l-1.9 1.9V18a2 2 0 0 1-1.85 1.995L18 20h-2.685l-1.9 1.9a2 2 0 0 1-2.701.116l-.127-.116l-1.9-1.9H6a2 2 0 0 1-1.995-1.85L4 18v-2.686l-1.9-1.9a2 2 0 0 1-.116-2.701l.116-.127l1.9-1.9V6a2 2 0 0 1 1.85-1.994L6 4h2.686z" class="duoicon-secondary-layer" opacity="0.3"/>
+              <path fill-rule="evenodd" d="m15.079 8.983l-4.244 4.244l-1.768-1.768a1 1 0 1 0-1.414 1.415l2.404 2.404a1.1 1.1 0 0 0 1.556 0l4.88-4.881a1 1 0 0 0-1.414-1.414" class="duoicon-primary-layer"/>
+            </svg>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg p-6 shadow-sm border">
-        <div class="flex items-center">
-          <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 00-18 0 9 9 0 0018 0z"></path>
-            </svg>
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-gray-600 mb-1">Pending</p>
+            <p class="text-xl sm:text-2xl font-bold text-[#3ED400]">{{ userStats.pending }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Pending</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ userStats.pending }}</p>
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#3ED400]/20 to-[#00C851]/20 rounded-lg">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#3ED400]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17 22q-2.075 0-3.537-1.463T12 17t1.463-3.537T17 12t3.538 1.463T22 17t-1.463 3.538T17 22m1.675-2.625l.7-.7L17.5 16.8V14h-1v3.2zM5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h4.175q.275-.875 1.075-1.437T12 1q1 0 1.788.563T14.85 3H19q.825 0 1.413.588T21 5v6.25q-.45-.325-.95-.55T19 10.3V5h-2v3H7V5H5v14h5.3q.175.55.4 1.05t.55.95zm7-16q.425 0 .713-.288T13 4t-.288-.712T12 3t-.712.288T11 4t.288.713T12 5"/>
+            </svg>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg p-6 shadow-sm border">
-        <div class="flex items-center">
-          <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
-            </svg>
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-gray-600 mb-1">Banned</p>
+            <p class="text-xl sm:text-2xl font-bold text-[#00C851]">{{ userStats.flagged }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Banned</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ userStats.flagged }}</p>
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#00C851]/20 to-[#3ED400]/20 rounded-lg">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 21V4h9l.4 2H20v10h-7l-.4-2H7v7z"/>
+            </svg>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Filters and Search -->
-    <div class="bg-white rounded-lg p-4 shadow-sm border">
-      <div class="flex flex-wrap gap-4 items-center">
-        <div class="flex-1 min-w-64">
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="sm:col-span-2 lg:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search users by name, email, or contact..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary"
+            placeholder="Name, email, or contact..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200"
           />
         </div>
         
         <div>
-          <select v-model="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select v-model="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
             <option value="">All Status</option>
             <option value="approved">Approved</option>
             <option value="pending">Pending</option>
@@ -115,45 +131,43 @@
         </div>
         
         <div>
-          <select v-model="barangayFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Barangay</label>
+          <select v-model="barangayFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
             <option value="">All Barangays</option>
             <option v-for="barangay in barangays" :key="barangay" :value="barangay">
               {{ barangay }}
             </option>
           </select>
         </div>
-        
-        <button 
-          @click="exportUsers"
-          class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-        >
-          Export PDF
-        </button>
       </div>
     </div>
 
     <!-- Users Table -->
-    <div class="bg-white rounded-lg shadow-sm border">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900">User Accounts</h3>
+    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+      <div class="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h3 class="text-lg sm:text-xl font-semibold text-gray-900">User Accounts</h3>
         <button 
           @click="loadUsers"
           :disabled="loading"
-          class="mt-2 text-sm text-primary hover:text-green-600 disabled:opacity-50"
+          class="text-sm px-4 py-2 bg-[#00C851] text-white rounded-lg hover:bg-[#3ED400] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
+          <svg v-if="loading" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
           {{ loading ? 'Loading...' : 'Refresh Users' }}
         </button>
       </div>
       
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+          <thead class="bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Contact</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Location</th>
               <th 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-[#00C851]/5 select-none transition-colors duration-200"
                 @click="sortByRegistered"
               >
                 <div class="flex items-center space-x-1">
@@ -161,7 +175,7 @@
                   <div class="flex flex-col">
                     <svg 
                       v-if="sortBy === 'registered' && sortOrder === 'asc'"
-                      class="w-3 h-3 text-primary" 
+                      class="w-3 h-3 text-[#00C851]" 
                       fill="currentColor" 
                       viewBox="0 0 20 20"
                     >
@@ -169,7 +183,7 @@
                     </svg>
                     <svg 
                       v-else-if="sortBy === 'registered' && sortOrder === 'desc'"
-                      class="w-3 h-3 text-primary" 
+                      class="w-3 h-3 text-[#00C851]" 
                       fill="currentColor" 
                       viewBox="0 0 20 20"
                     >
@@ -186,27 +200,30 @@
                   </div>
                 </div>
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cancelled</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Orders</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Cancelled</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+              <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-if="loading && users.length === 0">
-              <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                Loading users...
+              <td colspan="8" class="px-4 sm:px-6 py-8 text-center text-gray-500">
+                <div class="flex flex-col items-center gap-2">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00C851]"></div>
+                  <span>Loading users...</span>
+                </div>
               </td>
             </tr>
             <tr v-else-if="users.length === 0">
-              <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+              <td colspan="8" class="px-4 sm:px-6 py-8 text-center text-gray-500">
                 No users found
               </td>
             </tr>
-            <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-50" :class="{ 'bg-red-50': user.fraudFlags && user.fraudFlags.length > 0 }">
-              <td class="px-6 py-4 whitespace-nowrap">
+            <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-[#00C851]/5 transition-colors duration-200" :class="{ 'bg-red-50': user.fraudFlags && user.fraudFlags.length > 0 }">
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap">
                 <div class="flex items-center">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" :class="user.profilePictureUrl ? '' : 'bg-primary'">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md" :class="user.profilePictureUrl ? '' : 'bg-gradient-to-br from-[#00C851] to-[#3ED400]'">
                     <img
                       v-if="user.profilePictureUrl"
                       :src="user.profilePictureUrl"
@@ -221,73 +238,75 @@
                   </div>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ user.contact }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ user.barangay }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ user.registeredDate }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="font-medium">{{ user.totalOrders || 0 }}</span>
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap">
+                <span class="font-medium text-gray-900">{{ user.totalOrders || 0 }}</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap">
                 <span :class="user.cancelledOrders > 0 ? 'font-medium text-red-600' : 'text-gray-500'">
                   {{ user.cancelledOrders || 0 }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap">
                 <span :class="[
-                  'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                  user.status === 'approved' ? 'bg-green-100 text-green-800' :
-                  user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  user.status === 'flagged' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
+                  'inline-flex px-2 sm:px-3 py-1 text-xs font-medium rounded-full',
+                  user.status === 'approved' ? 'bg-[#74E600]/20 text-[#00C851] border border-[#74E600]/30' :
+                  user.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                  user.status === 'flagged' ? 'bg-red-100 text-red-800 border border-red-200' :
+                  'bg-gray-100 text-gray-800 border border-gray-200'
                 ]">
                   {{ user.status === 'flagged' ? 'Banned' : user.status.charAt(0).toUpperCase() + user.status.slice(1) }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                <button 
-                  v-if="user.status === 'pending'"
-                  @click="approveUser(user)"
-                  :disabled="loading"
-                  class="text-green-600 hover:text-green-800 disabled:opacity-50"
-                >
-                  Approve
-                </button>
-                <button 
-                  v-if="user.status === 'pending'"
-                  @click="rejectUser(user)"
-                  :disabled="loading"
-                  class="text-red-600 hover:text-red-800 disabled:opacity-50"
-                >
-                  Reject
-                </button>
-                <button 
-                  v-if="user.status === 'approved'"
-                  @click="flagUser(user)"
-                  :disabled="loading"
-                  class="text-red-600 hover:text-red-800 disabled:opacity-50"
-                >
-                  Ban
-                </button>
-                <button 
-                  v-if="user.status === 'flagged'"
-                  @click="unflagUser(user)"
-                  :disabled="loading"
-                  class="text-green-600 hover:text-green-800 disabled:opacity-50"
-                >
-                  Unban
-                </button>
-                <button 
-                  @click="viewUserDetails(user)"
-                  class="text-primary hover:text-green-600"
-                >
-                  View
-                </button>
+              <td class="px-3 sm:px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex flex-wrap gap-2">
+                  <button 
+                    v-if="user.status === 'pending'"
+                    @click="approveUser(user)"
+                    :disabled="loading"
+                    class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-[#74E600] text-white rounded-lg hover:bg-[#3ED400] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Approve
+                  </button>
+                  <button 
+                    v-if="user.status === 'pending'"
+                    @click="rejectUser(user)"
+                    :disabled="loading"
+                    class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Reject
+                  </button>
+                  <button 
+                    v-if="user.status === 'approved'"
+                    @click="flagUser(user)"
+                    :disabled="loading"
+                    class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Ban
+                  </button>
+                  <button 
+                    v-if="user.status === 'flagged'"
+                    @click="unflagUser(user)"
+                    :disabled="loading"
+                    class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-[#74E600] text-white rounded-lg hover:bg-[#3ED400] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Unban
+                  </button>
+                  <button 
+                    @click="viewUserDetails(user)"
+                    class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-[#00C851] text-white rounded-lg hover:bg-[#3ED400] transition-all duration-200"
+                  >
+                    View
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -295,8 +314,8 @@
       </div>
       
       <!-- Pagination Controls -->
-      <div v-if="totalPages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
+      <div v-if="totalPages > 1" class="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center">
           <span class="text-sm text-gray-700">
             Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} of {{ filteredUsers.length }} users
           </span>
@@ -306,10 +325,10 @@
             @click="previousPage"
             :disabled="currentPage === 1"
             :class="[
-              'px-3 py-1 text-sm font-medium rounded-md',
+              'px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200',
               currentPage === 1
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-[#00C851]'
             ]"
           >
             Previous
@@ -321,10 +340,10 @@
               :key="page"
               @click="goToPage(page)"
               :class="[
-                'px-3 py-1 text-sm font-medium rounded-md',
+                'px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                 currentPage === page
-                  ? 'bg-primary text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  ? 'bg-[#00C851] text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-[#00C851]'
               ]"
             >
               {{ page }}
@@ -335,10 +354,10 @@
             @click="nextPage"
             :disabled="currentPage === totalPages"
             :class="[
-              'px-3 py-1 text-sm font-medium rounded-md',
+              'px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200',
               currentPage === totalPages
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-[#00C851]'
             ]"
           >
             Next
@@ -348,70 +367,162 @@
     </div>
 
     <!-- View User Details Modal -->
-    <div v-if="showUserDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div v-if="showUserDetailsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-1.5 sm:p-2" @click.self="closeUserDetailsModal">
+      <div class="relative mx-auto w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[98vh] flex flex-col" @click.stop>
         <!-- Modal Header -->
-        <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">User Details</h3>
-          <button @click="closeUserDetailsModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-2 sm:p-3 rounded-t-2xl flex-shrink-0">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 bg-white/20 backdrop-blur-sm rounded">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-white">User Details</h3>
+                <p class="text-xs text-white/90 hidden sm:block">Complete user information</p>
+              </div>
+            </div>
+            <button @click="closeUserDetailsModal" class="text-white/90 hover:text-white hover:bg-white/20 rounded p-0.5 transition-all duration-200">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Modal Content -->
-        <div v-if="selectedUser" class="p-6 space-y-6">
-          <!-- Fraud Flags section -->
-          <div v-if="selectedUser.fraudFlags && selectedUser.fraudFlags.length > 0" class="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div class="flex items-start space-x-3">
-              <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-              </svg>
-              <div class="flex-1">
-                <h4 class="text-sm font-semibold text-red-900 mb-2">Fraud Detection Flags</h4>
-                <ul class="space-y-1">
-                  <li v-for="flag in selectedUser.fraudFlags" :key="flag.type" class="text-sm text-red-800">
-                    • {{ flag.description }}
-                  </li>
-                </ul>
+        <div v-if="selectedUser" class="p-2 sm:p-3 overflow-y-auto flex-1">
+          <div v-if="userDetailsSections.length > 1" class="mb-3">
+            <!-- Section Tabs -->
+            <div class="flex justify-center items-center gap-1 mb-2 flex-wrap">
+              <div
+                v-for="(section, index) in userDetailsSections"
+                :key="section.id"
+                @click="goToUserDetailsPage(index)"
+                :class="index === userDetailsCurrentPage ? 'bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white shadow-md' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'"
+                class="px-2 py-1 text-xs font-medium rounded-lg cursor-pointer transition-all duration-200"
+              >
+                {{ section.title }}
               </div>
+            </div>
+            <!-- Pagination Dots -->
+            <div class="flex justify-center items-center gap-1.5 mt-2">
+              <div
+                v-for="(section, index) in userDetailsSections"
+                :key="`dot-${section.id}`"
+                @click="goToUserDetailsPage(index)"
+                :class="index === userDetailsCurrentPage ? 'bg-[#00C851] w-2.5 h-2.5' : 'bg-gray-300 hover:bg-gray-400'"
+                class="w-2 h-2 rounded-full cursor-pointer transition-all duration-200"
+                :title="section.title"
+              ></div>
             </div>
           </div>
 
-          <!-- User Information -->
-          <div class="bg-gray-50 rounded-lg p-6">
-            <div class="flex items-center space-x-4 mb-6">
-              <div class="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" :class="selectedUser.profilePictureUrl ? '' : 'bg-primary'">
-                <img
-                  v-if="selectedUser.profilePictureUrl"
-                  :src="selectedUser.profilePictureUrl"
-                  :alt="selectedUser.name"
-                  class="w-full h-full object-cover"
-                />
-                <span v-else class="text-white text-2xl font-medium">{{ selectedUser.initials }}</span>
+          <div class="min-h-[200px] sm:min-h-[250px]">
+            <!-- User Summary Section -->
+            <div v-if="userDetailsSections[userDetailsCurrentPage]?.id === 'summary'" class="bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10 p-2 sm:p-3 rounded-xl border border-[#00C851]/20">
+              <h4 class="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">User Summary</h4>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-xs mb-3">
+                <div>
+                  <p class="text-gray-600 mb-0.5">User ID</p>
+                  <p class="font-medium text-gray-900 break-all min-w-0">#{{ selectedUser.id }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Status</p>
+                  <span :class="[
+                    'inline-flex px-2 py-0.5 text-xs font-medium rounded-full',
+                    selectedUser.status === 'approved' ? 'bg-[#74E600]/20 text-[#00C851] border border-[#74E600]/30' :
+                    selectedUser.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                    selectedUser.status === 'flagged' ? 'bg-red-100 text-red-800 border border-red-200' :
+                    'bg-gray-100 text-gray-800 border border-gray-200'
+                  ]">
+                    {{ selectedUser.status === 'flagged' ? 'Banned' : selectedUser.status.charAt(0).toUpperCase() + selectedUser.status.slice(1) }}
+                  </span>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Total Orders</p>
+                  <p class="font-medium text-[#00C851]">{{ selectedUser.totalOrders || 0 }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Registered</p>
+                  <p class="font-medium text-gray-900">{{ formatRegisteredDate(selectedUser.createdAt) }}</p>
+                </div>
               </div>
-              <div>
-                <h4 class="text-lg font-semibold text-gray-900">{{ selectedUser.name }}</h4>
-                <p class="text-sm text-gray-500">{{ selectedUser.email }}</p>
+              <div class="pt-3 border-t border-gray-200">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
+                  <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md" :class="selectedUser.profilePictureUrl ? '' : 'bg-gradient-to-br from-[#00C851] to-[#3ED400]'">
+                    <img
+                      v-if="selectedUser.profilePictureUrl"
+                      :src="selectedUser.profilePictureUrl"
+                      :alt="selectedUser.name"
+                      class="w-full h-full object-cover"
+                    />
+                    <span v-else class="text-white text-xl sm:text-2xl font-medium">{{ selectedUser.initials }}</span>
+                  </div>
+                  <div class="text-center sm:text-left">
+                    <h4 class="text-base sm:text-lg font-bold text-gray-900">{{ selectedUser.name }}</h4>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ selectedUser.email }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ selectedUser.contact }}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Facial Registration & Valid ID Section -->
-            <div v-if="selectedUser.faceRegistrationImage || selectedUser.validIdUrl" class="mb-6 bg-white rounded-lg p-4 border border-gray-200">
-              <h4 class="text-lg font-semibold text-gray-900 mb-4">Verification Documents</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Personal Information Section -->
+            <div v-if="userDetailsSections[userDetailsCurrentPage]?.id === 'personal'" class="bg-gradient-to-br from-[#00C851]/10 to-[#3ED400]/10 p-2 sm:p-3 rounded-xl border border-[#00C851]/20">
+              <h4 class="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Personal Information</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-xs">
+                <div>
+                  <p class="text-gray-600 mb-0.5">Full Name</p>
+                  <p class="font-medium text-gray-900">{{ selectedUser.name }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Email</p>
+                  <p class="font-medium text-gray-900">{{ selectedUser.email }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Contact Number</p>
+                  <p class="font-medium text-gray-900">{{ selectedUser.contact }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Barangay</p>
+                  <p class="font-medium text-gray-900">{{ selectedUser.barangay }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Status</p>
+                  <span :class="[
+                    'inline-flex px-2 py-0.5 text-xs font-medium rounded-full',
+                    selectedUser.status === 'approved' ? 'bg-[#74E600]/20 text-[#00C851] border border-[#74E600]/30' :
+                    selectedUser.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                    selectedUser.status === 'flagged' ? 'bg-red-100 text-red-800 border border-red-200' :
+                    'bg-gray-100 text-gray-800 border border-gray-200'
+                  ]">
+                    {{ selectedUser.status === 'flagged' ? 'Banned' : selectedUser.status.charAt(0).toUpperCase() + selectedUser.status.slice(1) }}
+                  </span>
+                </div>
+                <div>
+                  <p class="text-gray-600 mb-0.5">Registered Date</p>
+                  <p class="font-medium text-gray-900">{{ formatRegisteredDate(selectedUser.createdAt) }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Verification Documents Section -->
+            <div v-if="userDetailsSections[userDetailsCurrentPage]?.id === 'verification' && (selectedUser.faceRegistrationImage || selectedUser.validIdUrl)" class="bg-gradient-to-br from-[#00C851]/10 to-[#3ED400]/10 p-2 sm:p-3 rounded-xl border border-[#00C851]/20">
+              <h4 class="font-medium text-gray-900 mb-2 text-xs sm:text-sm">Verification Documents</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <!-- Facial Registration Image -->
-                <div v-if="selectedUser.faceRegistrationImage">
-                  <p class="text-sm font-medium text-gray-700 mb-2">Facial Registration</p>
-                  <div class="relative w-full h-48 border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100">
+                <div v-if="selectedUser.faceRegistrationImage" class="flex flex-col">
+                  <p class="text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Facial Registration</p>
+                  <div class="relative w-full h-40 sm:h-48 border-2 border-gray-300 rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-lg transition-all duration-200">
                     <img
                       :src="selectedUser.faceRegistrationImage"
                       alt="Facial Registration"
                       class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                       @click="openImageModal(selectedUser.faceRegistrationImage, 'Facial Registration')"
                     />
-                    <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                    <div class="absolute top-2 right-2 bg-gradient-to-r from-[#74E600] to-[#3ED400] text-white text-xs px-2 py-1 rounded-full shadow-md">
                       ✓ Verified
                     </div>
                   </div>
@@ -419,14 +530,17 @@
                     Registered: {{ formatDate(selectedUser.faceRegisteredAt) }}
                   </p>
                 </div>
-                <div v-else class="flex items-center justify-center h-48 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                  <p class="text-sm text-gray-500">No facial registration</p>
+                <div v-else class="flex flex-col">
+                  <p class="text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Facial Registration</p>
+                  <div class="flex items-center justify-center h-40 sm:h-48 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                    <p class="text-xs sm:text-sm text-gray-500">No facial registration</p>
+                  </div>
                 </div>
 
                 <!-- Valid ID -->
-                <div v-if="selectedUser.validIdUrl">
-                  <p class="text-sm font-medium text-gray-700 mb-2">Valid ID</p>
-                  <div class="relative w-full h-48 border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100">
+                <div v-if="selectedUser.validIdUrl" class="flex flex-col">
+                  <p class="text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Valid ID</p>
+                  <div class="relative w-full h-40 sm:h-48 border-2 border-gray-300 rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-lg transition-all duration-200">
                     <img
                       v-if="selectedUser.validIdUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)"
                       :src="selectedUser.validIdUrl"
@@ -438,16 +552,16 @@
                       v-else
                       :href="selectedUser.validIdUrl"
                       target="_blank"
-                      class="flex items-center justify-center w-full h-full text-blue-600 hover:text-blue-800"
+                      class="flex items-center justify-center w-full h-full text-[#00C851] hover:text-[#3ED400] transition-colors duration-200"
                     >
                       <div class="text-center">
-                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                         </svg>
-                        <p class="text-sm">View PDF</p>
+                        <p class="text-xs sm:text-sm">View PDF</p>
                       </div>
                     </a>
-                    <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                    <div class="absolute top-2 right-2 bg-gradient-to-r from-[#74E600] to-[#3ED400] text-white text-xs px-2 py-1 rounded-full shadow-md">
                       ✓ Verified
                     </div>
                   </div>
@@ -455,94 +569,119 @@
                     Uploaded: {{ formatDate(selectedUser.validIdUploadedAt) }}
                   </p>
                 </div>
-                <div v-else class="flex items-center justify-center h-48 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                  <p class="text-sm text-gray-500">No valid ID uploaded</p>
+                <div v-else class="flex flex-col">
+                  <p class="text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Valid ID</p>
+                  <div class="flex items-center justify-center h-40 sm:h-48 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                    <p class="text-xs sm:text-sm text-gray-500">No valid ID uploaded</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <h4 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h4>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <p class="text-sm text-gray-600">Full Name</p>
-                <p class="text-base font-medium text-gray-900">{{ selectedUser.name }}</p>
+            <!-- Order History Section -->
+            <div v-if="userDetailsSections[userDetailsCurrentPage]?.id === 'orders'" class="bg-gradient-to-br from-[#00C851]/10 to-[#3ED400]/10 p-2 sm:p-3 rounded-xl border border-[#00C851]/20">
+              <h4 class="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Order History ({{ userOrders.length }})</h4>
+              <div v-if="loadingUserOrders" class="p-4 sm:p-6 text-center text-gray-500">
+                <div class="flex flex-col items-center gap-2">
+                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#00C851]"></div>
+                  <span class="text-xs">Loading orders...</span>
+                </div>
               </div>
-              <div>
-                <p class="text-sm text-gray-600">Email</p>
-                <p class="text-base font-medium text-gray-900">{{ selectedUser.email }}</p>
+              <div v-else-if="userOrders.length === 0" class="p-4 sm:p-6 text-center text-gray-500 text-xs sm:text-sm">
+                No orders found
               </div>
-              <div>
-                <p class="text-sm text-gray-600">Contact Number</p>
-                <p class="text-base font-medium text-gray-900">{{ selectedUser.contact }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-600">Barangay</p>
-                <p class="text-base font-medium text-gray-900">{{ selectedUser.barangay }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-600">Status</p>
-                <span :class="[
-                  'inline-flex px-3 py-1 text-sm font-medium rounded-full',
-                  selectedUser.status === 'approved' ? 'bg-green-100 text-green-800' :
-                  selectedUser.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  selectedUser.status === 'flagged' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
-                ]">
-                  {{ selectedUser.status === 'flagged' ? 'Banned' : selectedUser.status.charAt(0).toUpperCase() + selectedUser.status.slice(1) }}
-                </span>
-              </div>
-              <div>
-                <p class="text-sm text-gray-600">Registered Date</p>
-                <p class="text-base font-medium text-gray-900">{{ formatRegisteredDate(selectedUser.createdAt) }}</p>
+              <div v-else class="space-y-2 max-h-64 overflow-y-auto">
+                <div v-for="order in userOrders" :key="order.id" class="p-2 sm:p-3 bg-white rounded-lg border border-gray-200 hover:bg-[#00C851]/5 transition-colors duration-200">
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-2">
+                        <span class="text-xs sm:text-sm font-medium text-gray-900">{{ order.serviceName }}</span>
+                        <span :class="[
+                          'inline-flex px-2 py-0.5 text-xs font-medium rounded-full',
+                          order.status === 'completed' ? 'bg-[#74E600]/20 text-[#00C851] border border-[#74E600]/30' :
+                          order.status === 'cancelled' ? 'bg-red-100 text-red-800 border border-red-200' :
+                          order.status === 'in_transit' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                          'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                        ]">
+                          {{ order.status.replace(/_/g, ' ').toUpperCase() }}
+                        </span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-0.5">Order #{{ order.id.slice(0, 8) }}</p>
+                      <p class="text-xs text-gray-500 mt-0.5">{{ order.createdAt }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm sm:text-base font-semibold text-gray-900">₱{{ order.totalAmount }}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- Fraud Flags Section -->
+            <div v-if="userDetailsSections[userDetailsCurrentPage]?.id === 'fraud' && selectedUser.fraudFlags && selectedUser.fraudFlags.length > 0" class="bg-red-50 border border-red-200 rounded-xl p-2 sm:p-3 shadow-md">
+              <h4 class="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Fraud Detection Flags</h4>
+              <div class="flex items-start space-x-2">
+                <div class="p-1.5 bg-red-100 rounded-lg flex-shrink-0">
+                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <ul class="space-y-1">
+                    <li v-for="flag in selectedUser.fraudFlags" :key="flag.type" class="text-xs sm:text-sm text-red-800">
+                      • {{ flag.description }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <!-- Order History -->
-          <div class="bg-white rounded-lg border">
-            <div class="px-6 py-4 border-b">
-              <h4 class="text-lg font-semibold text-gray-900">Order History ({{ userOrders.length }})</h4>
+          <!-- Pagination Controls -->
+          <div v-if="userDetailsSections.length > 1" class="flex items-center justify-between mt-4 pt-3 border-t border-gray-200 flex-shrink-0">
+            <button
+              @click="previousUserDetailsPage"
+              :disabled="userDetailsCurrentPage === 0"
+              class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              <span>Previous</span>
+            </button>
+            
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium text-gray-600">{{ userDetailsCurrentPage + 1 }}</span>
+              <span class="text-xs text-gray-400">of</span>
+              <span class="text-xs font-medium text-gray-600">{{ userDetailsSections.length }}</span>
             </div>
-            <div v-if="loadingUserOrders" class="p-6 text-center text-gray-500">
-              Loading orders...
-            </div>
-            <div v-else-if="userOrders.length === 0" class="p-6 text-center text-gray-500">
-              No orders found
-            </div>
-            <div v-else class="divide-y">
-              <div v-for="order in userOrders" :key="order.id" class="p-4 hover:bg-gray-50">
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-3">
-                      <span class="text-sm font-medium text-gray-900">{{ order.serviceName }}</span>
-                      <span :class="[
-                        'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        order.status === 'in_transit' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      ]">
-                        {{ order.status.replace(/_/g, ' ').toUpperCase() }}
-                      </span>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">Order #{{ order.id.slice(0, 8) }}</p>
-                    <p class="text-sm text-gray-500 mt-1">{{ order.createdAt }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-lg font-semibold text-gray-900">₱{{ order.totalAmount }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
+            <button
+              @click="nextUserDetailsPage"
+              :disabled="userDetailsCurrentPage === userDetailsSections.length - 1"
+              class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-[#00C851] to-[#3ED400] border border-transparent rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            >
+              <span>Next</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
           </div>
 
           <!-- Actions -->
-          <div class="flex items-center justify-end space-x-3 pt-4 border-t">
+          <div class="flex flex-col sm:flex-row justify-end gap-1.5 sm:gap-2 mt-3 flex-shrink-0">
+            <button
+              @click="closeUserDetailsModal"
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-all duration-200"
+            >
+              Close
+            </button>
             <button
               v-if="selectedUser.status === 'approved'"
               @click="flagUserFromModal"
               :disabled="loading"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Ban User
             </button>
@@ -550,15 +689,9 @@
               v-if="selectedUser.status === 'flagged'"
               @click="unflagUserFromModal"
               :disabled="loading"
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-white bg-[#74E600] rounded-lg hover:bg-[#3ED400] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Unban User
-            </button>
-            <button
-              @click="closeUserDetailsModal"
-              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              Close
             </button>
           </div>
         </div>
@@ -566,18 +699,18 @@
     </div>
 
     <!-- Image Modal -->
-    <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4" @click="closeImageModal">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto" @click.stop>
-        <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">{{ imageModalTitle }}</h3>
-          <button @click="closeImageModal" class="text-gray-400 hover:text-gray-600">
+    <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4 backdrop-blur-sm" @click="closeImageModal">
+      <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto shadow-2xl" @click.stop>
+        <div class="sticky top-0 bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] px-4 sm:px-6 py-4 flex items-center justify-between rounded-t-xl">
+          <h3 class="text-xl sm:text-2xl font-bold text-white">{{ imageModalTitle }}</h3>
+          <button @click="closeImageModal" class="text-white hover:text-gray-200 transition-colors duration-200 p-1 rounded-lg hover:bg-white/20">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
-        <div class="p-6">
-          <img :src="imageModalUrl" :alt="imageModalTitle" class="w-full h-auto rounded-lg" />
+        <div class="p-4 sm:p-6">
+          <img :src="imageModalUrl" :alt="imageModalTitle" class="w-full h-auto rounded-xl shadow-md" />
         </div>
       </div>
     </div>
@@ -612,6 +745,9 @@ export default {
     const selectedUser = ref(null)
     const userOrders = ref([])
     const loadingUserOrders = ref(false)
+    
+    // User Details Modal Pagination
+    const userDetailsCurrentPage = ref(0)
     
     // Image modal state
     const showImageModal = ref(false)
@@ -1013,6 +1149,9 @@ export default {
 
     const viewUserDetails = async (user) => {
       try {
+        // Reset pagination
+        userDetailsCurrentPage.value = 0
+        
         // Fetch fresh user data from Firestore to ensure we have all fields including faceRegistrationImage
         const userDoc = await getDoc(doc(db, 'users', user.id))
         if (userDoc.exists()) {
@@ -1070,10 +1209,56 @@ export default {
       }
     }
 
+    // User Details Modal Sections
+    const userDetailsSections = computed(() => {
+      if (!selectedUser.value) return []
+      const sections = []
+      
+      // User Summary - always show
+      sections.push({ id: 'summary', title: 'User Summary' })
+      
+      // Personal Information - always show
+      sections.push({ id: 'personal', title: 'Personal Information' })
+      
+      // Verification Documents - conditional
+      if (selectedUser.value.faceRegistrationImage || selectedUser.value.validIdUrl) {
+        sections.push({ id: 'verification', title: 'Verification Documents' })
+      }
+      
+      // Order History - always show
+      sections.push({ id: 'orders', title: 'Order History' })
+      
+      // Fraud Flags - conditional
+      if (selectedUser.value.fraudFlags && selectedUser.value.fraudFlags.length > 0) {
+        sections.push({ id: 'fraud', title: 'Fraud Flags' })
+      }
+      
+      return sections
+    })
+    
+    const nextUserDetailsPage = () => {
+      if (userDetailsCurrentPage.value < userDetailsSections.value.length - 1) {
+        userDetailsCurrentPage.value++
+      }
+    }
+    
+    const previousUserDetailsPage = () => {
+      if (userDetailsCurrentPage.value > 0) {
+        userDetailsCurrentPage.value--
+      }
+    }
+    
+    const goToUserDetailsPage = (index) => {
+      if (index >= 0 && index < userDetailsSections.value.length) {
+        userDetailsCurrentPage.value = index
+      }
+    }
+
     const closeUserDetailsModal = () => {
       showUserDetailsModal.value = false
       selectedUser.value = null
       userOrders.value = []
+      userDetailsCurrentPage.value = 0
     }
 
     const openImageModal = (imageUrl, title) => {
@@ -1475,7 +1660,12 @@ export default {
       sortBy,
       sortOrder,
       sortByRegistered,
-      exportUsers
+      exportUsers,
+      userDetailsCurrentPage,
+      userDetailsSections,
+      nextUserDetailsPage,
+      previousUserDetailsPage,
+      goToUserDetailsPage
     }
   }
 }

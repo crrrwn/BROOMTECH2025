@@ -1,43 +1,42 @@
 <template>
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <!-- Green Banner Header -->
+    <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div>
-          <h2 class="text-2xl font-semibold text-gray-900">Chat Monitoring</h2>
-          <p class="text-gray-600 mt-1">Monitor all conversations between users and drivers</p>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Chat Monitoring</h1>
+          <p class="text-white/90 text-sm sm:text-base">Monitor all conversations between users and drivers</p>
         </div>
-        <div class="flex items-center space-x-4">
-          <div class="bg-white rounded-lg border px-4 py-2">
-            <div class="flex items-center space-x-2">
-              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span class="text-sm font-medium text-gray-700">{{ activeChats.length }} Active Chats</span>
-            </div>
+        <div class="flex gap-2 sm:gap-3 flex-wrap">
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 px-3 sm:px-4 py-2 flex items-center gap-2">
+            <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse"></div>
+            <span class="text-white text-sm sm:text-base font-medium">{{ activeChats.length }} Active Chats</span>
           </div>
           <button
             @click="refreshChats"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+            class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 text-sm sm:text-base border border-white/30"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
+            <span class="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       <!-- Chat List -->
       <div class="lg:col-span-1">
-        <div class="bg-white rounded-lg shadow-sm border">
-          <div class="p-4 border-b bg-gray-50">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-gray-900">All Conversations</h3>
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+          <div class="p-3 sm:p-4 border-b bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <h3 class="text-base sm:text-lg font-bold text-gray-900">All Conversations</h3>
               <div class="flex items-center space-x-2">
                 <select
                   v-model="filterStatus"
                   @change="filterChats"
-                  class="text-sm border border-gray-300 rounded px-2 py-1"
+                  class="text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200"
                 >
                   <option value="all">All Chats</option>
                   <option value="active">Active</option>
@@ -48,39 +47,39 @@
             </div>
           </div>
           
-          <div class="divide-y max-h-96 overflow-y-auto">
+          <div class="divide-y max-h-[500px] sm:max-h-[600px] overflow-y-auto custom-scrollbar">
             <div
               v-for="chat in filteredChats"
               :key="chat.id"
               @click="selectChat(chat)"
               :class="[
-                'p-4 cursor-pointer hover:bg-gray-50 transition-colors',
-                selectedChatId === chat.id ? 'bg-blue-50 border-r-4 border-primary' : '',
+                'p-3 sm:p-4 cursor-pointer hover:bg-[#00C851]/5 transition-all duration-200',
+                selectedChatId === chat.id ? 'bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10 border-r-4 border-[#00C851]' : '',
                 chat.isUrgent ? 'border-l-4 border-red-500' : ''
               ]"
             >
-              <div class="flex items-start justify-between">
-                <div class="flex items-start space-x-3 flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
                   <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span class="text-gray-600 text-sm font-medium">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#00C851]/20 to-[#3ED400]/20 rounded-full flex items-center justify-center border border-[#00C851]/30">
+                      <span class="text-[#00C851] text-xs sm:text-sm font-bold">
                         {{ chat.customerName ? chat.customerName.charAt(0) : 'U' }}
                       </span>
                     </div>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center space-x-2">
-                      <p class="font-medium text-gray-900 truncate">
+                    <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <p class="font-bold text-xs sm:text-sm text-gray-900 truncate">
                         {{ chat.customerName || 'Customer' }}
                       </p>
-                      <span v-if="chat.isUrgent" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                      <span v-if="chat.isUrgent" class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                         Urgent
                       </span>
                     </div>
-                    <p class="text-sm text-gray-600 truncate">
+                    <p class="text-xs sm:text-sm text-gray-600 truncate">
                       Driver: {{ chat.driverName || 'Unassigned' }}
                     </p>
-                    <p class="text-sm text-gray-600 truncate">
+                    <p class="text-xs sm:text-sm text-gray-600 truncate">
                       Order #{{ chat.orderId }}
                     </p>
                     <p class="text-xs text-gray-500 truncate mt-1">
@@ -88,15 +87,15 @@
                     </p>
                   </div>
                 </div>
-                <div class="text-right flex-shrink-0 ml-2">
-                  <p class="text-xs text-gray-500">{{ formatChatTime(chat.lastMessageAt) }}</p>
-                  <div class="flex items-center justify-end mt-1 space-x-1">
-                    <div v-if="getTotalUnreadCount(chat) > 0" class="inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs rounded-full">
+                <div class="text-right flex-shrink-0 ml-1 sm:ml-2">
+                  <p class="text-xs text-gray-500 whitespace-nowrap">{{ formatChatTime(chat.lastMessageAt) }}</p>
+                  <div class="flex items-center justify-end mt-1 gap-1">
+                    <div v-if="getTotalUnreadCount(chat) > 0" class="inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm">
                       {{ getTotalUnreadCount(chat) }}
                     </div>
                     <div :class="[
                       'w-2 h-2 rounded-full',
-                      getActivityStatus(chat) === 'active' ? 'bg-green-500' : 
+                      getActivityStatus(chat) === 'active' ? 'bg-[#00C851] animate-pulse' : 
                       getActivityStatus(chat) === 'recent' ? 'bg-yellow-500' : 'bg-gray-400'
                     ]"></div>
                   </div>
@@ -105,12 +104,14 @@
             </div>
             
             <!-- Empty State -->
-            <div v-if="filteredChats.length === 0" class="p-8 text-center">
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-              <p class="text-gray-600">No conversations found</p>
-              <p class="text-sm text-gray-500 mt-1">Chats will appear here when users and drivers communicate</p>
+            <div v-if="filteredChats.length === 0" class="p-6 sm:p-8 text-center">
+              <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#00C851]/20 to-[#3ED400]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+              </div>
+              <p class="text-sm sm:text-base font-medium text-gray-700">No conversations found</p>
+              <p class="text-xs sm:text-sm text-gray-500 mt-1">Chats will appear here when users and drivers communicate</p>
             </div>
           </div>
         </div>
@@ -118,31 +119,31 @@
 
       <!-- Chat Viewer -->
       <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow-sm border">
-          <div v-if="selectedChat" class="flex flex-col" style="height: 600px;">
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+          <div v-if="selectedChat" class="flex flex-col" style="min-height: 500px; max-height: 700px; height: 70vh;">
             <!-- Chat Header -->
-            <div class="p-4 border-b bg-gray-50">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">
+            <div class="p-3 sm:p-4 border-b bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                  <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#00C851] to-[#3ED400] rounded-full flex items-center justify-center shadow-md">
+                    <span class="text-white text-sm sm:text-base font-bold">
                       {{ selectedChat.customerName ? selectedChat.customerName.charAt(0) : 'U' }}
                     </span>
                   </div>
                   <div>
-                    <h3 class="font-semibold text-gray-900">
+                    <h3 class="font-bold text-sm sm:text-base text-gray-900">
                       {{ selectedChat.customerName || 'Customer' }} ↔ {{ selectedChat.driverName || 'Driver' }}
                     </h3>
-                    <p class="text-sm text-gray-600">Order #{{ selectedChat.orderId }}</p>
+                    <p class="text-xs sm:text-sm text-gray-600">Order #{{ selectedChat.orderId }}</p>
                   </div>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <button
                     @click="markAsUrgent(selectedChat)"
                     :class="[
-                      'px-3 py-1 text-sm rounded-lg border',
+                      'px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border transition-all duration-200',
                       selectedChat.isUrgent 
-                        ? 'bg-red-100 text-red-700 border-red-300' 
+                        ? 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200' 
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     ]"
                   >
@@ -150,7 +151,7 @@
                   </button>
                   <button
                     @click="exportChat(selectedChat)"
-                    class="px-3 py-1 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    class="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white border border-transparent rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-sm"
                   >
                     Export
                   </button>
@@ -159,10 +160,10 @@
             </div>
 
             <!-- Messages Display -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4" style="scroll-behavior: smooth;" ref="messagesContainer">
+            <div class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4" style="scroll-behavior: smooth;" ref="messagesContainer">
               <div v-for="message in selectedChatMessages" :key="message.id" class="flex" :class="getMessageAlignment(message)">
-                <div class="max-w-xs lg:max-w-md">
-                  <div :class="getMessageBubbleClass(message)" class="px-4 py-2 rounded-lg">
+                <div class="max-w-[85%] sm:max-w-xs lg:max-w-md">
+                  <div :class="getMessageBubbleClass(message)" class="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-sm">
                     <!-- Sender Info -->
                     <div class="flex items-center space-x-2 mb-1">
                       <span class="text-xs font-medium">
@@ -206,16 +207,16 @@
                     <div v-if="editingMessageId === message.id" class="mb-2">
                       <textarea
                         v-model="editingMessageText"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] outline-none transition-all duration-200"
                         rows="2"
                         @keypress.enter.ctrl="saveEditMessage"
                         @keypress.escape="cancelEditMessage"
                       ></textarea>
-                      <div class="flex items-center space-x-2 mt-2">
-                        <button @click="saveEditMessage" class="px-3 py-1 bg-primary text-white text-xs rounded hover:bg-primary-dark">
+                      <div class="flex items-center gap-2 mt-2">
+                        <button @click="saveEditMessage" class="px-3 py-1.5 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white text-xs font-medium rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-sm">
                           Save
                         </button>
-                        <button @click="cancelEditMessage" class="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300">
+                        <button @click="cancelEditMessage" class="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-all duration-200">
                           Cancel
                         </button>
                       </div>
@@ -227,22 +228,22 @@
                     <div class="flex items-center justify-between mt-1">
                       <div class="flex items-center space-x-2">
                         <!-- Admin Edit/Delete Buttons -->
-                        <div v-if="message.senderRole === 'admin' && !message.deleted && !editingMessageId" class="flex items-center space-x-1">
+                        <div v-if="message.senderRole === 'admin' && !message.deleted && !editingMessageId" class="flex items-center gap-1.5">
                           <button
                             @click="startEditMessage(message)"
-                            class="text-xs text-gray-500 hover:text-primary px-1"
+                            class="text-xs text-gray-500 hover:text-[#00C851] px-1.5 py-0.5 rounded transition-colors duration-200"
                             title="Edit message"
                           >
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                           <button
                             @click="deleteAdminMessage(message.id)"
-                            class="text-xs text-gray-500 hover:text-red-600 px-1"
+                            class="text-xs text-gray-500 hover:text-red-600 px-1.5 py-0.5 rounded transition-colors duration-200"
                             title="Delete message"
                           >
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
@@ -258,67 +259,67 @@
             </div>
 
             <!-- Admin Chat Input -->
-            <div v-if="selectedChat" class="p-4 border-t bg-gray-50">
+            <div v-if="selectedChat" class="p-3 sm:p-4 border-t bg-gradient-to-r from-[#00C851]/5 to-[#3ED400]/5">
               <!-- Saved Replies Section -->
-              <div v-if="showSavedReplies" class="mb-3 p-3 bg-white rounded-lg border border-gray-200 max-h-48 overflow-y-auto">
+              <div v-if="showSavedReplies" class="mb-3 p-3 bg-white rounded-xl border border-gray-200 max-h-48 overflow-y-auto shadow-sm">
                 <div class="flex items-center justify-between mb-2">
-                  <h4 class="text-sm font-semibold text-gray-700">Saved Replies</h4>
-                  <button @click="showSavedReplies = false" class="text-gray-400 hover:text-gray-600">
+                  <h4 class="text-sm font-bold text-gray-900">Saved Replies</h4>
+                  <button @click="showSavedReplies = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
                 <div class="space-y-2">
-                  <div v-for="(reply, index) in savedReplies" :key="index" class="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                    <p class="text-sm text-gray-700 flex-1">{{ reply }}</p>
-                    <div class="flex items-center space-x-1">
-                      <button @click="useSavedReply(reply)" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded">
+                  <div v-for="(reply, index) in savedReplies" :key="index" class="flex items-center justify-between p-2.5 hover:bg-gray-50 rounded-lg transition-colors">
+                    <p class="text-xs sm:text-sm text-gray-700 flex-1 pr-2">{{ reply }}</p>
+                    <div class="flex items-center gap-1.5">
+                      <button @click="useSavedReply(reply)" class="text-xs font-medium text-white bg-gradient-to-r from-[#00C851] to-[#3ED400] hover:from-[#00C851]/90 hover:to-[#3ED400]/90 px-2.5 py-1 rounded-lg transition-all duration-200 shadow-sm">
                         Use
                       </button>
-                      <button @click="deleteSavedReply(index)" class="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded">
+                      <button @click="deleteSavedReply(index)" class="text-xs font-medium text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-lg transition-all duration-200 shadow-sm">
                         Delete
                       </button>
                     </div>
                   </div>
-                  <div v-if="savedReplies.length === 0" class="text-sm text-gray-500 text-center py-2">
+                  <div v-if="savedReplies.length === 0" class="text-xs sm:text-sm text-gray-500 text-center py-3">
                     No saved replies yet
                   </div>
                 </div>
               </div>
 
               <!-- Upload Progress -->
-              <div v-if="uploadingImage" class="mb-3">
-                <div class="flex justify-between text-xs font-medium text-gray-600 mb-1">
+              <div v-if="uploadingImage" class="mb-3 p-2 bg-white rounded-xl border border-gray-200">
+                <div class="flex justify-between text-xs font-medium text-gray-700 mb-1.5">
                   <span>Uploading Image...</span>
-                  <span>{{ imageUploadProgress }}%</span>
+                  <span class="text-[#00C851] font-bold">{{ imageUploadProgress }}%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div class="bg-primary h-2 rounded-full transition-all" :style="{ width: imageUploadProgress + '%' }"></div>
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div class="bg-gradient-to-r from-[#00C851] to-[#3ED400] h-2 rounded-full transition-all duration-300" :style="{ width: imageUploadProgress + '%' }"></div>
                 </div>
               </div>
 
               <!-- Chat Input Controls -->
               <div class="flex items-end gap-2">
-                <div class="flex items-center gap-1 bg-white p-1.5 rounded-lg border border-gray-200">
-                  <button @click="triggerImageInput" :disabled="uploadingImage" class="p-2 text-gray-400 hover:text-primary rounded transition-all" title="Upload from Gallery">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center gap-1 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm">
+                  <button @click="triggerImageInput" :disabled="uploadingImage" class="p-1.5 sm:p-2 text-gray-400 hover:text-[#00C851] rounded-lg transition-all duration-200" title="Upload from Gallery">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </button>
-                  <button @click="triggerCameraInput" :disabled="uploadingImage" class="p-2 text-gray-400 hover:text-primary rounded transition-all" title="Use Camera">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button @click="triggerCameraInput" :disabled="uploadingImage" class="p-1.5 sm:p-2 text-gray-400 hover:text-[#00C851] rounded-lg transition-all duration-200" title="Use Camera">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </button>
-                  <button @click="showSavedReplies = !showSavedReplies" class="p-2 text-gray-400 hover:text-primary rounded transition-all" title="Saved Replies">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button @click="showSavedReplies = !showSavedReplies" class="p-1.5 sm:p-2 text-gray-400 hover:text-[#00C851] rounded-lg transition-all duration-200" title="Saved Replies">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
                   </button>
-                  <button v-if="newMessage && newMessage.trim()" @click="saveCurrentReply" class="p-2 text-gray-400 hover:text-primary rounded transition-all" title="Save as Reply">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button v-if="newMessage && newMessage.trim()" @click="saveCurrentReply" class="p-1.5 sm:p-2 text-gray-400 hover:text-[#00C851] rounded-lg transition-all duration-200" title="Save as Reply">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                   </button>
@@ -333,7 +334,7 @@
                     @keypress.enter.prevent="sendAdminMessage"
                     rows="1"
                     placeholder="Type a message as admin..."
-                    class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm"
+                    class="w-full px-3 sm:px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] outline-none resize-none text-sm transition-all duration-200"
                     style="min-height: 40px; max-height: 120px;"
                   ></textarea>
                 </div>
@@ -341,12 +342,12 @@
                 <button
                   @click="sendAdminMessage"
                   :disabled="!newMessage.trim() || sendingMessage || uploadingImage"
-                  class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  class="px-3 sm:px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-xl hover:from-[#00C851]/90 hover:to-[#3ED400]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md flex items-center justify-center"
                 >
-                  <svg v-if="sendingMessage" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="sendingMessage" class="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-else class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </button>
@@ -356,13 +357,15 @@
           
           <!-- No Chat Selected -->
           <div v-else class="flex items-center justify-center h-96">
-            <div class="text-center">
-              <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-              </svg>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">Select a Conversation</h3>
-              <p class="text-gray-600">Choose a chat from the left to monitor the conversation</p>
+            <div class="text-center p-4">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#00C851]/20 to-[#3ED400]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 sm:w-10 sm:h-10 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              </div>
+              <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2">Select a Conversation</h3>
+              <p class="text-sm sm:text-base text-gray-600">Choose a chat from the left to monitor the conversation</p>
             </div>
           </div>
         </div>
@@ -372,23 +375,28 @@
     <!-- Image Preview Modal -->
     <div
       v-if="showImagePreview"
-      class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
       @click="closeImagePreview"
     >
-      <div class="max-w-4xl max-h-[90vh] relative" @click.stop>
-        <button
-          @click="closeImagePreview"
-          class="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors z-10"
-        >
-          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        <img
-          :src="previewImageUrl"
-          alt="Preview"
-          class="max-w-full max-h-[90vh] rounded-lg"
-        />
+      <div class="max-w-4xl max-h-[90vh] relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-3 sm:p-4 flex items-center justify-between">
+          <h3 class="text-sm sm:text-base font-bold text-white">Image Preview</h3>
+          <button
+            @click="closeImagePreview"
+            class="bg-white/20 backdrop-blur-sm rounded-lg p-1.5 sm:p-2 hover:bg-white/30 transition-all duration-200"
+          >
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-2 sm:p-4">
+          <img
+            :src="previewImageUrl"
+            alt="Preview"
+            class="max-w-full max-h-[75vh] rounded-xl mx-auto"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -674,7 +682,7 @@ export default {
 
     getMessageAlignment(message) {
       if (message.senderRole === 'admin') {
-        return 'justify-center'
+        return 'justify-end'
       }
       return message.senderRole === 'user' ? 'justify-start' : 'justify-end'
     },
@@ -683,11 +691,11 @@ export default {
       if (message.senderRole === 'bot') {
         return 'bg-blue-50 text-blue-900 border border-blue-200'
       } else if (message.senderRole === 'admin') {
-        return 'bg-purple-100 text-purple-900 border border-purple-200'
+        return 'bg-gradient-to-r from-[#74E600] to-[#3ED400] text-white border border-transparent'
       } else if (message.senderRole === 'user') {
         return 'bg-gray-100 text-gray-900'
       } else {
-        return 'bg-primary text-white'
+        return 'bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white'
       }
     },
 
@@ -1044,3 +1052,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+</style>

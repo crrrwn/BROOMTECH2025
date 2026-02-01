@@ -124,24 +124,19 @@
 
             <div class="p-6 md:p-8">
               <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                <div class="flex items-center gap-4">
-                  <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg text-white transform group-hover:scale-110 transition-transform', getServiceColor(booking.serviceType)]">
-                    <component :is="getServiceIcon(booking.serviceType)" class="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h3 class="text-xl font-black text-gray-800 leading-tight">
-                      {{ booking.serviceName || booking.serviceTitle }}
-                    </h3>
-                    <p class="text-sm text-gray-500 font-medium flex items-center mt-1">
-                      <span class="font-bold text-gray-700 mr-1">{{ booking.customerName }}</span> • {{ formatDate(booking.createdAt) }}
-                    </p>
-                  </div>
+              <div class="flex items-center gap-4">
+                <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg text-white transform group-hover:scale-110 transition-transform', getServiceColor(booking.serviceType)]">
+                  <component :is="getServiceIcon(booking.serviceType)" class="w-7 h-7" />
                 </div>
-                
-                <button @click="openChat(booking)" 
-                        class="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors self-end md:self-start">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                </button>
+                <div>
+                  <h3 class="text-xl font-black text-gray-800 leading-tight">
+                    {{ booking.serviceName || booking.serviceTitle }}
+                  </h3>
+                  <p class="text-sm text-gray-500 font-medium flex items-center mt-1">
+                    <span class="font-bold text-gray-700 mr-1">{{ booking.customerName }}</span> • {{ formatDate(booking.createdAt) }}
+                  </p>
+                </div>
+              </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -843,27 +838,8 @@ export default {
                 }
               },
               (error) => {
-                // Handle different geolocation error codes
-                // Code 1: PERMISSION_DENIED - User denied location permission
-                // Code 2: POSITION_UNAVAILABLE - Location unavailable
-                // Code 3: TIMEOUT - Request timeout (common, expected - don't log as error)
-                if (error.code === 3) {
-                  // Timeout is expected and common - just log as debug, don't show error
-                  console.log('[v0] Location tracking timeout (expected):', error.message)
-                  return
-                }
-                
-                // Only log actual errors (permission denied, position unavailable)
-                if (error.code === 1) {
-                  console.warn('[v0] Location permission denied:', error.message)
-                  this.$toast?.warning?.('Location permission denied. Please enable location access.')
-                } else if (error.code === 2) {
-                  console.warn('[v0] Location unavailable:', error.message)
-                  this.$toast?.warning?.('Location unavailable. Please check your GPS settings.')
-                } else {
-                  console.warn('[v0] Location tracking error:', error.message)
-                  this.$toast?.warning?.('Location tracking issue: ' + error.message)
-                }
+                console.error('[v0] Location tracking error:', error)
+                this.$toast?.error?.('Unable to track location')
               },
               {
                 enableHighAccuracy: true,

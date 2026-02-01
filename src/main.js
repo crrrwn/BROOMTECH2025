@@ -99,6 +99,13 @@ console.warn = (...args) => {
     return // Suppress table width warnings from PDF export
   }
   
+  // Suppress geolocation permission warnings (user has blocked permission)
+  if (fullMessage.includes('Location permission denied') || 
+      fullMessage.includes('Geolocation permission has been blocked') ||
+      fullMessage.includes('User denied Geolocation')) {
+    return // Suppress geolocation permission warnings
+  }
+  
   originalWarn.apply(console, args)
 }
 

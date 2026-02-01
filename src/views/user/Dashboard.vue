@@ -22,8 +22,8 @@
       <div class="bg-gradient-to-br from-white to-[#A8EBI2]/20 rounded-2xl p-6 shadow-xl border border-white/30 hover:shadow-2xl hover:scale-105 transition-all duration-300 group backdrop-blur-sm">
         <div class="flex items-center">
           <div class="w-14 h-14 bg-gradient-to-br from-[#74E600] to-[#3ED400] rounded-xl flex items-center justify-center group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4 20V7.1L2.05 2.85L3.85 2L6.2 7.05h11.6L20.15 2l1.8.85L20 7.1V20zm6-7h4q.425 0 .713-.288T15 12t-.288-.712T14 11h-4q-.425 0-.712.288T9 12t.288.713T10 13"/>
             </svg>
           </div>
           <div class="ml-4">
@@ -37,8 +37,8 @@
       <div class="bg-gradient-to-br from-white to-[#74E600]/20 rounded-2xl p-6 shadow-xl border border-white/30 hover:shadow-2xl hover:scale-105 transition-all duration-300 group backdrop-blur-sm">
         <div class="flex items-center">
           <div class="w-14 h-14 bg-gradient-to-br from-[#3ED400] to-[#00C851] rounded-xl flex items-center justify-center group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 2048 2048">
+              <path d="M1024 0q141 0 272 36t244 104t207 160t161 207t103 245t37 272q0 141-36 272t-104 244t-160 207t-207 161t-245 103t-272 37q-141 0-272-36t-244-104t-207-160t-161-207t-103-245t-37-272q0-141 36-272t104-244t160-207t207-161T752 37t272-37m603 685l-136-136l-659 659l-275-275l-136 136l411 411z"/>
             </svg>
           </div>
           <div class="ml-4">
@@ -52,8 +52,8 @@
       <div class="bg-gradient-to-br from-white to-yellow-200/30 rounded-2xl p-6 shadow-xl border border-white/30 hover:shadow-2xl hover:scale-105 transition-all duration-300 group backdrop-blur-sm">
         <div class="flex items-center">
           <div class="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M15 16.69V13h1.5v2.82l2.44 1.41l-.75 1.3zM19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.58-1.58c.14.19.3.36.47.53A7.001 7.001 0 0 0 21 11.1V2zM11.1 11c-.6.57-1.07 1.25-1.43 2H6v-2zm-2.03 4c-.07.33-.07.66-.07 1s0 .67.07 1H6v-2zM18 9H6V7h12zm2.85 7c0 .64-.12 1.27-.35 1.86c-.26.58-.62 1.14-1.07 1.57c-.43.45-.99.81-1.57 1.07c-.59.23-1.22.35-1.86.35c-2.68 0-4.85-2.17-4.85-4.85c0-1.29.51-2.5 1.42-3.43c.93-.91 2.14-1.42 3.43-1.42c2.67 0 4.85 2.17 4.85 4.85"/>
             </svg>
           </div>
           <div class="ml-4">
@@ -67,8 +67,12 @@
       <div class="bg-gradient-to-br from-white to-[#00C851]/20 rounded-2xl p-6 shadow-xl border border-white/30 hover:shadow-2xl hover:scale-105 transition-all duration-300 group backdrop-blur-sm">
         <div class="flex items-center">
           <div class="w-14 h-14 bg-gradient-to-br from-[#00C851] to-emerald-700 rounded-xl flex items-center justify-center group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <g fill-rule="evenodd" clip-rule="evenodd">
+                <path d="M11 3.5H6v-2h5a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5H6v-2h5a3 3 0 0 0 3-3v-1a3 3 0 0 0-3-3"/>
+                <path d="M6 1.5a1 1 0 0 1 1 1V18a1 1 0 1 1-2 0V2.5a1 1 0 0 1 1-1"/>
+                <path d="M2 5.436a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1m0 3a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1"/>
+              </g>
             </svg>
           </div>
           <div class="ml-4">

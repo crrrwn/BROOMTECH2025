@@ -1,25 +1,40 @@
 <template>
-  <div class="p-6 space-y-6">
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Pricing Panel</h1>
-        <p class="text-gray-600">Manage dynamic pricing, fixed rates, and service fees</p>
-      </div>
-      <div class="flex gap-3">
-        <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" @click="saveAllSettings">
-          Save Changes
-        </button>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" @click="resetToDefaults">
-          Reset to Default
-        </button>
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <!-- Green Banner Box -->
+    <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Pricing Panel</h1>
+          <p class="text-white/90 text-sm sm:text-base">Manage dynamic pricing, fixed rates, and service fees</p>
+        </div>
+        <div class="flex gap-2 sm:gap-3 flex-wrap">
+          <button 
+            class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 text-sm sm:text-base border border-white/30" 
+            @click="saveAllSettings"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Save Changes
+          </button>
+          <button 
+            class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 text-sm sm:text-base border border-white/30" 
+            @click="resetToDefaults"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Reset to Default
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white p-6 rounded-lg shadow-sm border">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
         <div class="flex items-center justify-between mb-4">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Minimum Charge</p>
+          <div class="flex-1">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1">Minimum Charge</p>
             <div class="flex items-center space-x-2">
               <span class="text-sm text-gray-500">₱</span>
               <input 
@@ -27,23 +42,27 @@
                 v-model.number="pricingRules.baseFee" 
                 min="0"
                 step="0.01"
-                class="text-2xl font-bold text-gray-900 w-32 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                class="text-xl sm:text-2xl font-bold text-gray-900 w-full max-w-32 px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200"
               >
             </div>
           </div>
-          <div class="p-3 bg-blue-100 rounded-lg">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#A8EB12]/20 to-[#74E600]/20 rounded-lg ml-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" viewBox="0 0 20 20" fill="currentColor">
+              <g fill-rule="evenodd" clip-rule="evenodd">
+                <path d="M11 3.5H6v-2h5a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5H6v-2h5a3 3 0 0 0 3-3v-1a3 3 0 0 0-3-3"/>
+                <path d="M6 1.5a1 1 0 0 1 1 1V18a1 1 0 1 1-2 0V2.5a1 1 0 0 1 1-1"/>
+                <path d="M2 5.436a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1m0 3a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1"/>
+              </g>
             </svg>
           </div>
         </div>
         <p class="text-xs text-gray-500">Starting price for all deliveries (CS Base Rate)</p>
       </div>
 
-      <div class="bg-white p-6 rounded-lg shadow-sm border">
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
         <div class="flex items-center justify-between mb-4">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Bad Weather Surcharge</p>
+          <div class="flex-1">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1">Bad Weather Surcharge</p>
             <div class="flex items-center space-x-2">
               <span class="text-sm text-gray-500">+₱</span>
               <input 
@@ -51,12 +70,12 @@
                 v-model.number="pricingRules.rainSurcharge" 
                 min="0"
                 step="0.01"
-                class="text-2xl font-bold text-orange-600 w-32 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                class="text-xl sm:text-2xl font-bold text-[#3ED400] w-full max-w-32 px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3ED400] focus:border-[#3ED400] transition-all duration-200"
               >
             </div>
           </div>
-          <div class="p-3 bg-orange-100 rounded-lg">
-            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#74E600]/20 to-[#3ED400]/20 rounded-lg ml-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#3ED400]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
             </svg>
           </div>
@@ -65,79 +84,79 @@
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Additional Service Fees (Add-ons)</h2>
-      <p class="text-sm text-gray-600 mb-4">Manage extra charges for specific conditions based on the 2025 Rate Sheet.</p>
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Additional Service Fees (Add-ons)</h2>
+      <p class="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Manage extra charges for specific conditions based on the 2025 Rate Sheet.</p>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Foods & Pabili (30+ items)</label>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div class="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:border-[#74E600] transition-all duration-200 hover:shadow-md">
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Foods & Pabili (30+ items)</label>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500">+₱</span>
-            <input type="number" v-model.number="specialFees.bulkFood" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="number" v-model.number="specialFees.bulkFood" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
           </div>
         </div>
 
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Box Fee</label>
+        <div class="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:border-[#74E600] transition-all duration-200 hover:shadow-md">
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Box Fee</label>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500">+₱</span>
-            <input type="number" v-model.number="specialFees.box" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="number" v-model.number="specialFees.box" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
           </div>
         </div>
 
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Hill Top Charge</label>
+        <div class="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:border-[#74E600] transition-all duration-200 hover:shadow-md">
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Hill Top Charge</label>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500">+₱</span>
-            <input type="number" v-model.number="specialFees.hillTop" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="number" v-model.number="specialFees.hillTop" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
           </div>
           <p class="text-xs text-gray-500 mt-1">Ex: Xevera, Greenhills, San Antonio</p>
         </div>
 
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Loob/Lakad Charge</label>
+        <div class="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:border-[#74E600] transition-all duration-200 hover:shadow-md">
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Loob/Lakad Charge</label>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500">+₱</span>
-            <input type="number" v-model.number="specialFees.loobLakad" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="number" v-model.number="specialFees.loobLakad" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
           </div>
           <p class="text-xs text-gray-500 mt-1">Ex: Hospital, Schools, Kapitolyo</p>
         </div>
 
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <label class="block text-sm font-medium text-gray-700 mb-2">High Floor (5th & up)</label>
+        <div class="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:border-[#74E600] transition-all duration-200 hover:shadow-md">
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">High Floor (5th & up)</label>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500">+₱</span>
-            <input type="number" v-model.number="specialFees.highFloor" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="number" v-model.number="specialFees.highFloor" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
           </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-      <div class="flex justify-between items-center mb-4">
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100">
+      <div class="flex justify-between items-center mb-4 sm:mb-6">
         <div>
-           <h2 class="text-lg font-semibold text-gray-900">Fixed Location Rates Matrix</h2>
-           <p class="text-sm text-gray-600">Set specific rates for Barangays or Landmarks (Overrides distance calculation)</p>
+           <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Fixed Location Rates Matrix</h2>
+           <p class="text-xs sm:text-sm text-gray-600 mt-1">Set specific rates for Barangays or Landmarks (Overrides distance calculation)</p>
         </div>
       </div>
 
-      <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-        <h3 class="text-sm font-medium text-blue-900 mb-3">Add New Rate</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div class="bg-gradient-to-br from-[#A8EB12]/10 via-[#74E600]/10 to-[#3ED400]/10 p-4 sm:p-6 rounded-xl border border-[#74E600]/20 mb-4 sm:mb-6">
+        <h3 class="text-sm sm:text-base font-medium text-[#00C851] mb-3 sm:mb-4">Add New Rate</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 items-end">
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Barangay</label>
-            <input type="text" v-model="newRate.barangay" placeholder="e.g. Bayanan I" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Barangay</label>
+            <input type="text" v-model="newRate.barangay" placeholder="e.g. Bayanan I" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Landmark (Optional)</label>
-            <input type="text" v-model="newRate.landmark" placeholder="e.g. Andoks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Landmark (Optional)</label>
+            <input type="text" v-model="newRate.landmark" placeholder="e.g. Andoks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Fix Price (₱)</label>
-            <input type="number" v-model.number="newRate.price" placeholder="0.00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Fix Price (₱)</label>
+            <input type="number" v-model.number="newRate.price" placeholder="0.00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200 text-sm">
           </div>
-          <button @click="addLocationRate" :disabled="!newRate.barangay || !newRate.price" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+          <button @click="addLocationRate" :disabled="!newRate.barangay || !newRate.price" class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md text-sm font-medium">
             Add Rate
           </button>
         </div>
@@ -146,35 +165,35 @@
       <div class="mb-4">
         <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </span>
-            <input type="text" v-model="searchRate" placeholder="Search Barangay or Landmark..." class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="text" v-model="searchRate" placeholder="Search Barangay or Landmark..." class="pl-9 sm:pl-10 w-full px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
         </div>
       </div>
 
-      <div class="overflow-x-auto max-h-96 overflow-y-auto border rounded-lg">
+      <div class="overflow-x-auto max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
         <table class="w-full">
-          <thead class="bg-gray-50 sticky top-0 z-10">
+          <thead class="bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10 sticky top-0 z-10">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barangay</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Landmark</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Barangay</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Landmark</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Price</th>
+              <th class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="(rate, index) in filteredRates" :key="index" class="hover:bg-gray-50">
-              <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ rate.barangay }}</td>
-              <td class="px-6 py-4 text-sm text-gray-500">{{ rate.landmark || '(Base Rate)' }}</td>
-              <td class="px-6 py-4 text-sm font-bold text-green-600">₱{{ rate.price }}</td>
-              <td class="px-6 py-4 text-right">
-                <button @click="removeLocationRate(rate)" class="text-red-600 hover:text-red-900 text-sm font-medium">Remove</button>
+            <tr v-for="(rate, index) in filteredRates" :key="index" class="hover:bg-[#A8EB12]/5 transition-colors duration-150">
+              <td class="px-4 sm:px-6 py-4 text-sm text-gray-900 font-medium">{{ rate.barangay }}</td>
+              <td class="px-4 sm:px-6 py-4 text-sm text-gray-500">{{ rate.landmark || '(Base Rate)' }}</td>
+              <td class="px-4 sm:px-6 py-4 text-sm font-bold text-[#00C851]">₱{{ rate.price }}</td>
+              <td class="px-4 sm:px-6 py-4 text-right">
+                <button @click="removeLocationRate(rate)" class="text-red-600 hover:text-red-800 text-sm font-medium transition-colors duration-150">Remove</button>
               </td>
             </tr>
             <tr v-if="filteredRates.length === 0">
-              <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">
                  No rates found. Add rates from your list above.
               </td>
             </tr>
@@ -183,111 +202,111 @@
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Dynamic Calculation Rules</h2>
-      <p class="text-sm text-gray-600 mb-4">Fallback settings if location is not in the Fixed Rates table.</p>
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Dynamic Calculation Rules</h2>
+      <p class="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Fallback settings if location is not in the Fixed Rates table.</p>
       
-      <div class="space-y-6">
-        <div class="border rounded-lg p-4 bg-gray-50">
-          <h3 class="text-md font-medium text-gray-800 mb-3">Weather Condition Charges</h3>
+      <div class="space-y-4 sm:space-y-6">
+        <div class="border border-gray-200 rounded-xl p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-white">
+          <h3 class="text-sm sm:text-base font-medium text-gray-800 mb-3 sm:mb-4">Weather Condition Charges</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Rain Surcharge</label>
+              <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Rain Surcharge</label>
               <div class="flex items-center space-x-2">
                 <span class="text-sm text-gray-500">₱</span>
                 <input 
                   type="number" 
                   v-model.number="pricingRules.rainSurcharge" 
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200 text-sm"
                 >
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Storm Surcharge</label>
+              <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Storm Surcharge</label>
               <div class="flex items-center space-x-2">
                 <span class="text-sm text-gray-500">₱</span>
                 <input 
                   type="number" 
                   v-model.number="pricingRules.stormSurcharge" 
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200 text-sm"
                 >
               </div>
             </div>
           </div>
         </div>
 
-        <div class="border rounded-lg p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-          <div class="flex items-center justify-between mb-3">
+        <div class="border border-[#74E600]/20 rounded-xl p-4 sm:p-6 bg-gradient-to-r from-[#A8EB12]/10 via-[#74E600]/10 to-[#3ED400]/10">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-3">
             <div class="flex items-center space-x-2">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
               </svg>
-              <h3 class="text-md font-medium text-gray-800">AI Fee Suggestions</h3>
+              <h3 class="text-sm sm:text-base font-medium text-gray-800">AI Fee Suggestions</h3>
             </div>
             <button 
               @click="generateAISuggestions" 
               :disabled="loadingAISuggestions"
-              class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm font-medium shadow-sm hover:shadow-md"
             >
               {{ loadingAISuggestions ? 'Analyzing...' : 'Generate Suggestions' }}
             </button>
           </div>
           
           <div v-if="aiSuggestions" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div class="bg-white rounded-lg p-4 border border-purple-200">
-              <h4 class="text-sm font-semibold text-gray-800 mb-2">Recommended Base Fee</h4>
-              <p class="text-2xl font-bold text-purple-600">₱{{ aiSuggestions.baseFee }}</p>
-              <button @click="applyAISuggestion('baseFee', aiSuggestions.baseFee)" class="mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium">Apply this suggestion →</button>
+            <div class="bg-white rounded-xl p-4 border border-[#74E600]/20 shadow-sm">
+              <h4 class="text-xs sm:text-sm font-semibold text-gray-800 mb-2">Recommended Base Fee</h4>
+              <p class="text-xl sm:text-2xl font-bold text-[#00C851]">₱{{ aiSuggestions.baseFee }}</p>
+              <button @click="applyAISuggestion('baseFee', aiSuggestions.baseFee)" class="mt-2 text-xs text-[#00C851] hover:text-[#3ED400] font-medium transition-colors duration-150">Apply this suggestion →</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">GCash Payment Charges</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="tier in gcashCharges" :key="tier.id" class="border rounded-lg p-4 hover:border-green-500 transition-colors">
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">GCash Payment Charges</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div v-for="tier in gcashCharges" :key="tier.id" class="border border-gray-200 rounded-xl p-4 sm:p-5 hover:border-[#74E600] hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50">
           <div class="flex items-center justify-between mb-3">
             <div>
-              <p class="text-sm font-medium text-gray-900">{{ tier.range }}</p>
+              <p class="text-xs sm:text-sm font-medium text-gray-900">{{ tier.range }}</p>
               <p class="text-xs text-gray-500">Order Amount Range</p>
             </div>
           </div>
-          <div class="flex items-center space-x-2">
-            <label class="text-sm text-gray-600">Charge:</label>
-            <div class="flex items-center space-x-1 flex-1">
-              <span class="text-sm text-gray-500">₱</span>
-              <input type="number" v-model="tier.charge" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+          <div class="flex items-center space-x-2 min-w-0">
+            <label class="text-xs sm:text-sm text-gray-600 whitespace-nowrap flex-shrink-0">Charge:</label>
+            <div class="flex items-center space-x-1 flex-1 min-w-0">
+              <span class="text-sm text-gray-500 flex-shrink-0">₱</span>
+              <input type="number" v-model="tier.charge" class="flex-1 min-w-0 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200 text-sm">
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-      <h2 class="text-lg font-semibold text-gray-900 mb-6">Fraud Detection Patterns</h2>
-      <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
-        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div class="flex items-start justify-between mb-3">
-            <div class="p-2 bg-red-100 rounded-lg">
-              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Fraud Detection Patterns</h2>
+      <div class="grid grid-cols-1 md:grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div class="bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200 rounded-xl p-4 sm:p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="p-2 sm:p-3 bg-red-100 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </div>
+            <h3 class="text-sm sm:text-base font-medium text-red-900">Frequent Cancels</h3>
           </div>
-          <h3 class="text-sm font-medium text-red-900 mb-1">Frequent Cancels</h3>
-          <p class="text-3xl font-bold text-red-600 mb-2">{{ fraudStats.frequentCancels }}</p>
-          <p class="text-sm text-red-700">Users with 5+ cancels (will be flagged)</p>
+          <p class="text-2xl sm:text-3xl font-bold text-red-600 mb-2">{{ fraudStats.frequentCancels }}</p>
+          <p class="text-xs sm:text-sm text-red-700">Users with 5+ cancels (will be flagged)</p>
         </div>
       </div>
 
       <div>
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold text-gray-900">Flagged Users</h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Flagged Users</h2>
           <button 
             @click="loadFraudStats" 
-            class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+            class="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -295,38 +314,38 @@
             Refresh
           </button>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto border border-gray-200 rounded-xl">
           <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
+            <thead class="bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10 border-b border-gray-200">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Alert Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">User</th>
+                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Alert Type</th>
+                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="user in flaggedUsers" :key="user.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
-                  <div class="text-sm text-gray-500">{{ user.email }}</div>
+              <tr v-for="user in flaggedUsers" :key="user.id" class="hover:bg-[#A8EB12]/5 transition-colors duration-150">
+                <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  <div class="text-xs sm:text-sm font-medium text-gray-900">{{ user.name }}</div>
+                  <div class="text-xs sm:text-sm text-gray-500">{{ user.email }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
                   <div>
-                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                       {{ user.alertType }}
                     </span>
                     <p v-if="user.pattern" class="text-xs text-gray-500 mt-1">{{ user.pattern }}</p>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button v-if="!user.isFlagged" @click="openFlagModal(user)" class="text-orange-600 hover:text-orange-900">Flag</button>
-                  <button v-else @click="unflagUser(user)" class="text-green-600 hover:text-green-900">Unflag</button>
-                  <button v-if="!user.isBanned" @click="banUser(user)" class="text-red-600 hover:text-red-900">Ban</button>
-                  <button v-else @click="unbanUser(user)" class="text-blue-600 hover:text-blue-900">Unban</button>
+                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-medium space-x-2">
+                  <button v-if="!user.isFlagged" @click="openFlagModal(user)" class="text-orange-600 hover:text-orange-800 transition-colors duration-150">Flag</button>
+                  <button v-else @click="unflagUser(user)" class="text-[#00C851] hover:text-[#3ED400] transition-colors duration-150">Unflag</button>
+                  <button v-if="!user.isBanned" @click="banUser(user)" class="text-red-600 hover:text-red-800 transition-colors duration-150">Ban</button>
+                  <button v-else @click="unbanUser(user)" class="text-blue-600 hover:text-blue-800 transition-colors duration-150">Unban</button>
                 </td>
               </tr>
               <tr v-if="flaggedUsers.length === 0">
-                <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500">No flagged users at this time</td>
+                <td colspan="3" class="px-6 py-8 text-center text-xs sm:text-sm text-gray-500">No flagged users at this time</td>
               </tr>
             </tbody>
           </table>
@@ -334,30 +353,79 @@
       </div>
     </div>
 
-    <div v-if="showFlagModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Flag User</h3>
-        <select v-model="flagReason" class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4">
+    <!-- Flag User Modal -->
+    <div v-if="showFlagModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="closeFlagModal">
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 sm:p-8 transform transition-all duration-200" @click.stop>
+        <div class="flex items-center gap-3 mb-4 sm:mb-6">
+          <div class="p-2 bg-orange-100 rounded-lg">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-semibold text-gray-900">Flag User</h3>
+        </div>
+        <select v-model="flagReason" class="w-full px-3 sm:px-4 py-2.5 text-sm border border-gray-300 rounded-lg mb-4 sm:mb-6 focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
           <option value="" disabled>Select a reason</option>
           <option value="Frequent Booking Cancellations">Frequent Booking Cancellations</option>
           <option value="Fake Address Provided">Fake Address Provided</option>
           <option value="Abusive Behavior">Abusive Behavior</option>
         </select>
-        <div class="flex justify-end space-x-3">
-          <button @click="closeFlagModal" class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg">Cancel</button>
-          <button @click="confirmFlagUser" :disabled="!flagReason" class="px-4 py-2 text-sm text-white bg-orange-600 rounded-lg">Flag User</button>
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+          <button @click="closeFlagModal" class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200">Cancel</button>
+          <button @click="confirmFlagUser" :disabled="!flagReason" class="px-4 py-2 text-sm text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md">Flag User</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showNotificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="closeNotificationModal">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
-        <h3 class="text-lg font-semibold mb-2" :class="{'text-green-900': notificationType === 'success', 'text-red-900': notificationType === 'error'}">
-          {{ notificationType === 'success' ? 'Success' : 'Notification' }}
-        </h3>
-        <p class="text-gray-700 mb-6">{{ notificationMessage }}</p>
+    <!-- Notification Modal -->
+    <div v-if="showNotificationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="closeNotificationModal">
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 sm:p-8 transform transition-all duration-200" @click.stop>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-2 rounded-lg" :class="notificationType === 'success' ? 'bg-[#A8EB12]/20' : 'bg-red-100'">
+            <svg v-if="notificationType === 'success'" class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <svg v-else class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-semibold" :class="notificationType === 'success' ? 'text-[#00C851]' : 'text-red-900'">
+            {{ notificationType === 'success' ? 'Success' : 'Error' }}
+          </h3>
+        </div>
+        <p class="text-sm sm:text-base text-gray-700 mb-6">{{ notificationMessage }}</p>
         <div class="flex justify-end">
-          <button @click="closeNotificationModal" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">OK</button>
+          <button @click="closeNotificationModal" class="px-4 sm:px-6 py-2 text-sm sm:text-base bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-sm hover:shadow-md">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Rate Modal -->
+    <div v-if="showRemoveModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="closeRemoveModal">
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 sm:p-8 transform transition-all duration-200" @click.stop>
+        <div class="flex items-center gap-3 mb-4 sm:mb-6">
+          <div class="p-2 sm:p-3 bg-gradient-to-br from-[#A8EB12]/20 via-[#74E600]/20 to-[#3ED400]/20 rounded-lg">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-semibold text-gray-900">Remove Rate</h3>
+        </div>
+        <div class="mb-4 sm:mb-6">
+          <p class="text-sm sm:text-base text-gray-700 mb-3">Are you sure you want to remove this rate?</p>
+          <div class="bg-gradient-to-br from-[#A8EB12]/10 via-[#74E600]/10 to-[#3ED400]/10 border border-[#74E600]/20 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm sm:text-base font-semibold text-gray-900">{{ selectedRateToRemove?.barangay }}</p>
+                <p class="text-xs sm:text-sm text-gray-600 mt-1">{{ selectedRateToRemove?.landmark || '(Base Rate)' }}</p>
+              </div>
+              <p class="text-lg sm:text-xl font-bold text-[#00C851]">₱{{ selectedRateToRemove?.price }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+          <button @click="closeRemoveModal" class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200">Cancel</button>
+          <button @click="confirmRemoveRate" class="px-4 py-2 text-sm text-white bg-gradient-to-r from-[#00C851] to-[#3ED400] rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-sm hover:shadow-md font-medium">Remove Rate</button>
         </div>
       </div>
     </div>
@@ -435,7 +503,11 @@ export default {
       aiSuggestions: null,
       showNotificationModal: false,
       notificationType: 'success',
-      notificationMessage: ''
+      notificationMessage: '',
+      
+      // Remove Rate Modal
+      showRemoveModal: false,
+      selectedRateToRemove: null
     }
   },
   
@@ -471,8 +543,25 @@ export default {
     },
 
     removeLocationRate(rateToRemove) {
-      if(confirm('Remove this rate?')) {
-         this.locationRates = this.locationRates.filter(rate => rate !== rateToRemove);
+      this.selectedRateToRemove = rateToRemove;
+      this.showRemoveModal = true;
+    },
+
+    openRemoveModal(rate) {
+      this.selectedRateToRemove = rate;
+      this.showRemoveModal = true;
+    },
+
+    closeRemoveModal() {
+      this.showRemoveModal = false;
+      this.selectedRateToRemove = null;
+    },
+
+    confirmRemoveRate() {
+      if (this.selectedRateToRemove) {
+        this.locationRates = this.locationRates.filter(rate => rate !== this.selectedRateToRemove);
+        this.showNotification('success', 'Rate removed successfully');
+        this.closeRemoveModal();
       }
     },
 
@@ -864,3 +953,36 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Performance optimizations for smooth rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Optimize table rendering */
+table {
+  will-change: transform;
+}
+
+/* Ensure modals render smoothly */
+.fixed {
+  will-change: opacity;
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  .text-3xl {
+    font-size: 1.875rem;
+  }
+}
+</style>

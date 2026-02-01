@@ -9,7 +9,7 @@
             <router-link to="/" class="flex items-center space-x-3 group">
               <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-[#3ED400] shadow-md group-hover:scale-105 transition-transform duration-300 bg-gray-200">
                  <img 
-                  src="https://placehold.co/100x100/3ED400/white?text=B" 
+                  src="/LOGO.jpg" 
                   alt="BroomTech Logo"
                   class="w-full h-full object-cover"
                 />
@@ -103,7 +103,7 @@
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-[#74E600] bg-gray-800">
                   <img 
-                    src="https://placehold.co/100x100/3ED400/white?text=B" 
+                    src="/LOGO.jpg" 
                     alt="BroomTech Logo"
                     class="w-full h-full object-cover"
                   />

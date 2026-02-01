@@ -547,7 +547,7 @@
         <div class="text-center">
           <div :class="[
             'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-md',
-            notificationType === 'success' ? 'bg-green-100 text-green-600' : 
+            notificationType === 'success' ? 'bg-[#E7FFF5] text-[#00C851]' : 
             notificationType === 'error' ? 'bg-red-100 text-red-600' : 
             notificationType === 'warning' ? 'bg-yellow-100 text-yellow-600' :
             'bg-blue-100 text-blue-600'
@@ -566,7 +566,9 @@
           <button 
             @click="closeNotificationModal"
             class="w-full py-3 rounded-xl font-bold text-white transition-colors shadow-md transform active:scale-95"
-            :class="notificationType === 'success' ? 'bg-[#3ED400] hover:bg-[#32b000]' : 'bg-gray-800 hover:bg-gray-900'"
+            :class="notificationType === 'success' 
+              ? 'bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] hover:brightness-110 shadow-[0_10px_28px_rgba(0,200,81,0.5)]' 
+              : 'bg-gray-800 hover:bg-gray-900'"
           >
             Okay, Got it
           </button>

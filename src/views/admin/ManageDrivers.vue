@@ -1,8 +1,38 @@
 <template>
-  <div class="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <!-- Green Banner Box -->
+    <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Manage Rider</h1>
+          <p class="text-white/90 text-sm sm:text-base">Monitor and manage driver performance</p>
+        </div>
+        <div class="flex gap-2 sm:gap-3 flex-wrap">
+          <button @click="loadDrivers" class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 text-sm sm:text-base border border-white/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Refresh
+          </button>
+          <button @click="openAddDriverModal" class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 text-sm sm:text-base border border-white/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Driver
+          </button>
+          <button @click="exportReport" class="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 text-sm sm:text-base border border-white/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00C851]"></div>
       <p class="ml-3 text-gray-600">Loading drivers from database...</p>
     </div>
 
@@ -26,81 +56,60 @@
 
     <!-- Main Content -->
     <div v-else>
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Manage Drivers</h1>
-          <p class="text-sm sm:text-base text-gray-600">Monitor and manage driver performance</p>
-          <p class="text-xs sm:text-sm text-gray-500 mt-1">
-            {{ drivers.length }} drivers loaded from Firestore (users + drivers)
-          </p>
-        </div>
-        <div class="flex flex-wrap gap-2 sm:gap-3">
-          <button @click="loadDrivers" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            Refresh
-          </button>
-          <button @click="openAddDriverModal" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            Add Driver
-          </button>
-          <button @click="exportReport" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Export
-          </button>
-        </div>
-      </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs sm:text-sm text-gray-600">Total Drivers</p>
+              <p class="text-xs sm:text-sm text-gray-600 mb-1">Total Drivers</p>
               <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ totalDrivers }}</p>
             </div>
-            <div class="p-2 sm:p-3 bg-blue-100 rounded-lg">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-2 sm:p-3 bg-gradient-to-br from-[#A8EB12]/20 to-[#74E600]/20 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs sm:text-sm text-gray-600">Online Now</p>
-              <p class="text-xl sm:text-2xl font-bold text-green-600">{{ onlineDrivers }}</p>
+              <p class="text-xs sm:text-sm text-gray-600 mb-1">Online Now</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#74E600]">{{ onlineDrivers }}</p>
             </div>
-            <div class="p-2 sm:p-3 bg-green-100 rounded-lg">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <div class="p-2 sm:p-3 bg-gradient-to-br from-[#74E600]/20 to-[#3ED400]/20 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#74E600]" xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 26 26" fill="currentColor">
+                <path d="M20.281 4.063a1.5 1.5 0 0 0-.906 2.593A8.94 8.94 0 0 1 22 13a8.95 8.95 0 0 1-2.625 6.344a1.503 1.503 0 1 0 2.125 2.125a11.995 11.995 0 0 0 0-16.938a1.5 1.5 0 0 0-1.063-.469a2 2 0 0 0-.156 0zm-14.906.03a1.5 1.5 0 0 0-.875.438a11.995 11.995 0 0 0 0 16.938a1.503 1.503 0 1 0 2.125-2.125A8.94 8.94 0 0 1 4 13a8.95 8.95 0 0 1 2.625-6.344a1.5 1.5 0 0 0-1.25-2.562zm3.813 3.313a1.5 1.5 0 0 0-.876.407A7 7 0 0 0 6 13c0 2.048.87 3.91 2.281 5.188a1.504 1.504 0 1 0 2.031-2.22A3.98 3.98 0 0 1 9 13a3.98 3.98 0 0 1 1.313-2.969a1.5 1.5 0 0 0-1.126-2.625zm7.406 0a1.5 1.5 0 0 0-.907 2.625A3.98 3.98 0 0 1 17 13a3.98 3.98 0 0 1-1.313 2.969a1.5 1.5 0 1 0 2 2.219A7 7 0 0 0 20 13a6.98 6.98 0 0 0-2.281-5.188a1.5 1.5 0 0 0-1.125-.406M13 11.188A1.812 1.812 0 1 0 14.813 13A1.81 1.81 0 0 0 13 11.187z"/>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs sm:text-sm text-gray-600">Pending Applications</p>
-              <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ pendingApplications }}</p>
+              <p class="text-xs sm:text-sm text-gray-600 mb-1">Pending Applications</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#3ED400]">{{ pendingApplications }}</p>
             </div>
-            <div class="p-2 sm:p-3 bg-orange-100 rounded-lg">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <div class="p-2 sm:p-3 bg-gradient-to-br from-[#3ED400]/20 to-[#00C851]/20 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#3ED400]" xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 12c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5m1.65 7.35L16.5 17.2V14h1v2.79l1.85 1.85zM18 3h-3.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H6c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h6.11a6.7 6.7 0 0 1-1.42-2H6V5h2v3h8V5h2v5.08c.71.1 1.38.31 2 .6V5c0-1.1-.9-2-2-2m-6 2c-.55 0-1-.45-1-1s.45-1 1-1s1 .45 1 1s-.45 1-1 1"/>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs sm:text-sm text-gray-600">Total Driver Shares</p>
-              <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-600">₱{{ totalEarnings }}</p>
+              <p class="text-xs sm:text-sm text-gray-600 mb-1">Total Rider Shares</p>
+              <p class="text-lg sm:text-xl md:text-2xl font-bold text-[#00C851]">₱{{ totalEarnings }}</p>
             </div>
-            <div class="p-2 sm:p-3 bg-purple-100 rounded-lg">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <div class="p-2 sm:p-3 bg-gradient-to-br from-[#00C851]/20 to-[#3ED400]/20 rounded-lg">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#00C851]" xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 3H2c-1.09.04-1.96.91-2 2v14c.04 1.09.91 1.96 2 2h20c1.09-.04 1.96-.91 2-2V5a2.074 2.074 0 0 0-2-2m0 16H2V5h20zm-8-2v-1.25c0-1.66-3.34-2.5-5-2.5s-5 .84-5 2.5V17zM9 7a2.5 2.5 0 0 0-2.5 2.5A2.5 2.5 0 0 0 9 12a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 9 7m5 0v1h6V7zm0 2v1h6V9zm0 2v1h4v-1z"/>
               </svg>
             </div>
           </div>
@@ -108,11 +117,11 @@
       </div>
 
       <!-- Filters -->
-      <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select v-model="filters.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <select v-model="filters.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="online">Online</option>
@@ -123,7 +132,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Vehicle Type</label>
-            <select v-model="filters.vehicleType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <select v-model="filters.vehicleType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               <option value="">All Vehicles</option>
               <option value="motorcycle">Motorcycle</option>
               <option value="car">Car</option>
@@ -137,14 +146,14 @@
               type="text"
               v-model="filters.search"
               placeholder="Driver name, phone..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200"
             >
           </div>
         </div>
       </div>
 
       <!-- Drivers Table -->
-      <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
         <div v-if="filteredDrivers.length === 0" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -159,7 +168,7 @@
             }}
           </p>
           <div v-if="drivers.length === 0" class="mt-4">
-            <button @click="loadDrivers" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            <button @click="loadDrivers" class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-md">
               Check for New Registrations
             </button>
           </div>
@@ -167,20 +176,20 @@
 
         <!-- Desktop Table View (hidden on mobile) -->
         <div v-else class="hidden lg:block overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50">
+          <table class="w-full min-w-full">
+            <thead class="bg-gradient-to-r from-[#00C851]/10 to-[#3ED400]/10">
               <tr>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver Share</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
-                <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Driver</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vehicle</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Deliveries</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Driver Share</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Schedule</th>
+                <th class="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="driver in paginatedDrivers" :key="driver.id" class="hover:bg-gray-50">
+              <tr v-for="driver in paginatedDrivers" :key="driver.id" class="hover:bg-[#00C851]/5 transition-colors duration-200">
                 <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <img class="h-10 w-10 rounded-full" :src="driver.profilePicture || '/placeholder.svg?height=40&width=40'" :alt="(driver.firstName + ' ' + driver.lastName).trim() || driver.email">
@@ -203,8 +212,8 @@
                 <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center space-x-2">
                     <div class="flex items-center space-x-1">
-                      <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400' ]"></div>
-                      <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-green-600' : 'text-gray-500' ]">
+                      <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-[#74E600]' : 'bg-gray-400' ]"></div>
+                      <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-[#74E600]' : 'text-gray-500' ]">
                         {{ driver.raw?.isOnline ? 'ONLINE' : 'OFFLINE' }}
                       </span>
                     </div>
@@ -236,13 +245,15 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button @click="openScheduleModal(driver)" class="text-blue-600 hover:text-blue-900 mr-2 text-xs lg:text-sm">
-                    Set Schedule
-                  </button>
-                  <button @click="suspendDriver(driver)" class="text-red-600 hover:text-red-900 text-xs lg:text-sm">
-                    {{ driver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
-                  </button>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <button @click="openScheduleModal(driver)" class="px-2 sm:px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-r from-[#00C851] to-[#3ED400] rounded hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-sm">
+                      Set Schedule
+                    </button>
+                    <button @click="suspendDriver(driver)" class="px-2 sm:px-2.5 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition-all duration-200 shadow-sm">
+                      {{ driver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -250,11 +261,11 @@
         </div>
 
         <!-- Mobile Card View (visible on mobile/tablet) -->
-        <div v-if="filteredDrivers.length > 0" class="lg:hidden space-y-4">
+        <div v-if="filteredDrivers.length > 0" class="lg:hidden space-y-4 p-4">
           <div 
             v-for="driver in paginatedDrivers" 
             :key="driver.id"
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3"
+            class="bg-white rounded-xl shadow-md border border-gray-100 p-4 space-y-3 hover:shadow-lg transition-all duration-200"
           >
             <!-- Driver Info Header -->
             <div class="flex items-start justify-between">
@@ -275,8 +286,8 @@
               <!-- Status Badge -->
               <div class="flex flex-col items-end space-y-1">
                 <div class="flex items-center space-x-1">
-                  <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400' ]"></div>
-                  <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-green-600' : 'text-gray-500' ]">
+                  <div :class="[ 'w-2 h-2 rounded-full', driver.raw?.isOnline ? 'bg-[#74E600]' : 'bg-gray-400' ]"></div>
+                  <span :class="[ 'text-xs font-medium', driver.raw?.isOnline ? 'text-[#74E600]' : 'text-gray-500' ]">
                     {{ driver.raw?.isOnline ? 'ONLINE' : 'OFFLINE' }}
                   </span>
                 </div>
@@ -328,13 +339,13 @@
             <div class="flex flex-col sm:flex-row gap-2 border-t border-gray-100 pt-3">
               <button 
                 @click="openScheduleModal(driver)" 
-                class="flex-1 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors"
+                class="flex-1 px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 text-sm font-medium transition-all duration-200 shadow-sm"
               >
                 Set Schedule
               </button>
               <button 
                 @click="suspendDriver(driver)" 
-                class="flex-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium transition-colors"
+                class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium transition-all duration-200 shadow-sm"
               >
                 {{ driver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
               </button>
@@ -343,57 +354,34 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="filteredDrivers.length > itemsPerPage" class="bg-white px-3 sm:px-4 md:px-6 py-3 flex items-center justify-between border-t border-gray-200">
-          <div class="flex-1 flex justify-between sm:hidden">
-            <button @click="previousPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-3 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              Previous
-            </button>
-            <div class="flex items-center">
-              <span class="text-xs text-gray-600 px-2">
-                Page {{ currentPage }} of {{ totalPages }}
-              </span>
-            </div>
-            <button @click="nextPage" :disabled="currentPage === totalPages" class="relative inline-flex items-center px-3 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              Next
-            </button>
+        <div v-if="filteredDrivers.length > itemsPerPage" class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200">
+          <div class="text-xs sm:text-sm text-gray-700">
+            Showing {{ Math.min((currentPage - 1) * itemsPerPage + 1, filteredDrivers.length) }} to {{ Math.min(currentPage * itemsPerPage, filteredDrivers.length) }} of {{ filteredDrivers.length }} results
           </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-xs sm:text-sm text-gray-700">
-                Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredDrivers.length) }} of {{ filteredDrivers.length }} results
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button @click="previousPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                  Previous
-                </button>
-                <span class="relative inline-flex items-center px-3 sm:px-4 py-2 border-t border-b border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
-                  {{ currentPage }} / {{ totalPages }}
-                </span>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                  Next
-                </button>
-              </nav>
-            </div>
+          <div class="flex flex-wrap gap-2">
+            <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">Previous</button>
+            <button v-for="page in visiblePages" :key="page" @click="goToPage(page)" :class="page === currentPage ? 'bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white shadow-md' : 'bg-white border border-gray-300 hover:bg-gray-50'" class="px-3 py-2 text-sm rounded-lg transition-all duration-200">{{ page }}</button>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">Next</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- View Driver Details Modal -->
-    <div v-if="selectedDriver" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">Driver Details</h3>
-            <p class="text-sm text-gray-500">Complete driver information and documents</p>
+    <div v-if="selectedDriver" class="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4" @click="selectedDriver = null">
+      <div class="relative mx-auto w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[98vh] flex flex-col" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-4 sm:p-6 rounded-t-2xl flex-shrink-0">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg sm:text-xl font-bold text-white">Driver Details</h3>
+              <p class="text-white/90 text-sm">Complete driver information and documents</p>
+            </div>
+            <button @click="selectedDriver = null" class="text-white/90 hover:text-white hover:bg-white/20 rounded-lg p-1 transition-all duration-200">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
-          <button @click="selectedDriver = null" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
         </div>
 
         <div class="p-6 space-y-6">
@@ -484,7 +472,7 @@
                 <button 
                   v-if="selectedDriver.raw?.driverInfo?.documents?.license"
                   @click="viewDocument(selectedDriver.raw.driverInfo.documents.license)"
-                  class="text-primary hover:text-green-600 text-sm mt-1"
+                  class="text-primary hover:text-[#00C851] text-sm mt-1 transition-colors duration-200"
                 >
                   View Document
                 </button>
@@ -495,7 +483,7 @@
                 <button 
                   v-if="selectedDriver.raw?.driverInfo?.documents?.orcr"
                   @click="viewDocument(selectedDriver.raw.driverInfo.documents.orcr)"
-                  class="text-primary hover:text-green-600 text-sm mt-1"
+                  class="text-primary hover:text-[#00C851] text-sm mt-1 transition-colors duration-200"
                 >
                   View Document
                 </button>
@@ -506,7 +494,7 @@
                 <button 
                   v-if="selectedDriver.raw?.driverInfo?.documents?.selfie"
                   @click="viewDocument(selectedDriver.raw.driverInfo.documents.selfie)"
-                  class="text-primary hover:text-green-600 text-sm mt-1"
+                  class="text-primary hover:text-[#00C851] text-sm mt-1 transition-colors duration-200"
                 >
                   View Document
                 </button>
@@ -517,7 +505,7 @@
                 <button 
                   v-if="selectedDriver.raw?.driverInfo?.documents?.profilePicture"
                   @click="viewDocument(selectedDriver.raw.driverInfo.documents.profilePicture)"
-                  class="text-primary hover:text-green-600 text-sm mt-1"
+                  class="text-primary hover:text-[#00C851] text-sm mt-1 transition-colors duration-200"
                 >
                   View Document
                 </button>
@@ -527,14 +515,14 @@
           </div>
         </div>
 
-        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-          <button @click="selectedDriver = null" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 rounded-b-2xl">
+          <button @click="selectedDriver = null" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200">
             Close
           </button>
-          <button @click="trackDriverFromModal" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+          <button @click="trackDriverFromModal" class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-md">
             Track Driver
           </button>
-          <button @click="confirmSuspendDriver" :class="selectedDriver.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" class="px-4 py-2 text-white rounded-lg">
+          <button @click="confirmSuspendDriver" :class="selectedDriver.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" class="px-4 py-2 text-white rounded-lg transition-all duration-200 shadow-md">
             {{ selectedDriver.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
           </button>
         </div>
@@ -542,18 +530,20 @@
     </div>
 
     <!-- Track Driver Modal -->
-    <div v-if="showTrackingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">Live Driver Tracking</h3>
-            <p class="text-sm text-gray-500">Real-time location monitoring with Google Maps</p>
+    <div v-if="showTrackingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4" @click="closeTrackingModal">
+      <div class="relative mx-auto w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[98vh] flex flex-col" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-4 sm:p-6 rounded-t-2xl flex-shrink-0">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg sm:text-xl font-bold text-white">Live Driver Tracking</h3>
+              <p class="text-white/90 text-sm">Real-time location monitoring with Google Maps</p>
+            </div>
+            <button @click="closeTrackingModal" class="text-white/90 hover:text-white hover:bg-white/20 rounded-lg p-1 transition-all duration-200">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
-          <button @click="closeTrackingModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
         </div>
 
         <div class="p-6 space-y-4">
@@ -567,8 +557,8 @@
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <div :class="trackedDriver?.raw?.isOnline ? 'bg-green-500' : 'bg-gray-400'" class="w-3 h-3 rounded-full animate-pulse"></div>
-              <span :class="trackedDriver?.raw?.isOnline ? 'text-green-600' : 'text-gray-500'" class="text-sm font-medium">
+              <div :class="trackedDriver?.raw?.isOnline ? 'bg-[#74E600]' : 'bg-gray-400'" class="w-3 h-3 rounded-full animate-pulse"></div>
+              <span :class="trackedDriver?.raw?.isOnline ? 'text-[#74E600]' : 'text-gray-500'" class="text-sm font-medium">
                 {{ trackedDriver?.raw?.isOnline ? 'ONLINE' : 'OFFLINE' }}
               </span>
             </div>
@@ -619,11 +609,11 @@
           </div>
         </div>
 
-        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-          <button @click="closeTrackingModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 rounded-b-2xl">
+          <button @click="closeTrackingModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200">
             Close
           </button>
-          <button @click="refreshDriverLocation" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
+          <button @click="refreshDriverLocation" class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 transition-all duration-200 shadow-md flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
@@ -634,70 +624,82 @@
     </div>
 
     <!-- Suspend Confirmation Modal -->
-    <div v-if="showSuspendModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend Driver' : 'Suspend Driver' }}
-        </h3>
-        <p class="text-gray-600 mb-4">
-          {{ driverToSuspend?.status === 'suspended' 
-            ? `Are you sure you want to unsuspend ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}? They will be able to accept orders again.`
-            : `Please provide a reason for suspending ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}.`
-          }}
-        </p>
-        <div v-if="driverToSuspend?.status !== 'suspended'" class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Suspension *</label>
-          <textarea
-            v-model="suspendReason"
-            rows="4"
-            required
-            placeholder="Enter the reason for suspending this driver..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-          ></textarea>
+    <div v-if="showSuspendModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4" @click="closeSuspendModal">
+      <div class="relative mx-auto w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-4 sm:p-6 rounded-t-2xl">
+          <h3 class="text-lg sm:text-xl font-bold text-white">
+            {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend Driver' : 'Suspend Driver' }}
+          </h3>
         </div>
-        <div class="flex justify-end space-x-3">
-          <button @click="closeSuspendModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-            Cancel
-          </button>
-          <button 
-            @click="executeSuspend" 
-            :disabled="driverToSuspend?.status !== 'suspended' && !suspendReason.trim()"
-            :class="driverToSuspend?.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" 
-            class="px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
-          </button>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">
+            {{ driverToSuspend?.status === 'suspended' 
+              ? `Are you sure you want to unsuspend ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}? They will be able to accept orders again.`
+              : `Please provide a reason for suspending ${driverToSuspend?.firstName} ${driverToSuspend?.lastName}.`
+            }}
+          </p>
+          <div v-if="driverToSuspend?.status !== 'suspended'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Suspension *</label>
+            <textarea
+              v-model="suspendReason"
+              rows="4"
+              required
+              placeholder="Enter the reason for suspending this driver..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200"
+            ></textarea>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button @click="closeSuspendModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200">
+              Cancel
+            </button>
+            <button 
+              @click="executeSuspend" 
+              :disabled="driverToSuspend?.status !== 'suspended' && !suspendReason.trim()"
+              :class="driverToSuspend?.status === 'suspended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'" 
+              class="px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md"
+            >
+              {{ driverToSuspend?.status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Schedule Management Modal -->
-    <div v-if="showScheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">Set Driver Schedule</h3>
-            <p class="text-sm text-gray-500">{{ selectedDriverForSchedule?.firstName }} {{ selectedDriverForSchedule?.lastName }}</p>
+    <div v-if="showScheduleModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-1.5 sm:p-2" @click="closeScheduleModal">
+      <div class="relative mx-auto w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[90vh] flex flex-col" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-2 sm:p-3 rounded-t-2xl flex-shrink-0">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 bg-white/20 backdrop-blur-sm rounded">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-white">Set Driver Schedule</h3>
+                <p class="text-xs text-white/90 hidden sm:block">{{ selectedDriverForSchedule?.firstName }} {{ selectedDriverForSchedule?.lastName }}</p>
+              </div>
+            </div>
+            <button @click="closeScheduleModal" class="text-white/90 hover:text-white hover:bg-white/20 rounded p-0.5 transition-all duration-200">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
-          <button @click="closeScheduleModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
         </div>
-
-        <div class="p-6 space-y-6">
+        <div class="p-2 sm:p-3 overflow-y-auto flex-1 space-y-4">
           <!-- Schedule Instructions -->
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p class="text-sm text-blue-800">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+            <p class="text-xs sm:text-sm text-blue-800">
               <strong>Instructions:</strong> Select the days and time slots when this driver is on duty. 
               Drivers with matching schedules will be prioritized when assigning orders.
             </p>
           </div>
 
           <!-- Schedule for each day -->
-          <div class="space-y-4">
-            <div v-for="day in daysOfWeek" :key="day.value" class="border border-gray-200 rounded-lg p-4">
+          <div class="space-y-3">
+            <div v-for="day in daysOfWeek" :key="day.value" class="border border-gray-200 rounded-lg p-3 sm:p-4">
               <div class="flex items-center justify-between mb-3">
                 <label class="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -719,7 +721,7 @@
                       type="time"
                       :value="getDaySchedule(day.value)?.startTime || '08:00'"
                       @change="updateDayTime(day.value, 'startTime', $event.target.value)"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200"
                     />
                   </div>
                   <div>
@@ -728,7 +730,7 @@
                       type="time"
                       :value="getDaySchedule(day.value)?.endTime || '17:00'"
                       @change="updateDayTime(day.value, 'endTime', $event.target.value)"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -737,9 +739,9 @@
           </div>
 
           <!-- Current Schedule Summary -->
-          <div v-if="hasSchedule" class="bg-gray-50 rounded-lg p-4">
-            <h4 class="font-medium text-gray-900 mb-2">Current Schedule Summary</h4>
-            <div class="space-y-1 text-sm text-gray-600">
+          <div v-if="hasSchedule" class="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <h4 class="text-sm font-medium text-gray-900 mb-2">Current Schedule Summary</h4>
+            <div class="space-y-1 text-xs sm:text-sm text-gray-600">
               <div v-for="day in daysOfWeek" :key="day.value">
                 <span v-if="isDaySelected(day.value)" class="font-medium">{{ day.label }}:</span>
                 <span v-if="isDaySelected(day.value)">
@@ -750,14 +752,14 @@
           </div>
         </div>
 
-        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-          <button @click="closeScheduleModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 rounded-b-2xl">
+          <button @click="closeScheduleModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200">
             Cancel
           </button>
           <button 
             @click="saveSchedule" 
             :disabled="savingSchedule"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md"
           >
             {{ savingSchedule ? 'Saving...' : 'Save Schedule' }}
           </button>
@@ -766,18 +768,20 @@
     </div>
 
     <!-- Add Driver Modal -->
-    <div v-if="showAddDriverModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div class="bg-white rounded-lg max-w-4xl w-full my-8">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-lg">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">Add New Driver</h3>
-            <p class="text-sm text-gray-500">Enter driver information and upload required documents</p>
+    <div v-if="showAddDriverModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-1.5 sm:p-2" @click="closeAddDriverModal">
+      <div class="relative mx-auto w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[98vh] flex flex-col my-8" @click.stop>
+        <div class="bg-gradient-to-r from-[#00C851] via-[#3ED400] to-[#74E600] p-4 sm:p-6 rounded-t-2xl flex-shrink-0">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg sm:text-xl font-bold text-white">Add New Driver</h3>
+              <p class="text-white/90 text-sm">Enter driver information and upload required documents</p>
+            </div>
+            <button @click="closeAddDriverModal" class="text-white/90 hover:text-white hover:bg-white/20 rounded-lg p-1 transition-all duration-200">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
-          <button @click="closeAddDriverModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
         </div>
 
         <form @submit.prevent="submitAddDriver" class="p-6 space-y-6">
@@ -787,23 +791,23 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                <input v-model="newDriver.firstName" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.firstName" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                <input v-model="newDriver.lastName" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.lastName" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input v-model="newDriver.email" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.email" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                <input v-model="newDriver.password" type="password" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.password" type="password" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
-                <input v-model="newDriver.contact" type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.contact" type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
             </div>
           </div>
@@ -814,19 +818,19 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Brand *</label>
-                <input v-model="newDriver.motorcycleInfo.brand" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.motorcycleInfo.brand" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Model *</label>
-                <input v-model="newDriver.motorcycleInfo.model" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.motorcycleInfo.model" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number *</label>
-                <input v-model="newDriver.motorcycleInfo.plateNumber" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.motorcycleInfo.plateNumber" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Year *</label>
-                <input v-model="newDriver.motorcycleInfo.year" type="number" required min="1990" max="2025" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <input v-model="newDriver.motorcycleInfo.year" type="number" required min="1990" max="2025" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
               </div>
             </div>
           </div>
@@ -837,7 +841,7 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Driving Experience *</label>
-                <select v-model="newDriver.experience" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <select v-model="newDriver.experience" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
                   <option value="">Select experience</option>
                   <option value="Less than 1 year">Less than 1 year</option>
                   <option value="1-3 years">1-3 years</option>
@@ -847,7 +851,7 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Availability *</label>
-                <select v-model="newDriver.availability" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <select v-model="newDriver.availability" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
                   <option value="">Select availability</option>
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
@@ -864,23 +868,23 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Driver's License *</label>
-                <input @change="handleFileUpload($event, 'license')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <p v-if="uploadProgress.license" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.license }}%</p>
+                <input @change="handleFileUpload($event, 'license')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
+                <p v-if="uploadProgress.license" class="text-xs text-[#00C851] mt-1">Uploading: {{ uploadProgress.license }}%</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">OR/CR *</label>
-                <input @change="handleFileUpload($event, 'orcr')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <p v-if="uploadProgress.orcr" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.orcr }}%</p>
+                <input @change="handleFileUpload($event, 'orcr')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
+                <p v-if="uploadProgress.orcr" class="text-xs text-[#00C851] mt-1">Uploading: {{ uploadProgress.orcr }}%</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Selfie with License *</label>
-                <input @change="handleFileUpload($event, 'selfie')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <p v-if="uploadProgress.selfie" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.selfie }}%</p>
+                <input @change="handleFileUpload($event, 'selfie')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
+                <p v-if="uploadProgress.selfie" class="text-xs text-[#00C851] mt-1">Uploading: {{ uploadProgress.selfie }}%</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture *</label>
-                <input @change="handleFileUpload($event, 'profilePicture')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                <p v-if="uploadProgress.profilePicture" class="text-xs text-green-600 mt-1">Uploading: {{ uploadProgress.profilePicture }}%</p>
+                <input @change="handleFileUpload($event, 'profilePicture')" type="file" accept="image/*" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00C851] focus:border-[#00C851] transition-all duration-200">
+                <p v-if="uploadProgress.profilePicture" class="text-xs text-[#00C851] mt-1">Uploading: {{ uploadProgress.profilePicture }}%</p>
               </div>
             </div>
           </div>
@@ -889,7 +893,7 @@
             <button type="button" @click="closeAddDriverModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
               Cancel
             </button>
-            <button type="submit" :disabled="isSubmitting" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+            <button type="submit" :disabled="isSubmitting" class="px-4 py-2 bg-gradient-to-r from-[#00C851] to-[#3ED400] text-white rounded-lg hover:from-[#00C851]/90 hover:to-[#3ED400]/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-all duration-200 shadow-md">
               <svg v-if="isSubmitting" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -1931,6 +1935,46 @@ export default {
 
     const previousPage = () => { if (currentPage.value > 1) currentPage.value-- }
     const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+    const goToPage = (page) => { currentPage.value = page }
+    
+    const visiblePages = computed(() => {
+      const total = totalPages.value
+      const current = currentPage.value
+      const pages = []
+      
+      if (total <= 7) {
+        // Show all pages if 7 or fewer
+        for (let i = 1; i <= total; i++) {
+          pages.push(i)
+        }
+      } else {
+        // Always show first page
+        pages.push(1)
+        
+        if (current <= 3) {
+          // Near the start
+          for (let i = 2; i <= 4; i++) pages.push(i)
+          pages.push('...')
+          pages.push(total)
+        } else if (current >= total - 2) {
+          // Near the end
+          pages.push('...')
+          for (let i = total - 3; i <= total; i++) pages.push(i)
+        } else {
+          // In the middle
+          pages.push('...')
+          for (let i = current - 1; i <= current + 1; i++) pages.push(i)
+          pages.push('...')
+          pages.push(total)
+        }
+      }
+      
+      return pages.filter((p, i, arr) => {
+        // Remove duplicate ellipses
+        if (p === '...' && arr[i + 1] === '...') return false
+        return true
+      })
+    })
 
     // Schedule Management Methods
     const openScheduleModal = async (driver) => {
@@ -2259,6 +2303,8 @@ export default {
       closeSuspendModal,
       previousPage,
       nextPage,
+      goToPage,
+      visiblePages,
       selectedDriver,
       showTrackingModal,
       trackedDriver,
