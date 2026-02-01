@@ -109,7 +109,7 @@
                   />
               </div>
               <div class="flex flex-col">
-                <span class="text-xl font-bold text-white tracking-tight leading-none">BROOOM</span>
+                <span class="text-xl font-bold text-white tracking-tight leading-none">BROOOOM</span>
                 <span class="text-[10px] text-[#74E600] font-bold tracking-widest uppercase mt-0.5">DELIVERY SERVICES</span>
               </div>
             </div>
