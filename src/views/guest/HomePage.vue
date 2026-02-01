@@ -47,7 +47,7 @@
             </span>
           </h1>
           <p class="text-sm sm:text-base md:text-lg lg:text-xl text-gray-100 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed drop-shadow-md font-medium animate-fade-in-delay px-2 sm:px-0">
-            From food delivery to bill payments, we've got you covered in Calapan City. Experience seamless service today.
+            We've got you fully covered in Calapan City! Whether you need Food Delivery, Grocery/Shopping, or Medicines Delivery, we are here to serve you. We also handle your Pay Bills / Remittances, Pick-up Service, generic Pabili Service, and even special Surprise Delivery for your loved ones.
           </p>
           <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center animate-buttons-in px-2 sm:px-0">
             <router-link 
@@ -162,7 +162,7 @@
           <div class="order-2 md:order-1 about-content">
             <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#05103B] mb-3 sm:mb-4 animate-title-in">About BROOOM</h2>
             <div class="w-12 sm:w-16 h-0.5 sm:h-1 bg-[#74E600] mb-4 sm:mb-6 rounded-full animate-line-expand"></div>
-            <p class="text-sm sm:text-base text-gray-600 leading-relaxed mb-4 sm:mb-6 animate-fade-in-delay">Founded on <span class="font-semibold text-[#74E600] animate-highlight">Feb 7, 2020</span>, BROOOM SERVICES connects customers with providers in Calapan City.</p>
+            <p class="text-sm sm:text-base text-gray-600 leading-relaxed mb-4 sm:mb-6 animate-fade-in-delay">Founded on <span class="font-semibold text-[#74E600] animate-highlight">Feb 7, 2020</span>, BROOOM DELIVERY SERVICES connects customers with providers in Calapan City.</p>
             <div class="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
               <div v-for="(item, idx) in ['Quality', 'Trust', 'Innovation']" :key="item" class="relative p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl text-center border border-gray-100 hover:border-[#74E600] hover:scale-110 hover:shadow-lg transition-all duration-300 feature-box overflow-hidden feature-box-hover" :style="{ animationDelay: `${idx * 0.15}s` }">
                 <div class="absolute inset-0 bg-gradient-to-br from-[#74E600]/20 to-transparent opacity-0 feature-overlay transition-opacity duration-300"></div>
@@ -882,12 +882,12 @@ export default {
     })
 
     const services = ref([
-      { id: 1, name: 'Food Delivery', description: 'Hot & fresh from local favorites', price: '55' },
-      { id: 2, name: 'Bill Payments', description: 'Secure hassle-free payments', price: '55' },
-      { id: 3, name: 'Pick-up & Drop', description: 'Fast local courier service', price: '55' },
-      { id: 4, name: 'Grocery', description: 'We shop and deliver to you', price: '55' },
-      { id: 5, name: 'Medicine', description: 'Safe pharmacy delivery', price: '55' },
-      { id: 6, name: 'Surprise Gifts', description: 'Send gifts to loved ones', price: '55' }
+      { id: 1, name: 'Food Delivery', description: 'Hot & fresh from local favorites', price: '54' },
+      { id: 2, name: 'Bill Payments', description: 'Secure hassle-free payments', price: '54' },
+      { id: 3, name: 'Pick-up & Drop', description: 'Fast local courier service', price: '54' },
+      { id: 4, name: 'Grocery', description: 'We shop and deliver to you', price: '54' },
+      { id: 5, name: 'Medicine', description: 'Safe pharmacy delivery', price: '54' },
+      { id: 6, name: 'Surprise Gifts', description: 'Send gifts to loved ones', price: '54' }
     ])
 
     const aboutImages = ref([

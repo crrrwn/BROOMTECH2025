@@ -23,25 +23,26 @@
                w-[calc(100vw-2rem)] sm:w-[320px] 
                h-[450px] sm:h-[480px] max-h-[80vh]"
       >
-        <div class="px-4 py-3 flex-shrink-0 relative overflow-hidden" style="background: linear-gradient(135deg, #00C851, #3ED400);">
+        <div class="px-4 py-3.5 flex-shrink-0 relative overflow-hidden" style="background: linear-gradient(135deg, #00C851, #3ED400);">
+          <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
           <div class="flex items-center justify-between relative z-10">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 shadow-inner">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/40 shadow-lg">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
               </div>
               <div>
-                <h3 class="font-bold text-white text-sm tracking-wide leading-tight">BroomBot</h3>
-                <div class="flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#A8EB12] animate-pulse"></span>
-                    <p class="text-[10px] text-green-50 font-medium">Online</p>
+                <h3 class="font-bold text-white text-sm tracking-wide leading-tight">BroooomBot</h3>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="w-2 h-2 rounded-full bg-[#A8EB12] animate-pulse shadow-sm shadow-[#A8EB12]/50"></span>
+                    <p class="text-[10px] text-green-50 font-semibold">Online</p>
                 </div>
               </div>
             </div>
             <button 
                 @click="toggleChat" 
-                class="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-1.5 transition-all duration-200"
+                class="text-white/90 hover:text-white hover:bg-white/25 rounded-full p-2 transition-all duration-200 hover:scale-110 active:scale-95"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -52,98 +53,112 @@
 
         <div class="flex-1 overflow-y-auto bg-gray-50 custom-scrollbar relative text-sm">
           
-          <div v-if="!selectedTopic" class="p-3 h-full flex flex-col">
-            <div class="mb-3 text-center pt-2">
-              <p class="text-gray-800 font-semibold text-sm">How can we help?</p>
-              <p class="text-[11px] text-gray-500">Select a topic below</p>
+          <div v-if="!selectedTopic" class="p-4 h-full flex flex-col">
+            <div class="mb-4 text-center pt-1">
+              <p class="text-gray-800 font-bold text-sm mb-1">How can we help?</p>
+              <p class="text-[11px] text-gray-500 font-medium">Select a topic below</p>
             </div>
 
-            <div class="space-y-2">
+            <div class="space-y-2.5 flex-1">
               <button
                 @click="selectTopic('Order Status')"
-                class="group w-full p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow hover:border-[#3ED400] transition-all duration-200 text-left flex items-center justify-between"
+                class="group w-full p-3.5 bg-white border-2 border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-[#3ED400] hover:-translate-y-0.5 transition-all duration-300 text-left flex items-center justify-between active:scale-[0.98]"
               >
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-md flex items-center justify-center bg-[#A8EB12]/20 text-[#00C851] group-hover:bg-[#3ED400] group-hover:text-white transition-colors text-sm">
-                     <span>📦</span>
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#A8EB12]/20 to-[#3ED400]/10 text-[#00C851] group-hover:from-[#3ED400] group-hover:to-[#00C851] group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-md">
+                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                     </svg>
                   </div>
                   <div>
-                      <span class="block font-semibold text-gray-700 text-xs group-hover:text-[#00C851] transition-colors">Order Status</span>
-                      <span class="text-[10px] text-gray-400">Track delivery</span>
+                      <span class="block font-bold text-gray-800 text-xs group-hover:text-[#00C851] transition-colors">Order Status</span>
+                      <span class="text-[10px] text-gray-500 font-medium">Track delivery</span>
                   </div>
                 </div>
-                <svg class="w-3 h-3 text-gray-300 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
               </button>
 
               <button
                 @click="selectTopic('Book Service')"
-                class="group w-full p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow hover:border-[#3ED400] transition-all duration-200 text-left flex items-center justify-between"
+                class="group w-full p-3.5 bg-white border-2 border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-[#3ED400] hover:-translate-y-0.5 transition-all duration-300 text-left flex items-center justify-between active:scale-[0.98]"
               >
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-md flex items-center justify-center bg-[#A8EB12]/20 text-[#00C851] group-hover:bg-[#3ED400] group-hover:text-white transition-colors text-sm">
-                    <span>📝</span>
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#A8EB12]/20 to-[#3ED400]/10 text-[#00C851] group-hover:from-[#3ED400] group-hover:to-[#00C851] group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
                   </div>
                   <div>
-                      <span class="block font-semibold text-gray-700 text-xs group-hover:text-[#00C851] transition-colors">Book Service</span>
-                      <span class="text-[10px] text-gray-400">New booking</span>
+                      <span class="block font-bold text-gray-800 text-xs group-hover:text-[#00C851] transition-colors">Book Service</span>
+                      <span class="text-[10px] text-gray-500 font-medium">New booking</span>
                   </div>
                 </div>
-                <svg class="w-3 h-3 text-gray-300 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
               </button>
 
               <button
                 @click="selectTopic('Pricing')"
-                class="group w-full p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow hover:border-[#3ED400] transition-all duration-200 text-left flex items-center justify-between"
+                class="group w-full p-3.5 bg-white border-2 border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-[#3ED400] hover:-translate-y-0.5 transition-all duration-300 text-left flex items-center justify-between active:scale-[0.98]"
               >
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-md flex items-center justify-center bg-[#A8EB12]/20 text-[#00C851] group-hover:bg-[#3ED400] group-hover:text-white transition-colors text-sm">
-                    <span>💰</span>
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#A8EB12]/20 to-[#3ED400]/10 text-[#00C851] group-hover:from-[#3ED400] group-hover:to-[#00C851] group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-md">
+                    <span class="text-lg font-bold">₱</span>
                   </div>
                   <div>
-                      <span class="block font-semibold text-gray-700 text-xs group-hover:text-[#00C851] transition-colors">Pricing</span>
-                      <span class="text-[10px] text-gray-400">Fees & charges</span>
+                      <span class="block font-bold text-gray-800 text-xs group-hover:text-[#00C851] transition-colors">Pricing</span>
+                      <span class="text-[10px] text-gray-500 font-medium">Fees & charges</span>
                   </div>
                 </div>
-                <svg class="w-3 h-3 text-gray-300 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-[#3ED400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
               </button>
             </div>
             
-            <div class="mt-auto text-center pt-2">
-                <p class="text-[9px] text-gray-400">Powered by BroomBot</p>
+            <div class="mt-auto text-center pt-3 border-t border-gray-100">
+                <p class="text-[9px] text-gray-400 font-medium">Powered by BroomBot</p>
             </div>
           </div>
 
           <div v-else class="flex flex-col h-full bg-white">
-            <div class="px-3 py-2 border-b border-gray-100 bg-gray-50 flex items-center sticky top-0 z-10">
+            <div class="px-4 py-2.5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex items-center sticky top-0 z-10 shadow-sm">
                 <button
                 @click="goBack"
-                class="flex items-center text-xs font-medium text-gray-500 hover:text-[#00C851] transition-colors px-1 py-1 rounded hover:bg-white"
+                class="flex items-center text-xs font-semibold text-gray-600 hover:text-[#00C851] transition-all duration-200 px-2 py-1.5 rounded-lg hover:bg-white hover:shadow-sm active:scale-95"
                 >
-                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
                 Back
                 </button>
             </div>
 
-            <div class="p-3 overflow-y-auto">
-                <div class="flex gap-2 mb-2">
-                    <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] shadow-sm mt-1" style="background: #3ED400;">
-                       🤖
+            <div class="p-4 overflow-y-auto">
+                <div class="flex gap-3 mb-2">
+                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white shadow-md mt-0.5" style="background: linear-gradient(135deg, #3ED400, #00C851);">
+                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                       </svg>
                     </div>
-                    <div class="flex flex-col space-y-1 max-w-[95%]">
-                        <div class="bg-gray-100 rounded-xl rounded-tl-none px-3 py-2 text-xs text-gray-700 shadow-sm border border-gray-200">
-                             <h4 class="font-bold text-[#00C851] mb-1.5 flex items-center gap-1.5 border-b border-gray-200 pb-1.5">
-                                <span class="text-sm">{{ getTopicIcon(selectedTopic) }}</span>
-                                <span>{{ selectedTopic }}</span>
+                    <div class="flex flex-col space-y-1 max-w-[90%]">
+                        <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl rounded-tl-none px-4 py-3 text-xs text-gray-700 shadow-md border border-gray-200/50">
+                             <h4 class="font-bold text-[#00C851] mb-2 flex items-center gap-2 border-b border-gray-200 pb-2">
+                                <span class="text-sm">
+                                  <svg v-if="selectedTopic === 'Order Status'" class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                  </svg>
+                                  <svg v-else-if="selectedTopic === 'Book Service'" class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                  </svg>
+                                  <span v-else-if="selectedTopic === 'Pricing'" class="text-base font-bold">₱</span>
+                                </span>
+                                <span class="text-sm">{{ selectedTopic }}</span>
                             </h4>
-                            <div class="whitespace-pre-line leading-relaxed text-gray-600 text-[11px] sm:text-xs">
+                            <div class="whitespace-pre-line leading-relaxed text-gray-700 text-[11px] sm:text-xs font-medium">
                                 {{ getTopicContent(selectedTopic) }}
                             </div>
                         </div>
@@ -227,24 +242,21 @@ export default {
    • COD or GCash
 7. Submit!
 
-💡 Tips:
+Tips:
 • Fees calculated by distance
 • Extra fees for hilltop/high floors`,
 
-        'Pricing': `💰 Delivery Fees:
+        'Pricing': `Delivery Fees:
 
 • Base (First 3km): ₱54
 • Distance Fee: ₱15/km after 3km
 • Bad Weather: +₱10
 
-📍 Extra Fees:
+Extra Fees:
 • Hilltop/Loob: ₱10
 • High Floor (5th+): ₱20
 • Box/Package: ₱10
-• Bulk Food (30+): ₱50
-
-Example (5km):
-₱54 (Base) + ₱30 (2km x ₱15) = ₱84`
+• Bulk Food (30+): ₱50`
       }
       return content[topic] || 'Content not available.'
     }
@@ -255,17 +267,18 @@ Example (5km):
 <style scoped>
 /* Custom Scrollbar for sleek look */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f3f4f6;
+  border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #3ED400, #00C851);
+  border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: linear-gradient(135deg, #00C851, #3ED400);
 }
 
 /* Updated Transitions */

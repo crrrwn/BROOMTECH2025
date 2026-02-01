@@ -16,7 +16,7 @@
               </div>
               <div class="flex flex-col">
                 <span class="text-lg font-bold bg-gradient-to-r from-[#05103B] to-[#74E600] bg-clip-text text-transparent leading-tight">BROOOOM</span>
-                <span class="text-[10px] text-gray-600 leading-none font-medium tracking-wide">SERVICES</span>
+                <span class="text-[10px] text-gray-600 leading-none font-medium tracking-wide">DELIVERY SERVICES</span>
               </div>
             </router-link>
           </div>
@@ -110,7 +110,7 @@
               </div>
               <div class="flex flex-col">
                 <span class="text-xl font-bold text-white tracking-tight leading-none">BROOOM</span>
-                <span class="text-[10px] text-[#74E600] font-bold tracking-widest uppercase mt-0.5">SERVICES</span>
+                <span class="text-[10px] text-[#74E600] font-bold tracking-widest uppercase mt-0.5">DELIVERY SERVICES</span>
               </div>
             </div>
             <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
@@ -135,15 +135,27 @@
               </li>
               <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
                 <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                Bill Payments
+                Pay Bills / Remittances
               </li>
               <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
                 <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                Pick-up & Drop
+                Pick-up Service
               </li>
               <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
                 <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                Grocery Shopping
+                Surprise Delivery
+              </li>
+              <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
+                <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                Medicines Delivery
+              </li>
+              <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
+                <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                Grocery / Shopping
+              </li>
+              <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
+                <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                Babili Service
               </li>
             </ul>
           </div>
@@ -164,13 +176,13 @@
                 <div class="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#74E600]/20 transition-colors">
                   <svg class="w-4 h-4 text-[#74E600]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 </div>
-                <span>broomteechservices@gmail.com</span>
+                <span>broooomexpressdelivery@gmail.com</span>
               </div>
               <div class="flex items-center space-x-3 group hover:text-white transition-colors">
                 <div class="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#74E600]/20 transition-colors">
                   <svg class="w-4 h-4 text-[#74E600]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                 </div>
-                <span>+63 123 456 7890</span>
+                <span>0955 773 9438</span>
               </div>
             </div>
           </div>
@@ -178,10 +190,10 @@
         </div>
         
         <div class="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-          <p>&copy; 2025 BroomTech. All rights reserved.</p>
+          <p>&copy; 2025 Broooom Delivery Services. All rights reserved.</p>
           <div class="flex items-center gap-6">
-            <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+            <span>Privacy Policy</span>
+            <span>Terms of Service</span>
           </div>
         </div>
       </div>
