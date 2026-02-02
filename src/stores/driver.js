@@ -169,8 +169,8 @@ export const useDriverStore = defineStore("driver", {
             
             if (approvalDateString === todayString) {
               const amount = parseFloat(remittance.amount) || 0
-              const driverShare = remittance.driverShare || (amount * driverShareRate)
-              const adminShare = remittance.adminShare || (amount * adminShareRate)
+              const adminShare = remittance.adminShare ?? (amount * adminShareRate)
+              const driverShare = remittance.driverShare ?? (amount - adminShare) // Driver share = total - admin (e.g. 1450 - 290 = 1160)
               
               totalRemittedToday += amount
               totalDriverShareToday += driverShare
@@ -229,8 +229,8 @@ export const useDriverStore = defineStore("driver", {
       }
 
       try {
-        const driverShare = amount * 0.8
         const adminShare = amount * 0.2
+        const driverShare = amount - adminShare // Driver share = total - admin (e.g. 1450 - 290 = 1160)
 
         // Update driver record with remittance
         const driverRef = doc(db, "drivers", user.uid)
@@ -331,10 +331,8 @@ export const useDriverStore = defineStore("driver", {
             // Only count remittances approved today (exact same day)
             if (approvalDateString === todayString) {
               const amount = parseFloat(remittance.amount) || 0
-              
-              // Use driverShare and adminShare from remittance if available, otherwise calculate
-              const driverShare = remittance.driverShare || (amount * driverShareRate)
-              const adminShare = remittance.adminShare || (amount * adminShareRate)
+              const adminShare = remittance.adminShare ?? (amount * adminShareRate)
+              const driverShare = remittance.driverShare ?? (amount - adminShare) // Driver share = total - admin (e.g. 1450 - 290 = 1160)
               
               totalRemittedToday += amount
               totalDriverShareToday += driverShare
@@ -423,8 +421,8 @@ export const useDriverStore = defineStore("driver", {
           }
         })
         
-        const driverShare = weeklyTotal * 0.8
         const adminShare = weeklyTotal * 0.2
+        const driverShare = weeklyTotal - adminShare // Driver share = total - admin (e.g. 1450 - 290 = 1160)
         
         this.weeklyEarnings = {
           total: weeklyTotal.toFixed(2),

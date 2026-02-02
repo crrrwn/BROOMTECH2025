@@ -666,16 +666,16 @@ const deleteAdminAccount = async () => {
     const credential = EmailAuthProvider.credential(user.email, deletePassword.value)
     await reauthenticateWithCredential(user, credential)
 
-    // Delete admin document from Firestore
-    const adminRef = doc(db, 'admins', user.uid)
-    await deleteDoc(adminRef)
-
-    // Reset adminExists flag to allow new admin registration
+    // Reset adminExists first (while still admin) so new admin can register later
     const settingsRef = doc(db, 'settings', 'system')
     await updateDoc(settingsRef, {
       adminExists: false,
       updatedAt: new Date()
     })
+
+    // Delete admin document from Firestore (requires rule: allow delete if isOwner(adminId))
+    const adminRef = doc(db, 'admins', user.uid)
+    await deleteDoc(adminRef)
 
     // Delete Firebase Auth user
     await deleteUser(user)

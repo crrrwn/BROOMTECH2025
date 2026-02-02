@@ -54,7 +54,7 @@
                 
                 <div v-if="dateGroup.remitStatus !== 'Remitted' && dateGroup.remitStatus !== 'Approved'">
                    <button @click="openRemitModal(dateGroup)" class="px-6 py-2.5 bg-gradient-to-r from-[#74E600] to-[#00C851] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95">
-                     Remit ₱{{ dateGroup.totalAmount.toFixed(2) }}
+                     Remit ₱{{ (dateGroup.totalAmount * adminShareRate).toFixed(2) }}
                    </button>
                 </div>
                 <div v-else>
@@ -122,7 +122,7 @@
                     <tr v-for="remittance in remittanceHistory" :key="remittance.id" class="hover:bg-gray-50/50 transition-colors">
                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ formatDate(remittance.date) }}</td>
                        <td class="px-6 py-4 text-sm font-bold text-gray-900">₱{{ remittance.amount.toFixed(2) }}</td>
-                       <td class="px-6 py-4 text-sm font-bold text-blue-600">₱{{ (remittance.driverShare || (remittance.amount * driverShareRate)).toFixed(2) }}</td>
+                       <td class="px-6 py-4 text-sm font-bold text-blue-600">₱{{ (remittance.driverShare != null ? remittance.driverShare : (remittance.amount - (remittance.amount * (remittance.adminShareRate ?? 0.20)))).toFixed(2) }}</td>
                        <td class="px-6 py-4 text-sm text-gray-500">{{ formatPaymentMethod(remittance.paymentMethod) }}</td>
                        <td class="px-6 py-4">
                           <span :class="['px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider', remittance.status === 'approved' ? 'bg-green-100 text-green-700' : remittance.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700']">
@@ -162,7 +162,7 @@
               </div>
               <div class="flex justify-between text-sm">
                  <span class="text-gray-500">Your Income ({{ driverSharePercent }}%)</span>
-                 <span class="font-bold text-blue-600">₱{{ (selectedDateGroup.totalAmount * driverShareRate).toFixed(2) }}</span>
+                 <span class="font-bold text-blue-600">₱{{ (selectedDateGroup.totalAmount - (selectedDateGroup.totalAmount * adminShareRate)).toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-sm">
                  <span class="text-gray-500">Admin Commission ({{ adminSharePercent }}%)</span>
@@ -171,7 +171,7 @@
               <div class="pt-2">
                  <div class="bg-[#3ED400]/10 p-3 rounded-xl border border-[#3ED400]/20 flex justify-between items-center">
                     <span class="text-xs font-bold text-[#3ED400] uppercase">Amount to Remit</span>
-                    <span class="text-lg font-extrabold text-[#3ED400]">₱{{ selectedDateGroup.totalAmount.toFixed(2) }}</span>
+                    <span class="text-lg font-extrabold text-[#3ED400]">₱{{ (selectedDateGroup.totalAmount * adminShareRate).toFixed(2) }}</span>
                  </div>
               </div>
            </div>
@@ -400,12 +400,13 @@ export default {
              const driverDoc = await getDoc(driverRef);
              const driverShareRate = driverDoc.exists() ? (driverDoc.data().driverShareRate || 0.80) : 0.80;
              const adminShareRate = driverDoc.exists() ? (driverDoc.data().adminShareRate || 0.20) : 0.20;
-             
+             const adminShare = amount * adminShareRate;
+             const driverShare = amount - adminShare; // Driver share = total - admin (e.g. 1450 - 290 = 1160)
              const remittanceData = {
                 driverId: user.uid, driverName: this.authStore.userProfile?.fullName || 'Driver',
                 amount, 
-                driverShare: amount * driverShareRate, 
-                adminShare: amount * adminShareRate,
+                driverShare, 
+                adminShare,
                 driverShareRate: driverShareRate, // Store rates for reference
                 adminShareRate: adminShareRate,
                 paymentMethod: this.remitFormData.paymentMethod, proofUrl,
@@ -416,8 +417,8 @@ export default {
              for(const d of this.selectedDateGroup.deliveries) {
                  await updateDoc(doc(db, 'orders', d.id), { remitStatus: 'remitted', remittanceId: ref.id, remittedAt: new Date() });
              }
-             // Update driver doc
-             const newTotal = (driverDoc.exists() ? driverDoc.data().totalEarningsToday || 0 : 0) + amount;
+             // Update driver doc — only their share (total - admin); admin gets 20% only
+             const newTotal = (driverDoc.exists() ? driverDoc.data().totalEarningsToday || 0 : 0) + driverShare
              await setDoc(driverRef, { totalEarningsToday: newTotal, lastRemitDate: new Date().toDateString(), hasRemitted: true }, { merge: true });
              await this.driverStore.loadEarningsData();
              this.isUploading = false;

@@ -600,9 +600,9 @@ export default {
           ? (driverDoc.data().adminShareRate || (remittance.adminShareRate || 0.20))
           : (remittance.adminShareRate || 0.20)
         
-        // Calculate exact admin share amount
+        // Admin share = 20% of amount; driver share = amount - admin share (e.g. 1450 - 290 = 1160)
         const exactAdminShare = remittance.adminShare || (remittance.amount * adminShareRate)
-        const exactDriverShare = remittance.driverShare || (remittance.amount * driverShareRate)
+        const exactDriverShare = remittance.driverShare ?? (remittance.amount - exactAdminShare)
         
         // Update remittance status to approved with exact amounts
         await updateDoc(doc(db, 'remittances', remittance.id), {
@@ -657,9 +657,14 @@ export default {
             
             const approvalDateString = approvalDate.toDateString()
             
-            // Only count remittances approved today
+            // Only count remittances approved today — driver share = amount - admin share (e.g. 1450 - 290 = 1160)
             if (approvalDateString === today) {
-              totalApprovedToday += data.amount || 0
+              const amt = data.amount || 0
+              const adminShare = data.adminShare != null ? Number(data.adminShare) : (amt * (data.adminShareRate || 0.20))
+              const driverShare = data.driverShare != null && data.driverShare !== undefined
+                ? Number(data.driverShare) || 0
+                : (amt - adminShare)
+              totalApprovedToday += driverShare
             }
           })
           
@@ -699,8 +704,7 @@ export default {
             console.log('[v0] Driver earnings updated after approval:', {
               driverId: remittance.driverId,
               driverName: remittance.driverName,
-              totalApprovedToday,
-              driverShare: (totalApprovedToday * driverShareRate).toFixed(2),
+              totalDriverShareToday: totalApprovedToday,
               driverShareRate: driverShareRate,
               driverSharePercent: driverSharePercent,
               today
@@ -723,7 +727,7 @@ export default {
         
         // Show notification modal
         const driverSharePercent = Math.round(driverShareRate * 100)
-        const actualDriverShare = remittance.driverShare || (remittance.amount * driverShareRate)
+        const actualDriverShare = remittance.driverShare ?? (remittance.amount - (remittance.adminShare || remittance.amount * adminShareRate))
         this.notificationType = 'approved'
         this.notificationMessage = `Remittance of ₱${remittance.amount.toFixed(2)} from ${remittance.driverName} has been approved successfully. Driver's ${driverSharePercent}% share (₱${actualDriverShare.toFixed(2)}) has been credited to their account.`
         this.showNotificationModal = true

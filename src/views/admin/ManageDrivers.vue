@@ -1123,14 +1123,13 @@ export default {
         // Sum up driverShare from all approved remittances
         remittancesSnap.forEach(remittanceDoc => {
           const remittance = remittanceDoc.data()
-          // Use driverShare from remittance if available, otherwise calculate from amount and rate
+          // Driver share = amount - admin share (e.g. 1450 - 290 = 1160)
           if (remittance.driverShare !== undefined && remittance.driverShare !== null) {
             totalDriverShare += Number(remittance.driverShare) || 0
           } else {
-            // Fallback: calculate using driver's share rate
             const amount = Number(remittance.amount) || 0
-            const driverShareRate = remittance.driverShareRate || 0.80
-            totalDriverShare += amount * driverShareRate
+            const adminShare = remittance.adminShare ?? (amount * (remittance.adminShareRate || 0.20))
+            totalDriverShare += amount - adminShare
           }
         })
         
