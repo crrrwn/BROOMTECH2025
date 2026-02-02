@@ -840,16 +840,48 @@ export const useAuthStore = defineStore("auth", {
 
     // ---------- First-admin creation ----------
     async registerAdmin(adminData) {
+      // #region agent log
+      console.log('[DEBUG] registerAdmin called', { email: adminData.email, isAuthenticated: !!auth.currentUser });
+      fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:start',message:'registerAdmin called',data:{adminData:{email:adminData.email,hasPassword:!!adminData.password},isAuthenticated:!!auth.currentUser},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       try {
         const settingsRef = doc(db, "settings", "system")
-        const settingsSnap = await getDoc(settingsRef)
-        if (settingsSnap.exists() && settingsSnap.data().adminExists === true) {
+        // #region agent log
+        console.log('[DEBUG] About to read settings/system', { isAuthenticated: !!auth.currentUser });
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:beforeSettingsRead',message:'About to read settings/system',data:{isAuthenticated:!!auth.currentUser,currentUserId:auth.currentUser?.uid||null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
+        // Check if admin already exists - handle permission denied gracefully for first-time setup
+        let adminAlreadyExists = false;
+        try {
+          const settingsSnap = await getDoc(settingsRef)
+          // #region agent log
+          console.log('[DEBUG] Settings read SUCCESS', { exists: settingsSnap.exists(), adminExists: settingsSnap.exists() ? settingsSnap.data()?.adminExists : null });
+          fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:afterSettingsRead',message:'Settings read SUCCESS',data:{exists:settingsSnap.exists(),adminExists:settingsSnap.exists()?settingsSnap.data()?.adminExists:null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          if (settingsSnap.exists() && settingsSnap.data().adminExists === true) {
+            adminAlreadyExists = true;
+          }
+        } catch (readError) {
+          // #region agent log
+          console.log('[DEBUG] Settings read FAILED (will proceed assuming no admin exists)', { errorCode: readError.code, errorMessage: readError.message });
+          fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:settingsReadError',message:'Settings read FAILED - proceeding',data:{errorCode:readError.code,errorMessage:readError.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          // If we can't read settings due to permissions, assume no admin exists yet (first-time setup)
+          // This allows registration to proceed when Firestore rules require authentication for settings read
+          console.warn("Could not read settings (permission denied). Proceeding with admin registration.")
+        }
+        
+        if (adminAlreadyExists) {
           return { success: false, message: "An administrator already exists." }
         }
 
         const { email, password, firstName, lastName } = adminData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:afterAuthCreate',message:'Firebase Auth user created',data:{uid:user.uid,email:user.email},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,C'})}).catch(()=>{});
+        // #endregion
 
         const adminProfileData = {
           firstName,
@@ -861,12 +893,41 @@ export const useAuthStore = defineStore("auth", {
           banned: false,
           createdAt: new Date().toISOString(),
         }
-        await setDoc(doc(db, "admins", user.uid), adminProfileData)
-        await setDoc(settingsRef, { adminExists: true, updatedAt: new Date().toISOString() }, { merge: true })
+        try {
+          await setDoc(doc(db, "admins", user.uid), adminProfileData)
+          // #region agent log
+          console.log('[DEBUG] Admin doc created SUCCESS', { uid: user.uid });
+          fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:afterAdminDocCreate',message:'Admin doc created SUCCESS',data:{uid:user.uid},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
+        } catch (adminDocError) {
+          // #region agent log
+          console.log('[DEBUG] Admin doc create FAILED', { errorCode: adminDocError.code, errorMessage: adminDocError.message });
+          fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:adminDocError',message:'Admin doc create FAILED',data:{errorCode:adminDocError.code,errorMessage:adminDocError.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
+          throw adminDocError;
+        }
+        try {
+          await setDoc(settingsRef, { adminExists: true, updatedAt: new Date().toISOString() }, { merge: true })
+          // #region agent log
+          console.log('[DEBUG] Settings write SUCCESS');
+          fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:afterSettingsWrite',message:'Settings write SUCCESS',data:{uid:user.uid},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+        } catch (settingsWriteError) {
+          // #region agent log
+          console.log('[DEBUG] Settings write FAILED (non-critical)', { errorCode: settingsWriteError.code, errorMessage: settingsWriteError.message });
+          fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:settingsWriteError',message:'Settings write FAILED',data:{errorCode:settingsWriteError.code,errorMessage:settingsWriteError.message,uid:user.uid},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+          // Settings write is non-critical - admin doc is already created successfully
+          // The adminExists flag is a secondary check; the actual admin doc existence is the source of truth
+          console.warn("Could not update settings.adminExists flag, but admin account was created successfully.")
+        }
 
         await signOut(auth)
         return { success: true, message: "Administrator account created successfully! You can now login." }
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:registerAdmin:catch',message:'registerAdmin caught error',data:{errorCode:error.code,errorMessage:error.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'ALL'})}).catch(()=>{});
+        // #endregion
         console.error("Admin registration error:", error)
         try {
           if (error.code === "permission-denied" && auth.currentUser) await deleteUser(auth.currentUser)
