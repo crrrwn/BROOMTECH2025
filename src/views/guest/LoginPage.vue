@@ -415,12 +415,21 @@ const handleForgotPassword = async () => {
 
 // Face Registration Handlers
 const handleFaceRegistered = async (data) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.vue:handleFaceRegistered:start',message:'handleFaceRegistered called',data:{hasData:!!data,hasDescriptor:!!(data?.descriptor||data),hasFaceImage:!!data?.faceImage,userId:authStore.user?.uid},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   try {
     // data can be either descriptor (old format) or { descriptor, faceImage } (new format)
     const descriptor = data.descriptor || data
     const faceImage = data.faceImage || null
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.vue:handleFaceRegistered:beforeSave',message:'About to save face descriptor',data:{descriptorLength:descriptor?.length,hasFaceImage:!!faceImage},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     const result = await authStore.saveFaceDescriptor(authStore.user.uid, descriptor, faceImage)
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.vue:handleFaceRegistered:afterSave',message:'saveFaceDescriptor result',data:{success:result.success,message:result.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     
     if (result.success) {
       // Reset registration attempts on success
@@ -436,11 +445,17 @@ const handleFaceRegistered = async (data) => {
       showValidIdUpload.value = true
     } else {
       // Registration failed - trigger failed handler to track attempts
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.vue:handleFaceRegistered:saveFailed',message:'saveFaceDescriptor failed',data:{success:result.success,message:result.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       await handleFaceRegistrationFailed(0) // 0 means this is a save failure, not an attempt limit
       showNotification('error', result.message || 'Failed to register face. Please try again.')
     }
   } catch (error) {
     // Registration failed - trigger failed handler to track attempts
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.vue:handleFaceRegistered:error',message:'Exception in handleFaceRegistered',data:{errorName:error.name,errorMessage:error.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     await handleFaceRegistrationFailed(0)
     showNotification('error', 'An error occurred during face registration')
   }

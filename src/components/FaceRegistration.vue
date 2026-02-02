@@ -244,15 +244,30 @@ const formatTime = (seconds) => {
 }
 
 onMounted(async () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:start',message:'FaceRegistration component mounted',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});
+  // #endregion
   try {
     // Load models first
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:beforeLoadModels',message:'About to load face models',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     const loaded = await loadModels()
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:afterLoadModels',message:'Face models load result',data:{loaded},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     if (!loaded) {
       error.value = 'Failed to load face recognition models. Please refresh the page.'
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:modelsLoadFailed',message:'Models failed to load',data:{loaded},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       return
     }
 
     // Start camera
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:beforeGetUserMedia',message:'About to request camera access',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     stream = await navigator.mediaDevices.getUserMedia({
       video: { 
         width: 640, 
@@ -260,6 +275,9 @@ onMounted(async () => {
         facingMode: 'user'
       }
     })
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:afterGetUserMedia',message:'Camera access granted',data:{hasStream:!!stream},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
 
     if (videoElement.value) {
       videoElement.value.srcObject = stream
@@ -269,6 +287,9 @@ onMounted(async () => {
     startDetection()
   } catch (err) {
     console.error('Error accessing camera:', err)
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:error',message:'Error in onMounted',data:{errorName:err.name,errorMessage:err.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});
+    // #endregion
     error.value = 'Failed to access camera. Please ensure camera permissions are granted.'
   }
 })
@@ -306,6 +327,9 @@ const startDetection = () => {
   
   // Set timeout for face detection - if no face detected in 30 seconds, show error
   detectionTimeout = setTimeout(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:detectionTimeout',message:'Detection timeout reached (30s)',data:{faceDetected:faceDetected.value,showCooldown:showCooldown.value,livenessChecked:livenessChecked.value,registrationAttempts:registrationAttempts.value},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (!faceDetected.value && !showCooldown.value) {
       registrationAttempts.value++
       if (registrationAttempts.value >= 3) {
@@ -378,6 +402,9 @@ const startDetection = () => {
           
           if (!liveness.isLive && previousDetections.length >= 2) {
             // Not a live face - block immediately
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:livenessCheckFailed',message:'Liveness check FAILED',data:{isLive:liveness.isLive,reason:liveness.reason,previousDetectionsCount:previousDetections.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             error.value = liveness.reason || 'Liveness check failed. Please use a live camera, not a photo.'
             showTryAgain.value = true
             faceDetected.value = false
@@ -389,6 +416,9 @@ const startDetection = () => {
           
           // If we have enough samples and it's live, mark as checked (reduced from 3 to 2 for faster scanning)
           if (liveness.isLive && previousDetections.length >= 2) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:livenessCheckPassed',message:'Liveness check PASSED',data:{isLive:liveness.isLive,reason:liveness.reason},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             livenessChecked.value = true
             livenessStatus.value = 'Live face verified'
           }
@@ -522,6 +552,9 @@ const startCooldown = () => {
 }
 
 const handleRegister = async () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:handleRegister:start',message:'handleRegister called',data:{hasDescriptor:!!currentDescriptor,registrationAttempts:registrationAttempts.value,registering:registering.value},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   if (!currentDescriptor) {
     error.value = 'Please ensure your face is clearly visible in the camera.'
     return
@@ -561,12 +594,18 @@ const handleRegister = async () => {
       faceImageUrl = canvas.toDataURL('image/jpeg', 0.9)
     }
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:handleRegister:emitting',message:'Emitting registered event',data:{descriptorLength:currentDescriptor?.length,hasFaceImage:!!faceImageUrl},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     // Emit the descriptor and face image to parent component
     emit('registered', { descriptor: currentDescriptor, faceImage: faceImageUrl })
     // Reset attempts on success
     registrationAttempts.value = 0
   } catch (err) {
     console.error('Registration error:', err)
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:handleRegister:error',message:'Registration error',data:{errorName:err.name,errorMessage:err.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     registrationAttempts.value++
     
     if (registrationAttempts.value >= 3) {

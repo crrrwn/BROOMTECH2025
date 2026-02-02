@@ -99,8 +99,14 @@ export const useAuthStore = defineStore("auth", {
 
     // ---------- Face Recognition Methods ----------
     async saveFaceDescriptor(userId, descriptor, faceImage = null) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:saveFaceDescriptor:start',message:'saveFaceDescriptor called',data:{userId,descriptorLength:descriptor?.length,hasFaceImage:!!faceImage},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       try {
         const profile = await this.refreshAndGetProfile()
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:saveFaceDescriptor:afterProfile',message:'Profile fetched',data:{hasProfile:!!profile,role:profile?.role},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         if (!profile) {
           return { success: false, message: 'User profile not found' }
         }
@@ -156,7 +162,13 @@ export const useAuthStore = defineStore("auth", {
         }
 
         console.log('[v0] Updating Firestore document:', collectionName, userId, updateData)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:saveFaceDescriptor:beforeUpdateDoc',message:'About to update Firestore',data:{collectionName,userId,hasDescriptor:!!updateData.faceDescriptor,hasFaceImageUrl:!!updateData.faceRegistrationImage},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         await updateDoc(doc(db, collectionName, userId), updateData)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:saveFaceDescriptor:afterUpdateDoc',message:'Firestore update SUCCESS',data:{collectionName,userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         console.log('[v0] Firestore document updated successfully')
 
         // Update local profile
@@ -171,6 +183,9 @@ export const useAuthStore = defineStore("auth", {
         return { success: true, message: 'Face registered successfully' }
       } catch (error) {
         console.error('Error saving face descriptor:', error)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:saveFaceDescriptor:catch',message:'saveFaceDescriptor ERROR',data:{errorCode:error.code,errorMessage:error.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         return { success: false, message: error.message }
       }
     },
