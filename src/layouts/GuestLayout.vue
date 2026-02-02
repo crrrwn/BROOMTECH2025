@@ -155,7 +155,7 @@
               </li>
               <li class="hover:text-[#74E600] transition-colors duration-200 cursor-pointer flex items-center group">
                 <svg class="w-4 h-4 mr-2 text-[#74E600] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                Babili Service
+                Pabili Service
               </li>
             </ul>
           </div>
