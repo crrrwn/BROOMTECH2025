@@ -22,7 +22,7 @@
             @error="handleImageError"
           />
           <div>
-            <span class="text-xl font-bold text-gray-800 tracking-tight block leading-none">BroomTech</span>
+            <span class="text-xl font-bold text-gray-800 tracking-tight block leading-none">Broooom</span>
             <span class="text-[10px] text-[#74E600] font-bold tracking-widest uppercase">User Panel</span>
           </div>
         </div>

@@ -308,9 +308,9 @@
           <div class="ml-2 text-xs sm:text-sm">
             <label for="acceptTerms" class="font-semibold text-gray-700 cursor-pointer select-none transition-colors hover:text-[#3ED400]">
               I agree to the 
-              <a href="#" class="text-[#00C851] hover:text-[#3ED400] underline font-bold transition-all" @click.prevent>Terms of Service</a>
+              <span class="text-[#00C851] font-bold">Terms of Service</span>
               and 
-              <a href="#" class="text-[#00C851] hover:text-[#3ED400] underline font-bold transition-all" @click.prevent>Privacy Policy</a>
+              <span class="text-[#00C851] font-bold">Privacy Policy</span>
             </label>
             <p v-if="form.acceptTerms === false && form.confirmPassword" class="mt-0.5 text-[10px] text-red-500">
               Required
