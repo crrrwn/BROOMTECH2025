@@ -279,7 +279,7 @@ onMounted(async () => {
       } catch (e) {
         console.warn('Video play() failed:', e)
       }
-      // Start detection only when video has dimensions (critical on mobile)
+      // Start detection when video has dimensions (critical on mobile)
       const startWhenReady = () => {
         if (isVideoReady(video)) {
           startDetection()
@@ -287,9 +287,17 @@ onMounted(async () => {
         }
         video.addEventListener('loadeddata', startWhenReady, { once: true })
         video.addEventListener('playing', startWhenReady, { once: true })
+        video.addEventListener('loadedmetadata', startWhenReady, { once: true })
+        // Fallback: start after delay even if events didn't fire (e.g. some Android)
+        const fallbackMs = 1500
         setTimeout(() => {
-          if (!detectionInterval && isVideoReady(video)) startDetection()
-        }, 500)
+          if (detectionInterval) return
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            startDetection()
+          } else if (isVideoReady(video)) {
+            startDetection()
+          }
+        }, fallbackMs)
       }
       startWhenReady()
     }

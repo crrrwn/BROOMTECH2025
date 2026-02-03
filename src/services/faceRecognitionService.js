@@ -14,13 +14,13 @@ export const isMobile = () =>
 /** Check if video element has valid dimensions and is ready (required on mobile) */
 export const isVideoReady = (video) => {
   if (!video || !video.srcObject) return false
-  return (
-    video.readyState >= 2 &&
+  // On mobile, readyState can stay 1; accept any state as long as we have dimensions
+  const hasDimensions =
     typeof video.videoWidth === 'number' &&
     typeof video.videoHeight === 'number' &&
     video.videoWidth > 0 &&
     video.videoHeight > 0
-  )
+  return hasDimensions && (video.readyState >= 1 || video.videoWidth > 0)
 }
 
 export const loadModels = async () => {
@@ -77,6 +77,15 @@ export const loadModels = async () => {
   return loadingPromise
 }
 
+/** TinyFaceDetector options: lower scoreThreshold for mobile so faces are detected more easily */
+function getDetectorOptions() {
+  const opts = { scoreThreshold: 0.4 }
+  if (isMobile()) {
+    opts.inputSize = 416
+  }
+  return new faceapi.TinyFaceDetectorOptions(opts)
+}
+
 export const detectFace = async (videoElement) => {
   if (!modelsLoaded) {
     const loaded = await loadModels()
@@ -84,9 +93,10 @@ export const detectFace = async (videoElement) => {
       throw new Error('Failed to load face recognition models')
     }
   }
+  if (!isVideoReady(videoElement)) return null
 
   const detection = await faceapi
-    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
+    .detectSingleFace(videoElement, getDetectorOptions())
     .withFaceLandmarks()
     .withFaceDescriptor()
 
@@ -119,9 +129,10 @@ export const checkLiveness = (currentDetection, previousDetections = []) => {
     y: currentBox.y + currentBox.height / 2
   }
 
-  // Need at least 3 previous detections to check movement
-  if (previousDetections.length < 3) {
-    return { isLive: true, reason: 'Collecting samples' } // Still collecting, assume live
+  // On mobile, require fewer samples (user holds phone still)
+  const minSamples = isMobile() ? 2 : 3
+  if (previousDetections.length < minSamples) {
+    return { isLive: true, reason: 'Collecting samples' }
   }
 
   // Check if face position has changed (real faces move slightly)
@@ -168,11 +179,11 @@ export const checkLiveness = (currentDetection, previousDetections = []) => {
     landmarkMovement = landmarkMovement / currentLandmarks.length
   }
 
-  // Liveness criteria:
-  // 1. Face position should have some movement (movementRatio > 0.3%)
-  // 2. Face size should vary slightly (avgSizeVariation > 0.2%)
-  // 3. Landmarks should show some movement (landmarkMovement > 1 pixel average)
-  const isLive = movementRatio > 0.003 || avgSizeVariation > 0.002 || landmarkMovement > 1
+  // Liveness: on mobile use lower thresholds (user holds phone still)
+  const moveThresh = isMobile() ? 0.0015 : 0.003
+  const sizeThresh = isMobile() ? 0.001 : 0.002
+  const landmarkThresh = isMobile() ? 0.5 : 1
+  const isLive = movementRatio > moveThresh || avgSizeVariation > sizeThresh || landmarkMovement > landmarkThresh
 
   if (!isLive) {
     return { 
