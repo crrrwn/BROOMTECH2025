@@ -17,6 +17,7 @@
           ref="videoElement"
           autoplay
           playsinline
+          muted
           class="w-full h-full object-cover"
           style="transform: scaleX(-1);"
         ></video>
@@ -209,7 +210,7 @@
 <script setup>
 // --- LOGIC MO (EXACTLY AS PROVIDED IN CODE 2) ---
 import { ref, onMounted, onUnmounted } from 'vue'
-import { detectFace, getFaceDescriptor, loadModels, compareFaces, detectFaceWithLiveness } from '@/services/faceRecognitionService'
+import { detectFace, getFaceDescriptor, loadModels, compareFaces, detectFaceWithLiveness, isVideoReady } from '@/services/faceRecognitionService'
 
 const props = defineProps({
   registeredDescriptor: {
@@ -257,24 +258,44 @@ onMounted(async () => {
       return
     }
 
-    // Start camera
+    // Camera constraints: flexible on mobile (many devices reject fixed 640x480)
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)
+    const videoConstraints = isMobileDevice
+      ? { facingMode: 'user', width: { ideal: 640, max: 1280 }, height: { ideal: 480, max: 720 } }
+      : { width: 640, height: 480, facingMode: 'user' }
+
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { 
-        width: 640, 
-        height: 480,
-        facingMode: 'user'
-      }
+      video: videoConstraints,
+      audio: false
     })
 
     if (videoElement.value) {
-      videoElement.value.srcObject = stream
+      const video = videoElement.value
+      video.srcObject = stream
+      // iOS: muted + explicit play() required for video to start
+      video.muted = true
+      try {
+        await video.play()
+      } catch (e) {
+        console.warn('Video play() failed:', e)
+      }
+      // Start detection only when video has dimensions (critical on mobile)
+      const startWhenReady = () => {
+        if (isVideoReady(video)) {
+          startDetection()
+          return
+        }
+        video.addEventListener('loadeddata', startWhenReady, { once: true })
+        video.addEventListener('playing', startWhenReady, { once: true })
+        setTimeout(() => {
+          if (!detectionInterval && isVideoReady(video)) startDetection()
+        }, 500)
+      }
+      startWhenReady()
     }
-
-    // Start face detection
-    startDetection()
   } catch (err) {
     console.error('Error accessing camera:', err)
-    error.value = 'Failed to access camera. Please ensure camera permissions are granted.'
+    error.value = 'Failed to access camera. Please ensure camera permissions are granted and use HTTPS.'
   }
 })
 

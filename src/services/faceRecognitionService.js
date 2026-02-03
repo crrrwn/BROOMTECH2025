@@ -7,6 +7,22 @@ const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/'
 let modelsLoaded = false
 let loadingPromise = null
 
+/** Detect if running on mobile (needed for camera constraints and detector options) */
+export const isMobile = () =>
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent)
+
+/** Check if video element has valid dimensions and is ready (required on mobile) */
+export const isVideoReady = (video) => {
+  if (!video || !video.srcObject) return false
+  return (
+    video.readyState >= 2 &&
+    typeof video.videoWidth === 'number' &&
+    typeof video.videoHeight === 'number' &&
+    video.videoWidth > 0 &&
+    video.videoHeight > 0
+  )
+}
+
 export const loadModels = async () => {
   if (modelsLoaded) return true
   
@@ -185,9 +201,12 @@ export const detectFaceWithLiveness = async (videoElement, previousDetections = 
       throw new Error('Failed to load face recognition models')
     }
   }
+  if (!isVideoReady(videoElement)) {
+    return { detection: null, liveness: { isLive: false, reason: 'Camera not ready' } }
+  }
 
   const detection = await faceapi
-    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
+    .detectSingleFace(videoElement, getDetectorOptions())
     .withFaceLandmarks()
     .withFaceDescriptor()
 

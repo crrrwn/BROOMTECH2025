@@ -17,6 +17,7 @@
           ref="videoElement"
           autoplay
           playsinline
+          muted
           class="w-full h-full object-cover"
           style="transform: scaleX(-1);"
         ></video>
@@ -208,7 +209,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { detectFace, getFaceDescriptor, loadModels, detectFaceWithLiveness } from '@/services/faceRecognitionService'
+import { detectFace, getFaceDescriptor, loadModels, detectFaceWithLiveness, isVideoReady } from '@/services/faceRecognitionService'
 
 const emit = defineEmits(['registered', 'failed', 'cancel'])
 
@@ -264,27 +265,40 @@ onMounted(async () => {
       return
     }
 
-    // Start camera
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:beforeGetUserMedia',message:'About to request camera access',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    // Camera constraints: flexible on mobile (many devices reject fixed 640x480)
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)
+    const videoConstraints = isMobileDevice
+      ? { facingMode: 'user', width: { ideal: 640, max: 1280 }, height: { ideal: 480, max: 720 } }
+      : { width: 640, height: 480, facingMode: 'user' }
+
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { 
-        width: 640, 
-        height: 480,
-        facingMode: 'user'
-      }
+      video: videoConstraints,
+      audio: false
     })
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/aa4d712d-7c8c-4968-903e-1afa9f9920b5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FaceRegistration.vue:onMounted:afterGetUserMedia',message:'Camera access granted',data:{hasStream:!!stream},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
 
     if (videoElement.value) {
-      videoElement.value.srcObject = stream
+      const video = videoElement.value
+      video.srcObject = stream
+      video.muted = true
+      try {
+        await video.play()
+      } catch (e) {
+        console.warn('Video play() failed:', e)
+      }
+      // Start detection only when video has dimensions (critical on mobile)
+      const startWhenReady = () => {
+        if (isVideoReady(video)) {
+          startDetection()
+          return
+        }
+        video.addEventListener('loadeddata', startWhenReady, { once: true })
+        video.addEventListener('playing', startWhenReady, { once: true })
+        setTimeout(() => {
+          if (!detectionInterval && isVideoReady(video)) startDetection()
+        }, 500)
+      }
+      startWhenReady()
     }
-
-    // Start face detection
-    startDetection()
   } catch (err) {
     console.error('Error accessing camera:', err)
     // #region agent log
