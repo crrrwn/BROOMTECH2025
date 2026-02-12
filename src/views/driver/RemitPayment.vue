@@ -36,15 +36,15 @@
             <button @click="filterPeriod = 'all'" :class="['px-4 py-2 rounded-xl text-sm font-bold border transition-colors whitespace-nowrap', filterPeriod === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">All Time</button>
           </div>
 
-          <div v-if="getFilteredDeliveries().length === 0" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
+          <div v-if="groupedDeliveriesToRemit.length === 0" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
             <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
-            <p class="text-gray-500 font-medium">No completed deliveries to remit yet.</p>
+            <p class="text-gray-500 font-medium">{{ groupedDeliveries.length > 0 ? 'No pending remittances. Check History for remitted items.' : 'No completed deliveries to remit yet.' }}</p>
           </div>
 
           <div v-else class="space-y-6">
-            <div v-for="dateGroup in groupedDeliveries" :key="dateGroup.date" class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+            <div v-for="dateGroup in groupedDeliveriesToRemit" :key="dateGroup.date" class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
               
               <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
                 <div>
@@ -330,6 +330,10 @@ export default {
         }
       })
       return Object.values(grouped).sort((a, b) => new Date(b.date) - new Date(a.date))
+    },
+    // Only show date groups that are not yet remitted — remitted ones appear in History
+    groupedDeliveriesToRemit() {
+      return this.groupedDeliveries.filter(g => g.remitStatus === 'Pending')
     }
   },
   async mounted() {
@@ -439,11 +443,16 @@ export default {
         });
     },
     getFilteredDeliveries() {
-        if(this.filterPeriod === 'today') {
+        // Exclude orders already remitted or approved by admin — those belong in History only
+        const pendingOnly = this.completedDeliveries.filter(d => {
+            const status = (d.remitStatus || '').toLowerCase()
+            return status !== 'remitted' && status !== 'approved'
+        })
+        if (this.filterPeriod === 'today') {
             const today = new Date(); today.setHours(0,0,0,0);
-            return this.completedDeliveries.filter(d => (d.deliveredAt?.toDate?.() || new Date(0)) >= today);
+            return pendingOnly.filter(d => (d.deliveredAt?.toDate?.() || new Date(0)) >= today);
         }
-        return this.completedDeliveries;
+        return pendingOnly;
     },
     calculateDeliveryTotal(d) {
         const p = d.pricing || {};

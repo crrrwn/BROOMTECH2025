@@ -287,10 +287,19 @@
 
         <div class="p-6 space-y-6" v-if="selectedBooking">
           <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
+            <div v-if="selectedBooking.formData?.useAddStoreOption" class="p-3 bg-green-50 rounded-xl border-2 border-green-200 mb-4">
+              <p class="text-xs font-black text-green-700 uppercase tracking-wider mb-2">Add Store Option</p>
+              <p v-if="selectedBooking.formData?.addStoreName" class="font-bold text-gray-900 text-sm">{{ selectedBooking.formData.addStoreName }}</p>
+              <p class="text-gray-800 text-sm">{{ selectedBooking.pickupAddress || getPickupLocation(selectedBooking) }}</p>
+              <div v-if="selectedBooking.formData?.addStoreItems" class="mt-2 pt-2 border-t border-green-200">
+                <p class="text-[10px] font-bold text-green-700 uppercase tracking-wider mb-0.5">What to buy at store</p>
+                <p class="text-gray-800 text-sm whitespace-pre-wrap">{{ selectedBooking.formData.addStoreItems }}</p>
+              </div>
+            </div>
             <div class="relative pl-6 border-l-2 border-gray-300 space-y-6">
               <div class="relative">
                 <div class="absolute -left-[29px] top-0 w-3 h-3 rounded-full bg-green-500 ring-4 ring-white"></div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pickup Location</p>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{{ selectedBooking.formData?.useAddStoreOption ? 'Add Store (Pickup)' : 'Pickup Location' }}</p>
                 <p class="font-bold text-gray-900">{{ selectedBooking.pickupAddress || getPickupLocation(selectedBooking) }}</p>
               </div>
               <div class="relative">
@@ -539,7 +548,9 @@ export default {
     getPickupLocation(booking) {
       if (!booking?.formData) return booking.pickupAddress || 'N/A'
       const formData = booking.formData
+      if (formData.useAddStoreOption && formData.addStoreAddress) return formData.addStoreAddress
       return (
+        booking.pickupAddress ||
         formData.pickupAddress ||
         formData.restaurantAddress ||
         formData.storeAddress ||

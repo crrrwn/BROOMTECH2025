@@ -469,24 +469,27 @@
               </div>
             </div>
             <div v-if="selectedOrder?.pickupAddress || getPickupLocation(selectedOrder) || selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder) || getServiceDetails(selectedOrder)" class="mt-3 pt-3 border-t-2 border-[#00C851]/20">
+              <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Route: Pickup → Delivery (customer)</p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                <div v-if="selectedOrder?.pickupAddress || getPickupLocation(selectedOrder)" class="bg-white/60 p-2 rounded-lg border border-[#74E600]/20">
+                <div v-if="selectedOrder?.pickupAddress || getPickupLocation(selectedOrder)" class="bg-white/60 p-2 rounded-lg border-2 border-[#74E600]/40">
                   <p class="text-gray-600 mb-1 font-medium flex items-center gap-1">
                     <svg class="w-3 h-3 text-[#74E600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    Pickup Location
+                    {{ selectedOrder?.formData?.useAddStoreOption ? '1. Add Store (Pickup)' : '1. Pickup' }}
                   </p>
                   <p class="font-semibold text-gray-900">{{ selectedOrder?.pickupAddress || getPickupLocation(selectedOrder) }}</p>
+                  <p v-if="selectedOrder?.formData?.useAddStoreOption && selectedOrder?.formData?.addStoreName" class="text-[10px] text-green-600 font-semibold mt-1">Store: {{ selectedOrder.formData.addStoreName }}</p>
+                  <p v-if="selectedOrder?.formData?.useAddStoreOption && selectedOrder?.formData?.addStoreItems" class="text-[10px] text-gray-600 mt-1 border-t border-gray-100 pt-1">Buy: {{ selectedOrder.formData.addStoreItems }}</p>
                 </div>
-                <div v-if="selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder)" class="bg-white/60 p-2 rounded-lg border border-[#3ED400]/20">
+                <div v-if="selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder)" class="bg-white/60 p-2 rounded-lg border-2 border-[#3ED400]/40">
                   <p class="text-gray-600 mb-1 font-medium flex items-center gap-1">
                     <svg class="w-3 h-3 text-[#3ED400]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    Delivery Location
+                    2. Delivery (Customer)
                   </p>
                   <p class="font-semibold text-gray-900">{{ selectedOrder?.deliveryAddress || getDeliveryLocation(selectedOrder) }}</p>
                 </div>
@@ -808,7 +811,7 @@
             </div>
 
             <div v-if="orderDetailsSections[orderDetailsCurrentPage]?.id === 'location' && (selectedOrderForDetails.pickupAddress || getPickupLocation(selectedOrderForDetails) || selectedOrderForDetails.deliveryAddress || getDeliveryLocation(selectedOrderForDetails))" class="bg-gradient-to-br from-[#A8EB12]/10 via-[#74E600]/10 to-[#3ED400]/10 p-3 sm:p-4 rounded-xl border-2 border-[#00C851]/20 shadow-sm">
-              <div class="flex items-center gap-2 mb-3">
+              <div class="flex items-center gap-2 mb-2">
                 <div class="p-1.5 bg-gradient-to-br from-[#74E600] to-[#3ED400] rounded-lg">
                   <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -817,24 +820,31 @@
                 </div>
                 <h4 class="font-bold text-gray-900 text-sm sm:text-base">Location Information</h4>
               </div>
-              <div class="space-y-2 sm:space-y-3">
-                <div v-if="selectedOrderForDetails.pickupAddress || getPickupLocation(selectedOrderForDetails)" class="bg-white/70 p-2.5 rounded-lg border border-[#74E600]/20">
+              <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">Route: 1st stop (pickup) → 2nd stop (customer delivery)</p>
+              <div class="space-y-3">
+                <div v-if="selectedOrderForDetails.formData?.useAddStoreOption" class="bg-green-50 p-3 rounded-xl border-2 border-green-300 shadow-sm">
+                  <p class="text-[10px] font-black text-green-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs font-bold">1</span>
+                    Add Store Option (user-requested pickup)
+                  </p>
+                  <p v-if="selectedOrderForDetails.formData?.addStoreName" class="font-bold text-gray-900 text-sm">{{ selectedOrderForDetails.formData.addStoreName }}</p>
+                  <p class="text-gray-800 text-sm">{{ selectedOrderForDetails.pickupAddress || getPickupLocation(selectedOrderForDetails) }}</p>
+                  <div v-if="selectedOrderForDetails.formData?.addStoreItems" class="mt-2 pt-2 border-t border-green-200">
+                    <p class="text-[10px] font-bold text-green-700 uppercase tracking-wider mb-0.5">What to buy at store</p>
+                    <p class="text-gray-800 text-sm whitespace-pre-wrap">{{ selectedOrderForDetails.formData.addStoreItems }}</p>
+                  </div>
+                </div>
+                <div v-else-if="selectedOrderForDetails.pickupAddress || getPickupLocation(selectedOrderForDetails)" class="bg-white/70 p-2.5 rounded-lg border-2 border-[#74E600]/30">
                   <p class="text-gray-600 text-xs sm:text-sm mb-1 font-medium flex items-center gap-1">
-                    <svg class="w-3 h-3 text-[#74E600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#74E600] text-white text-xs font-bold">1</span>
                     Pickup Location
                   </p>
                   <p class="font-bold text-gray-900 text-xs sm:text-sm">{{ selectedOrderForDetails.pickupAddress || getPickupLocation(selectedOrderForDetails) }}</p>
                 </div>
-                <div v-if="selectedOrderForDetails.deliveryAddress || getDeliveryLocation(selectedOrderForDetails)" class="bg-white/70 p-2.5 rounded-lg border border-[#3ED400]/20">
+                <div v-if="selectedOrderForDetails.deliveryAddress || getDeliveryLocation(selectedOrderForDetails)" class="bg-white/70 p-2.5 rounded-lg border-2 border-[#3ED400]/30">
                   <p class="text-gray-600 text-xs sm:text-sm mb-1 font-medium flex items-center gap-1">
-                    <svg class="w-3 h-3 text-[#3ED400]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Delivery Location
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3ED400] text-white text-xs font-bold">2</span>
+                    Delivery — Customer Address (final stop)
                   </p>
                   <p class="font-bold text-gray-900 text-xs sm:text-sm">{{ selectedOrderForDetails.deliveryAddress || getDeliveryLocation(selectedOrderForDetails) }}</p>
                 </div>
@@ -998,10 +1008,12 @@
                   
                   <div v-if="additionalOrder.pickupAddress || additionalOrder.deliveryAddress" class="mt-1.5 text-xs">
                     <div v-if="additionalOrder.pickupAddress" class="text-gray-600">
-                      <span class="font-medium">Pickup:</span> {{ additionalOrder.pickupAddress }}
+                      <span class="font-medium">{{ additionalOrder.formData?.useAddStoreOption ? 'Add Store (Pickup):' : 'Pickup:' }}</span> {{ additionalOrder.pickupAddress }}
+                      <span v-if="additionalOrder.formData?.useAddStoreOption && additionalOrder.formData?.addStoreName" class="text-green-600 font-semibold"> — {{ additionalOrder.formData.addStoreName }}</span>
+                      <span v-if="additionalOrder.formData?.useAddStoreOption && additionalOrder.formData?.addStoreItems" class="block mt-0.5 text-gray-500">Buy: {{ additionalOrder.formData.addStoreItems }}</span>
                     </div>
                     <div v-if="additionalOrder.deliveryAddress" class="text-gray-600 mt-0.5">
-                      <span class="font-medium">Delivery:</span> {{ additionalOrder.deliveryAddress }}
+                      <span class="font-medium">Delivery (Customer):</span> {{ additionalOrder.deliveryAddress }}
                     </div>
                   </div>
                   
@@ -1231,9 +1243,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                       </svg>
-                      Pickup:
+                      {{ (trackedOrder || selectedOrder)?.formData?.useAddStoreOption ? '1. Add Store (Pickup):' : '1. Pickup:' }}
                     </span>
                     <span class="font-bold text-[#74E600]">{{ (trackedOrder || selectedOrder)?.pickupAddress || getPickupLocation(trackedOrder || selectedOrder) }}</span>
+                    <p v-if="(trackedOrder || selectedOrder)?.formData?.useAddStoreOption && (trackedOrder || selectedOrder)?.formData?.addStoreName" class="text-xs text-green-600 font-semibold mt-1">Store: {{ (trackedOrder || selectedOrder).formData.addStoreName }}</p>
+                    <p v-if="(trackedOrder || selectedOrder)?.formData?.useAddStoreOption && (trackedOrder || selectedOrder)?.formData?.addStoreItems" class="text-xs text-gray-600 mt-1">Buy: {{ (trackedOrder || selectedOrder).formData.addStoreItems }}</p>
                   </div>
                   <div v-if="(trackedOrder || selectedOrder)?.deliveryAddress || getDeliveryLocation(trackedOrder || selectedOrder)" class="bg-white/70 p-3 rounded-lg border-2 border-[#3ED400]/30">
                     <span class="text-gray-600 font-semibold block mb-1 flex items-center gap-1">
@@ -1241,7 +1255,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                       </svg>
-                      Drop-off:
+                      2. Delivery (Customer):
                     </span>
                     <span class="font-bold text-[#3ED400]">{{ (trackedOrder || selectedOrder)?.deliveryAddress || getDeliveryLocation(trackedOrder || selectedOrder) }}</span>
                   </div>
@@ -3050,9 +3064,11 @@ export default {
 
     // CHANGE: Added functions to get pickup and delivery locations from form data
     const getPickupLocation = (order) => {
-      if (!order?.formData) return ''
+      if (!order?.formData) return order?.pickupAddress || ''
 
       const formData = order.formData
+      if (formData.useAddStoreOption && formData.addStoreAddress) return formData.addStoreAddress
+
       const serviceType = order.serviceType || order.serviceId
 
       switch (serviceType) {
@@ -3066,7 +3082,7 @@ export default {
           return formData.pickupAddress || ''
 
         default:
-          return ''
+          return order?.pickupAddress || ''
       }
     }
 

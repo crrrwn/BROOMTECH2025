@@ -162,6 +162,9 @@
                 <p v-if="calculatedPrice.isFixedRate" class="text-xs text-green-600 italic text-right mt-1">
                    *Applied fixed rate for this location
                 </p>
+                <p v-if="calculatedPrice.hasAddStoreOption" class="text-xs text-green-600 italic text-right mt-1">
+                   *Two delivery fees applied (store + delivery)
+                </p>
               </div>
 
               <div class="my-4 border-t-2 border-dashed border-gray-200"></div>
@@ -509,6 +512,31 @@
                 </div>
               </div>
 
+              <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200 hover:border-[#3ED400] transition-colors">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Add Store Options (Optional)</label>
+                <p class="text-xs text-gray-500 mb-3">Add a store/pickup location. Delivery fee will apply twice (store + delivery). Address uses Calapan Places.</p>
+                <label class="flex items-center gap-2 mb-3 cursor-pointer">
+                  <input type="checkbox" v-model="bookingForm.useAddStoreOption" class="w-4 h-4 text-[#3ED400] rounded focus:ring-[#3ED400]"/>
+                  <span class="text-sm font-semibold text-gray-700">Add store / pickup location</span>
+                </label>
+                <div v-if="bookingForm.useAddStoreOption" class="space-y-4 pt-2 border-t border-gray-200">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Store / Location Name</label>
+                    <input type="text" v-model.trim="bookingForm.addStoreName" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none shadow-sm text-sm" placeholder="e.g. SM Store, Pharmacy"/>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Store Address *</label>
+                    <input type="text" v-model.trim="bookingForm.addStoreAddress" ref="addStoreAddressInput" autocomplete="address-line1" @input="onAddressManualInput" :required="bookingForm.useAddStoreOption" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none shadow-sm text-sm" placeholder="Search address (Calapan only)"/>
+                    <p class="text-xs text-gray-500 mt-1">Start typing to search — connected to Places. Not shown on map.</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">What to buy at this store *</label>
+                    <textarea v-model.trim="bookingForm.addStoreItems" rows="3" :required="bookingForm.useAddStoreOption" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3ED400] focus:border-transparent outline-none shadow-sm text-sm" placeholder="e.g. 2 pcs shampoo, 1 gallon water, vitamins..."></textarea>
+                    <p class="text-xs text-gray-500 mt-1">List items to get from this store. Shown to driver and in order details.</p>
+                  </div>
+                </div>
+              </div>
+
               <div class="bg-gray-50/50 p-4 md:p-5 rounded-2xl border border-gray-200">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Payment</label>
                 <div class="flex flex-col sm:flex-row gap-4">
@@ -679,7 +707,12 @@ export default {
         // Medicine
         medicineNames: '', prescriptionFile: null, quantity: '',
         // Pick-up & Drop
-        pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
+        pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: '',
+        // Add Store Options (optional, for all services)
+        useAddStoreOption: false,
+        addStoreName: '',
+        addStoreAddress: '',
+        addStoreItems: ''
       },
 
       isBookingRestricted: false,
@@ -758,9 +791,12 @@ export default {
     },
 
     calculateDeliveryFee() {
-      if (!this.selectedService || !this.routeInfo.distanceValue) return
+      if (!this.selectedService) return
+      const hasRoute = this.routeInfo.distanceValue > 0
+      const hasAddStore = this.bookingForm.useAddStoreOption && (this.bookingForm.addStoreAddress || '').trim()
+      if (!hasRoute && !hasAddStore) return
 
-      const distanceInKm = this.routeInfo.distanceValue / 1000
+      const distanceInKm = (this.routeInfo.distanceValue || 0) / 1000
       let baseCharge = 0
       let distanceFee = 0
       let isFixedRate = false
@@ -856,7 +892,13 @@ export default {
       // This can be implemented later if order item count is available in the form
       // For now, bulk order detection is not automatic - can be enhanced when item count is tracked
 
-      // 5. WEATHER & GCASH
+      // 5. ADD STORE OPTIONS: Apply two delivery fees (Fix Rate x2) when user adds a store
+      if (this.bookingForm.useAddStoreOption && (this.bookingForm.addStoreAddress || '').trim()) {
+        baseCharge = baseCharge * 2
+        distanceFee = distanceFee * 2
+      }
+
+      // 6. WEATHER & GCASH
       const badWeatherFee = (this.isBadWeather && this.badWeatherFeeEnabled) ? (this.pricingSettings.pricingRules.rainSurcharge || 10) : 0
       let subtotal = baseCharge + distanceFee + badWeatherFee + addOnsTotal
 
@@ -882,7 +924,8 @@ export default {
         gcashFee: Math.round(gcashFee * 100) / 100,
         subtotal: Math.round(subtotal * 100) / 100,
         total: Math.round(total * 100) / 100,
-        isFixedRate: isFixedRate
+        isFixedRate: isFixedRate,
+        hasAddStoreOption: !!(this.bookingForm.useAddStoreOption && (this.bookingForm.addStoreAddress || '').trim())
       }
 
       console.log('[v1] Final Calculation:', this.calculatedPrice)
@@ -1033,7 +1076,8 @@ export default {
         shoppingList: '', storePreference: '',
         giftType: '', recipientName: '', recipientContact: '', preferredDateTime: '', storeName: '', storeAddress: '',
         medicineNames: '', prescriptionFile: null, quantity: '',
-        pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: ''
+        pickupContact: '', itemDescription: '', itemType: '', dropoffAddress: '', preferredPickupDateTime: '',
+        useAddStoreOption: false, addStoreName: '', addStoreAddress: '', addStoreItems: ''
       }
       this.clearFormData()
       this.clearJollibeeMarkers()
@@ -1186,7 +1230,8 @@ export default {
       
       const refs = [
         'restaurantAddressInput', 'deliveryAddressInput', 'pickupAddressInput', 'returnAddressInput',
-        'dropoffAddressInput', 'storeAddressInput', 'storePreferenceInput', 'billerNameInput'
+        'dropoffAddressInput', 'storeAddressInput', 'storePreferenceInput', 'billerNameInput',
+        'addStoreAddressInput'
       ]
       const calapanBounds = new window.google.maps.LatLngBounds(
         new window.google.maps.LatLng(13.3000, 121.0800),
@@ -1242,6 +1287,13 @@ export default {
              this.addBillerMarker(place.geometry.location, place.name, place.formatted_address)
              return
           }
+          if (refKey === 'addStoreAddressInput') {
+             this.bookingForm.addStoreAddress = addr
+             if (place.name) this.bookingForm.addStoreName = place.name
+             this.saveFormData()
+             setTimeout(() => this.calculateDeliveryFee(), 100)
+             return
+          }
           
           if (refKey === 'restaurantAddressInput') {
              this.bookingForm.restaurantAddress = addr
@@ -1255,7 +1307,7 @@ export default {
           else if (refKey === 'dropoffAddressInput') this.bookingForm.dropoffAddress = addr
           else if (refKey === 'storeAddressInput') this.bookingForm.storeAddress = addr
 
-          this.addAddressMarker(place.geometry.location, addr, refKey)
+          if (refKey !== 'addStoreAddressInput') this.addAddressMarker(place.geometry.location, addr, refKey)
           this.saveFormData()
           setTimeout(() => this.updateRoute(), 100)
         })
@@ -1504,14 +1556,15 @@ export default {
 
     checkRequiredFields() {
        const f = this.bookingForm
+       const addStoreOk = !f.useAddStoreOption || (f.addStoreAddress && f.addStoreAddress.trim() && (f.addStoreItems || '').trim())
        switch(this.selectedService?.id) {
-          case 'food-delivery': return f.restaurantName && f.restaurantAddress && f.foodOrderDetails && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
-          case 'bill-payments': return f.billerName && f.accountName && f.accountNumber && f.amountToPay && f.pickupAddress && f.returnAddress && !!f.billReceiptUrl
-          case 'grocery-shopping': return f.shoppingList && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
-          case 'gift-delivery': return f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress && f.storeAddress
-          case 'medicine-delivery': return f.medicineNames && f.quantity && f.budgetRange && f.receiverName && f.deliveryAddress
-          case 'pickup-drop': return f.pickupAddress && f.pickupContact && f.itemDescription && f.itemType && f.dropoffAddress
-          default: return false
+          case 'food-delivery': return addStoreOk && f.restaurantName && f.restaurantAddress && f.foodOrderDetails && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
+          case 'bill-payments': return addStoreOk && f.billerName && f.accountName && f.accountNumber && f.amountToPay && f.pickupAddress && f.returnAddress && !!f.billReceiptUrl
+          case 'grocery-shopping': return addStoreOk && f.shoppingList && f.budgetRange && f.receiverName && f.receiverContact && f.deliveryAddress
+          case 'gift-delivery': return addStoreOk && f.giftType && f.budgetRange && f.recipientName && f.recipientContact && f.deliveryAddress && f.storeAddress
+          case 'medicine-delivery': return addStoreOk && f.medicineNames && f.quantity && f.budgetRange && f.receiverName && f.deliveryAddress
+          case 'pickup-drop': return addStoreOk && f.pickupAddress && f.pickupContact && f.itemDescription && f.itemType && f.dropoffAddress
+          default: return addStoreOk && false
        }
     },
 
@@ -1579,12 +1632,18 @@ export default {
           }
 
           let pickup = '', delivery = ''
-          switch(this.selectedService.id) {
-             case 'food-delivery': pickup = this.bookingForm.restaurantAddress; delivery = this.bookingForm.deliveryAddress; break;
-             case 'bill-payments': pickup = this.bookingForm.pickupAddress; delivery = this.bookingForm.returnAddress; break;
-             case 'pickup-drop': pickup = this.bookingForm.pickupAddress; delivery = this.bookingForm.dropoffAddress; break;
-             case 'gift-delivery': pickup = this.bookingForm.storeAddress; delivery = this.bookingForm.deliveryAddress; break;
-             default: delivery = this.bookingForm.deliveryAddress;
+          const useAddStore = this.bookingForm.useAddStoreOption && (this.bookingForm.addStoreAddress || '').trim()
+          if (useAddStore) {
+            pickup = this.bookingForm.addStoreAddress
+            delivery = this.selectedService.id === 'pickup-drop' ? this.bookingForm.dropoffAddress : this.bookingForm.deliveryAddress
+          } else {
+            switch(this.selectedService.id) {
+              case 'food-delivery': pickup = this.bookingForm.restaurantAddress; delivery = this.bookingForm.deliveryAddress; break;
+              case 'bill-payments': pickup = this.bookingForm.pickupAddress; delivery = this.bookingForm.returnAddress; break;
+              case 'pickup-drop': pickup = this.bookingForm.pickupAddress; delivery = this.bookingForm.dropoffAddress; break;
+              case 'gift-delivery': pickup = this.bookingForm.storeAddress; delivery = this.bookingForm.deliveryAddress; break;
+              default: delivery = this.bookingForm.deliveryAddress;
+            }
           }
 
           const { billReceiptFile, prescriptionFile, ...restForm } = this.bookingForm
@@ -1649,6 +1708,12 @@ export default {
     bookingForm: {
       handler() { clearTimeout(this.formSaveTimer); this.formSaveTimer = setTimeout(() => this.saveFormData(), 500) },
       deep: true
+    },
+    'bookingForm.useAddStoreOption'() {
+      this.$nextTick(() => {
+        this.initializeAutocomplete()
+        if (this.selectedService && (this.routeInfo.distanceValue > 0 || (this.bookingForm.addStoreAddress || '').trim())) this.calculateDeliveryFee()
+      })
     }
   }
 }

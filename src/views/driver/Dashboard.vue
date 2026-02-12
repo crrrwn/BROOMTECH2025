@@ -57,24 +57,20 @@
                  </div>
               </div>
 
-              <div v-if="driverStore.hasRemitted">
-                 <h3 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">₱{{ driverStore.todayEarnings.driverShare || '0.00' }}</h3>
+              <div>
+                 <h3 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">₱{{ driverStore.todayEarnings?.driverShare ?? '0.00' }}</h3>
+                 <p class="text-[10px] md:text-xs text-gray-400 mt-1 uppercase tracking-wider">Your share ({{ driverStore.hasRemitted ? 'from approved remittances today' : 'remit & get approved to see' }})</p>
                  <div class="mt-6 flex gap-4 text-sm text-gray-400 border-t border-gray-700 pt-4">
                     <div class="flex flex-col">
-                       <span class="text-[10px] md:text-xs uppercase tracking-wide">Total</span>
-                       <span class="text-gray-200 font-bold">₱{{ driverStore.todayEarnings.total || '0.00' }}</span>
+                       <span class="text-[10px] md:text-xs uppercase tracking-wide">Total remitted today</span>
+                       <span class="text-gray-200 font-bold">₱{{ driverStore.todayEarnings?.total ?? '0.00' }}</span>
                     </div>
                     <div class="w-px bg-gray-700 h-8"></div>
                     <div class="flex flex-col">
-                       <span class="text-[10px] md:text-xs uppercase tracking-wide">Admin Fee</span>
-                       <span class="text-gray-200 font-bold">₱{{ driverStore.todayEarnings.adminShare || '0.00' }}</span>
+                       <span class="text-[10px] md:text-xs uppercase tracking-wide">Admin share</span>
+                       <span class="text-gray-200 font-bold">₱{{ driverStore.todayEarnings?.adminShare ?? '0.00' }}</span>
                     </div>
                  </div>
-              </div>
-
-              <div v-else class="flex flex-col items-center justify-center py-4 text-center">
-                 <svg class="w-10 h-10 text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                 <p class="text-gray-400 text-xs md:text-sm">Remit pending balance to unlock view.</p>
               </div>
            </div>
         </div>

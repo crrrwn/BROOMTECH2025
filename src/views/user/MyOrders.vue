@@ -158,16 +158,20 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-gray-50/80 rounded-2xl border border-gray-100 mb-6">
                 <div class="relative pl-4 border-l-2 border-green-200">
                   <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-100 border-4 border-white shadow-sm"></div>
-                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">From</p>
-                  <p class="font-bold text-gray-800 line-clamp-2">
-                    {{ order.pickupAddress || order.formData?.pickupAddress || order.formData?.restaurantAddress || order.formData?.storeAddress }}
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                    {{ order.formData?.useAddStoreOption ? 'Add Store (Pickup)' : 'From' }}
                   </p>
+                  <p class="font-bold text-gray-800 line-clamp-2">
+                    {{ order.pickupAddress || order.formData?.addStoreAddress || order.formData?.pickupAddress || order.formData?.restaurantAddress || order.formData?.storeAddress }}
+                  </p>
+                  <p v-if="order.formData?.useAddStoreOption && order.formData?.addStoreName" class="text-xs text-gray-500 mt-1">Store: {{ order.formData.addStoreName }}</p>
+                  <p v-if="order.formData?.useAddStoreOption && order.formData?.addStoreItems" class="text-xs text-gray-600 mt-1 line-clamp-2">Buy: {{ order.formData.addStoreItems }}</p>
                 </div>
                 <div class="relative pl-4 border-l-2 border-red-200">
                   <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-red-100 border-4 border-white shadow-sm"></div>
                   <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">To</p>
                   <p class="font-bold text-gray-800 line-clamp-2">
-                    {{ order.deliveryAddress || order.formData?.deliveryAddress || order.formData?.returnAddress }}
+                    {{ order.deliveryAddress || order.formData?.deliveryAddress || order.formData?.returnAddress || order.formData?.dropoffAddress }}
                   </p>
                 </div>
               </div>
@@ -273,6 +277,15 @@
                     <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                       <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Pickup Logistics</h5>
                       <div class="space-y-3 text-sm">
+                        <div v-if="order.formData?.useAddStoreOption && (order.formData?.addStoreAddress || order.formData?.addStoreName || order.formData?.addStoreItems)" class="flex flex-col gap-1 p-3 bg-green-50/80 rounded-xl border border-green-200/60 mb-2">
+                          <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">Add Store Option</span>
+                          <span v-if="order.formData.addStoreName" class="font-bold text-gray-800">{{ order.formData.addStoreName }}</span>
+                          <span v-if="order.formData.addStoreAddress" class="text-sm text-gray-700">{{ order.formData.addStoreAddress }}</span>
+                          <div v-if="order.formData.addStoreItems" class="mt-2 pt-2 border-t border-green-200/60">
+                            <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">What to buy at store</span>
+                            <p class="text-sm text-gray-800 whitespace-pre-wrap mt-0.5">{{ order.formData.addStoreItems }}</p>
+                          </div>
+                        </div>
                         <div v-if="order.formData?.pickupAddress || order.formData?.restaurantAddress" class="flex flex-col gap-1">
                           <span class="text-gray-500 text-xs">Address</span>
                           <span class="font-bold text-gray-800">{{ order.formData.pickupAddress || order.formData.restaurantAddress }}</span>
@@ -1367,7 +1380,9 @@ export default {
           o.id.toLowerCase().includes(q) ||
           (o.serviceName || '').toLowerCase().includes(q) ||
           (o.pickupAddress || o.formData?.pickupAddress || '').toLowerCase().includes(q) ||
-          (o.deliveryAddress || o.formData?.deliveryAddress || '').toLowerCase().includes(q)
+          (o.deliveryAddress || o.formData?.deliveryAddress || '').toLowerCase().includes(q) ||
+          (o.formData?.addStoreAddress || '').toLowerCase().includes(q) ||
+          (o.formData?.addStoreName || '').toLowerCase().includes(q)
         )
       }
       

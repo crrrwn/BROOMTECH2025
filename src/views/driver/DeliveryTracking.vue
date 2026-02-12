@@ -97,10 +97,14 @@
       </div>
 
       <div class="bg-gradient-to-r from-[#F4FFE9] via-white to-[#E8FFE8] p-5 rounded-2xl border border-[#E2FAD6] mb-6">
+        <div v-if="order?.formData?.useAddStoreOption && order?.formData?.addStoreItems" class="p-3 bg-green-50 rounded-xl border border-green-200 mb-4">
+          <p class="text-[10px] font-black text-green-700 uppercase tracking-wider mb-1">Add Store — What to buy</p>
+          <p class="text-sm font-bold text-gray-800 whitespace-pre-wrap">{{ order.formData.addStoreItems }}</p>
+        </div>
         <div class="relative pl-4 border-l-2 border-[#B7F08F] space-y-6">
           <div class="relative">
             <div class="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-white border-[3px] border-[#FFB300] shadow-sm"></div>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Pickup</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{{ order?.formData?.useAddStoreOption ? 'Add Store (Pickup)' : 'Pickup' }}</p>
             <p class="text-sm font-bold text-gray-800 leading-snug">{{ pickupAddress }}</p>
           </div>
 
@@ -129,9 +133,14 @@
         </button>
       </div>
       
+      <p v-if="!order?.proofOfDelivery?.url" class="text-xs text-amber-600 font-semibold mb-2 text-center">Upload proof of delivery first to finish.</p>
       <button
         @click="finishDelivery"
-        class="w-full py-4 bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] text-white font-black text-base md:text-lg rounded-2xl shadow-[0_12px_30px_rgba(0,200,81,0.55)] hover:shadow-[0_16px_40px_rgba(0,200,81,0.65)] hover:-translate-y-0.5 transition-all active:scale-95 tracking-wide"
+        :disabled="!order || order.status === 'delivered' || !order?.proofOfDelivery?.url"
+        class="w-full py-4 font-black text-base md:text-lg rounded-2xl transition-all tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        :class="order?.proofOfDelivery?.url
+          ? 'bg-gradient-to-r from-[#74E600] via-[#3ED400] to-[#00C851] text-white shadow-[0_12px_30px_rgba(0,200,81,0.55)] hover:shadow-[0_16px_40px_rgba(0,200,81,0.65)] hover:-translate-y-0.5 active:scale-95'
+          : 'bg-gray-300 text-gray-500'"
       >
         FINISH DELIVERY
       </button>
@@ -215,6 +224,15 @@
             </div>
           </div>
 
+          <div v-if="order?.formData?.useAddStoreOption && (order?.formData?.addStoreName || order?.formData?.addStoreItems)" class="bg-green-50 p-5 rounded-2xl border-2 border-green-200 shadow-sm">
+            <h4 class="text-xs font-black text-green-700 uppercase tracking-widest mb-3">Add Store Option</h4>
+            <p v-if="order.formData.addStoreName" class="font-bold text-gray-900 text-sm">{{ order.formData.addStoreName }}</p>
+            <p v-if="order.formData.addStoreAddress" class="text-gray-700 text-sm">{{ order.formData.addStoreAddress }}</p>
+            <div v-if="order.formData.addStoreItems" class="mt-3 pt-3 border-t border-green-200">
+              <p class="text-[10px] font-bold text-green-700 uppercase tracking-wider mb-1">What to buy at store</p>
+              <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ order.formData.addStoreItems }}</p>
+            </div>
+          </div>
           <div v-if="order?.formData" class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
             <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Details</h4>
             <div class="space-y-3">
@@ -1658,8 +1676,15 @@ export default {
 
                 console.log('[v0] Order updated successfully')
 
-                // Update local order status
+                // Update local order so UI reflects proof and status
                 this.order.status = 'delivered'
+                this.order.proofOfDelivery = {
+                  url: downloadURL,
+                  fileName: filename,
+                  path: filePath,
+                  driverId,
+                  uploadedAt: new Date()
+                }
 
                 // Send notification to all admins
                 try {
