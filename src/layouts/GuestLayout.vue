@@ -195,11 +195,17 @@
 
         </div>
         
-        <div class="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-          <p>&copy; 2025 Broooom Delivery Services. All rights reserved.</p>
-          <div class="flex items-center gap-6">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
+        <div class="mt-12 pt-8 border-t border-gray-800 space-y-4">
+          <p class="text-xs text-gray-400 text-center md:text-left">
+            In compliance with the <strong class="text-gray-300">Data Privacy Act of 2012 (RA 10173)</strong>. 
+            Your personal data is protected and processed in accordance with the law.
+          </p>
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+            <p>&copy; 2025 Broooom Delivery Services. All rights reserved.</p>
+            <div class="flex items-center gap-6 flex-wrap justify-center">
+              <router-link to="/privacy" class="hover:text-[#74E600] transition-colors">Privacy Policy & Data Privacy Act</router-link>
+              <span class="text-gray-600">Terms of Service</span>
+            </div>
           </div>
         </div>
       </div>

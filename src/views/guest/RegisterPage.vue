@@ -307,10 +307,9 @@
           </div>
           <div class="ml-2 text-xs sm:text-sm">
             <label for="acceptTerms" class="font-semibold text-gray-700 cursor-pointer select-none transition-colors hover:text-[#3ED400]">
-              I agree to the 
-              <span class="text-[#00C851] font-bold">Terms of Service</span>
-              and 
-              <span class="text-[#00C851] font-bold">Privacy Policy</span>
+              I agree to the Terms of Service and the 
+              <router-link to="/privacy" class="text-[#00C851] font-bold hover:underline" target="_blank">Privacy Policy</router-link>
+              . I consent to the processing of my personal data in accordance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>.
             </label>
             <p v-if="form.acceptTerms === false && form.confirmPassword" class="mt-0.5 text-[10px] text-red-500">
               Required

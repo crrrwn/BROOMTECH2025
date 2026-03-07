@@ -16,6 +16,7 @@ import LoginPage from "@/views/guest/LoginPage.vue"
 import RegisterPage from "@/views/guest/RegisterPage.vue"
 import VerifyEmail from "@/views/guest/VerifyEmail.vue"
 import VerifyEmailSuccess from "@/views/guest/VerifyEmailSuccess.vue"
+import PrivacyPolicy from "@/views/guest/PrivacyPolicy.vue"
 
 // User Pages
 import UserDashboard from "@/views/user/Dashboard.vue"
@@ -61,6 +62,7 @@ const routes = [
       { path: "register", name: "register", component: RegisterPage },
       { path: "verify-email", name: "verify-email", component: VerifyEmail },
       { path: "verify-email-success", name: "verify-email-success", component: VerifyEmailSuccess },
+      { path: "privacy", name: "privacy-policy", component: PrivacyPolicy },
     ],
   },
 
